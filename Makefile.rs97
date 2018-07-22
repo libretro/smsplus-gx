@@ -1,4 +1,4 @@
-PRGNAME     = smsplus.dge
+PRGNAME     = sms_sdl
 
 # define regarding OS, which compiler to use
 EXESUFFIX = 
@@ -12,7 +12,7 @@ SDL_INCLUDE =
 
 # change compilation / linking flag options
 F_OPTS		= -DHOME_SUPPORT -Icpu -Isound -I.
-CC_OPTS		= -msym32 -mlong-calls -fno-pic -fno-pie -fomit-frame-pointer -fdata-sections -ffunction-sections -mips32 -mno-shared -mno-mips16 -O2 $(F_OPTS)
+CC_OPTS		= -msym32 -mlong-calls -fno-pic -fno-pie -O2 -mno-abicalls -fdata-sections -ffunction-sections -mips32 -mno-shared -mno-mips16 -O2 $(F_OPTS)
 CFLAGS		= -I$(SDL_INCLUDE) $(CC_OPTS)
 CXXFLAGS	=$(CFLAGS) 
 LDFLAGS     = -lSDLmain -lSDL -lm -Wl,--as-needed -Wl,--gc-sections -flto -lz -s

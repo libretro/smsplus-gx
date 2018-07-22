@@ -13,10 +13,10 @@ SDL_INCLUDE =
 
 # change compilation / linking flag options
 F_OPTS		= -DHOME_SUPPORT -Icpu -Isound -I.
-CC_OPTS		= -O2 -fomit-frame-pointer -fdata-sections -ffunction-sections $(F_OPTS)
+CC_OPTS		= -O0 -g $(F_OPTS)
 CFLAGS		= -I$(SDL_INCLUDE) $(CC_OPTS)
 CXXFLAGS	=$(CFLAGS) 
-LDFLAGS     = -lSDLmain -lSDL -lm -Wl,--as-needed -Wl,--gc-sections -flto -lz
+LDFLAGS     = -lSDLmain -lSDL -lm -flto -lz
 
 # Files to be r
 SRCDIR    = . ./sound ./cpu ./rs97

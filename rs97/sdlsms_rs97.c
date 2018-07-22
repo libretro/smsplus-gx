@@ -26,6 +26,7 @@
 #include "font.h"
 #include "text_gui.h"
 
+
 static const char *rom_filename;
 t_sdl_video sdl_video;
 static t_sdl_sound sdl_sound;
@@ -41,22 +42,11 @@ SDL_Surface* data_screen;
 
 static void sdlsms_video_blit_center(SDL_Surface* screen, SDL_Surface* buffer)
 {
-	SDL_LockSurface(screen);
-	bitmap.data = (unsigned char*)screen->pixels + (4 * (3072 - 16));
-	if (time_state > 120)
-	{
-		time_state = 0;
-		memset(screen->pixels, 0, (320*24));
-	}
-	else if (time_state > 0)
-	{
-		if (time_state == 1) memset(screen->pixels, 0, (320*24));
-		gfx_font_print(screen, 4, 4, font, buf);
-		time_state++;
-	}
-	SDL_Flip(screen);
-	SDL_UnlockSurface(screen);
-	/*bitmap.data = (unsigned char*)buffer->pixels + (4 * (3072 - 16));
+    uint32_t *s = (uint32_t*)buffer->pixels;
+    uint32_t *d = (uint32_t*)screen->pixels;
+    uint8_t y;
+    
+	bitmap.data = (uint8_t*)buffer->pixels + (4 * (3072 - 16));
 	if (time_state > 120)
 	{
 		time_state = 0;
@@ -65,11 +55,16 @@ static void sdlsms_video_blit_center(SDL_Surface* screen, SDL_Surface* buffer)
 	else if (time_state > 0)
 	{
 		if (time_state == 1) memset(buffer->pixels, 0, (320*24));
-		gfx_font_print(buffer->pixels, 4, 4, font, buf);
+		gfx_font_print(buffer, 4, 4, font, buf);
 		time_state++;
-	}*/
-	//SDL_SoftStretch(buffer, NULL, screen, NULL);
-	//SDL_Flip(screen);
+	}
+    if(SDL_MUSTLOCK(screen)) SDL_LockSurface(screen);
+
+    for (uint8_t y = 0; y < 239; y++, s += 160, d += 320) // double-line fix by pingflood, 2018
+        memmove((uint32_t*)d, (uint32_t*)s, 640);
+        
+	if(SDL_MUSTLOCK(screen)) SDL_UnlockSurface(screen);
+	SDL_Flip(screen);
 }
 
 static void sdlsms_video_take_screenshot()
@@ -103,15 +98,13 @@ static int sdlsms_video_init(int frameskip, int fullscreen, int filter)
   }
 
 
-  sdl_video.surf_screen = SDL_SetVideoMode(320, 240, 16, vidflags);
+  sdl_video.surf_screen = SDL_SetVideoMode(320, 480, 16, vidflags);
   if(!sdl_video.surf_screen) {
     printf("ERROR: can't set video mode (%dx%d): %s.\n", screen_width, screen_height, SDL_GetError());
     return 0;
   }
 
-  if(fullscreen) {
-    SDL_ShowCursor(SDL_DISABLE);
-  }
+	SDL_ShowCursor(SDL_DISABLE);
 
   SDL_WM_SetCaption(SMSSDL_TITLE, NULL);
   return 1;
@@ -503,18 +496,18 @@ int sdlsms_init(const t_config* pcfg)
   }
 
   /* set up the virtual console emulation */
-  SDL_LockSurface(sdl_video.surf_screen);
+  SDL_LockSurface(data_screen);
   printf("Initializing virtual console emulation... ");
 
   memset(&bitmap, 0, sizeof(t_bitmap));
   bitmap.width  = SMS_SCREEN_WIDTH;
   bitmap.height = SMS_SCREEN_HEIGHT;
   bitmap.depth  = 16;
-  bitmap.pitch  = sdl_video.surf_screen->pitch;
-  bitmap.data   = (unsigned char*)sdl_video.surf_screen->pixels;
+  bitmap.pitch  = data_screen->pitch;
+  bitmap.data   = (unsigned char*)data_screen->pixels;
   system_init(pcfg->nosound ? 0 : SOUND_FREQUENCY);
   load_sram(pcfg->game_name);
-  SDL_UnlockSurface(sdl_video.surf_screen);
+  SDL_UnlockSurface(data_screen);
   printf("Ok.\n");
 
   return 1;
