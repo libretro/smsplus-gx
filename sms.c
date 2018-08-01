@@ -5,11 +5,11 @@
 t_sms sms;
 z80_t *Z80_Context=NULL;
 static z80_t z80;
-int z80_ICount;
-static int extra_cycles=0;
+int32_t z80_ICount;
+static int32_t extra_cycles=0;
 
 /* Run the virtual console emulation for one frame */
-void sms_frame(int skip_render)
+void sms_frame(int32_t skip_render)
 {
     /* Take care of hard resets */
     if(input.system & INPUT_HARD_RESET)
@@ -140,15 +140,16 @@ void cpu_reset(void)
 
 
 /* Write to memory */
-void cpu_writemem16(int address, int data)
+void cpu_writemem16(int32_t address, int32_t data)
 {
     cpu_writemap[(address >> 13)][(address & 0x1FFF)] = data;
-    if(address >= 0xFFFC) sms_mapper_w(address & 3, data);
+    if(address >= 0xFFFC)
+		sms_mapper_w(address & 3, data);
 }
 
 
 /* Write to an I/O port */
-void cpu_writeport(int port, int data)
+void cpu_writeport(int32_t port, int32_t data)
 {
     switch(port & 0xFF)
     {
@@ -207,7 +208,7 @@ void cpu_writeport(int port, int data)
 
 
 /* Read from an I/O port */
-int cpu_readport(int port)
+int32_t cpu_readport(int32_t port)
 {
     uint8 temp = 0xFF;
 
@@ -272,7 +273,7 @@ int cpu_readport(int port)
 }
 
 
-void sms_mapper_w(int address, int data)
+void sms_mapper_w(int32_t address, int32_t data)
 {
     /* Calculate ROM page index */
     uint8 page = (data % cart.pages);
@@ -323,7 +324,7 @@ void sms_mapper_w(int address, int data)
 }
 
 
-int sms_irq_callback(int param)
+int32_t sms_irq_callback(int32_t param)
 {
     return (0xFF);
 }

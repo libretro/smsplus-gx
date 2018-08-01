@@ -138,7 +138,7 @@ typedef struct {
 } OPLL ;
 
 /* Initialize */
-EMU2413_API void OPLL_init(uint32 clk, uint32 rate) ;
+EMU2413_API void OPLL_init(uint32 c, uint32 r) ;
 EMU2413_API void OPLL_close(void) ;
 
 /* Create Object */
@@ -151,8 +151,8 @@ EMU2413_API void OPLL_reset_patch(OPLL *, int) ;
 EMU2413_API void OPLL_setClock(uint32 c, uint32 r) ;
 
 /* Port/Register access */
-EMU2413_API void OPLL_writeIO(OPLL *, uint32 reg, uint32 val) ;
-EMU2413_API void OPLL_writeReg(OPLL *, uint32 reg, uint32 val) ;
+EMU2413_API void OPLL_writeIO(OPLL *opll, uint32 adr, uint32 val);
+EMU2413_API void OPLL_writeReg(OPLL *opll, uint32 reg, uint32 data);
 
 /* Synthsize */
 EMU2413_API int16 OPLL_calc(OPLL *) ;

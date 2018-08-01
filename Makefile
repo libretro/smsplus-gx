@@ -19,7 +19,7 @@ CXXFLAGS	=$(CFLAGS)
 LDFLAGS     = -lSDLmain -lSDL -lm -flto -lz
 
 # Files to be r
-SRCDIR    = . ./sound ./cpu ./rs97
+SRCDIR    = . ./sound ./cpu ./sdl
 VPATH     = $(SRCDIR)
 SRC_C   = $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.c))
 SRC_CP   = $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.cpp))

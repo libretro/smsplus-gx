@@ -22,14 +22,14 @@
    Postal address: 15 Crescent Road, Wokingham, Berks, RG40 2DB, England
 
 */
-
-unsigned char *cpu_readmap[8];
-unsigned char *cpu_writemap[8];
-
+#include <stdint.h>
 #include "z80.h"
 #include "z80_macros.h"
-
 #include "z80cfg.h"
+
+
+uint8_t *cpu_readmap[8];
+uint8_t *cpu_writemap[8];
 
 
 /* Whether a half carry occured or not can be determined by looking at

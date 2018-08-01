@@ -101,38 +101,55 @@ static int load_rom_zip(const char* filename)
 
 static int load_rom_normal(const char* filename)
 {
-  int size;
-  FILE *fd = fopen(filename, "rb");
-  if(!fd) return 0;
+	int size;
+	FILE *fd;
+	
+	fd = fopen(filename, "rb");
 
-  /* Seek to end of file, and get size */
-  fseek(fd, 0, SEEK_END);
-  size = ftell(fd);
-  fseek(fd, 0, SEEK_SET);
+	if (fd != NULL)
+	{
+		/* Seek to end of file, and get size */
+		fseek(fd, 0, SEEK_END);
+		size = ftell(fd);
+		fseek(fd, 0, SEEK_SET);
 
-  /* Don't load games smaller than 32k */
-  if(size < 0x8000) return 0;
+		/* Don't load games smaller than 32k */
+		if(size < 0x8000)
+		{
+			fclose(fd);
+			return 0;
+		}
 
-  /* Take care of image header, if present */
-  if((size / 512) & 1) {
-    size -= 512;
-    fseek(fd, 512, SEEK_SET);
-  }
+		/* Take care of image header, if present */
+		if((size / 512) & 1) 
+		{
+			size -= 512;
+			fseek(fd, 512, SEEK_SET);
+		}
 
-  cart.pages = (size / 0x4000);
-  cart.rom = (unsigned char*)malloc(size);
-  if(!cart.rom) return 0;
-  fread(cart.rom, size, 1, fd);
-
-  fclose(fd);
-
-  /* Figure out game image type */
-  if(strcasecmp(strrchr(filename, '.'), ".gg") == 0)
-    cart.type = TYPE_GG;
-  else
-    cart.type = TYPE_SMS;
-
-  return 1;
+		cart.pages = (size / 0x4000);
+		cart.rom = (unsigned char*)malloc(size);
+		
+		if (!cart.rom)
+		{
+			fclose(fd);
+			return 0;
+		}
+			
+		fread(cart.rom, size, 1, fd);
+		
+		fclose(fd);
+	}
+	else
+		return 0;
+	
+	/* Figure out game image type */
+	if(strcasecmp(strrchr(filename, '.'), ".gg") == 0)
+		cart.type = TYPE_GG;
+	else
+		cart.type = TYPE_SMS;
+	
+	return 1;
 }
 
 
@@ -168,16 +185,18 @@ void load_sram(const char* game_name)
 /* Save SRAM data */
 void save_sram(const char* game_name)
 {
-    if(sms.save) {
-        char name[0x100];
-        FILE *fd = NULL;
-        strcpy(name, game_name);
-        strcpy(strrchr(name, '.'), ".sav");
-        fd = fopen(name, "wb");
-        if(fd) {
-            fwrite(sms.sram, 0x8000, 1, fd);
-            fclose(fd);
-        }
+	FILE *fd;
+	char name[0x100];
+    if(sms.save) 
+    {
+		strcpy(name, game_name);
+		strcpy(strrchr(name, '.'), ".sav");
+		fd = fopen(name, "wb");
+		if(fd) 
+		{
+			fwrite(sms.sram, 0x8000, 1, fd);
+			fclose(fd);
+		}
     }
 }
 
@@ -190,7 +209,8 @@ int load_state(const char* game_name, int state_slot)
     strcpy(name, game_name);
     sprintf(strrchr(name, '.'), ".st%d", state_slot);
     fd = fopen(name, "rb");
-    if(!fd) return (0);
+    if(!fd) 
+		return (0);
     system_load_state(fd);
     fclose(fd);
     return (1);
@@ -205,7 +225,8 @@ int save_state(const char* game_name, int state_slot)
     strcpy(name, game_name);
     sprintf(strrchr(name, '.'), ".st%d", state_slot);
     fd = fopen(name, "wb");
-    if(!fd) return (0);
+    if(!fd)
+		return (0);
     system_save_state(fd);
     fclose(fd);
     return(1);

@@ -21,7 +21,7 @@ uint8_t is_vram_dirty;
 uint8_t lut[0x10000];
 
 /* Attribute expansion table */
-uint16_t atex[4] =
+uint32_t atex[4] =
 {
     0x00000000,
     0x10101010,
@@ -257,7 +257,7 @@ void render_bg_sms(int32_t line)
         atex_mask = (attr >> 7) & 0x30;
 
         /* Point32_t to a line of pattern data in cache */
-        cache_ptr = (uint16_t *)&cache[((attr & 0x7FF) << 6) | (v_row)];
+        cache_ptr = (uint8_t *)&cache[((attr & 0x7FF) << 6) | (v_row)];
         
 		for( i = 0; i < 8; i++)
 		{

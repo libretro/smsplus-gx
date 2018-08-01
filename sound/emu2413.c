@@ -1279,7 +1279,8 @@ uint32 OPLL_toggleMask(OPLL *opll, uint32 mask)
 
 *****************************************************/
 
-void OPLL_writeReg(OPLL *opll, uint32 reg, uint32 data){
+void OPLL_writeReg(OPLL *opll, uint32 reg, uint32 data)
+{
 
   int i,v,ch ;
 
