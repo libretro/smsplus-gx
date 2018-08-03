@@ -258,7 +258,7 @@ void Menu()
         }
 
 		SDL_Flip(sdl_video.surf_screen);
-		++sdl_video.frames_rendered;
+		//++sdl_video.frames_rendered;
     }
     
     if (currentselection == 6)
@@ -740,10 +740,7 @@ void sdlsms_emulate()
     printf("Starting emulation...\n");
 
     if(snd.enabled) SDL_PauseAudio(0);
-	if(sdl_sync.sem_sync) 
-	{
-		SDL_SetTimer(50, sdlsms_sync_timer_callback);
-	}
+	if(sdl_sync.sem_sync) SDL_SetTimer(50, sdlsms_sync_timer_callback);
 
     while(!quit) 
     {
@@ -766,11 +763,14 @@ void sdlsms_emulate()
 
         if(selectpressed) 
         {
+			sdlsms_sync_close();
             Menu();
             SDL_FillRect(sdl_video.surf_screen, NULL, 0);
             input.system &= (IS_GG) ? ~INPUT_START : ~INPUT_PAUSE;
             selectpressed = 0;
             startpressed = 0;
+            sdlsms_sync_init(0);
+			if(sdl_sync.sem_sync) SDL_SetTimer(50, sdlsms_sync_timer_callback);
         }
         sdlsms_video_update();
         if(snd.enabled) sdlsms_sound_update();
