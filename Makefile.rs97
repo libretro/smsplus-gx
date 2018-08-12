@@ -4,21 +4,20 @@ PRGNAME     = sms_sdl
 EXESUFFIX = 
 TOOLCHAIN = 
 CC          = /opt/rs97-toolchain/bin/mipsel-linux-gcc
+CCP         = /opt/rs97-toolchain/bin/mipsel-linux-g++
 LD          = /opt/rs97-toolchain/bin/mipsel-linux-gcc
 
 # add SDL dependencies
-SDL_LIB     = 
-SDL_INCLUDE = 
 
-# change compilation / linking flag options
-F_OPTS		= -DHOME_SUPPORT -Icpu -Isound -I.
-CC_OPTS		= -msym32 -mlong-calls -fno-pic -fno-pie -O2 -mno-abicalls -fdata-sections -ffunction-sections -mips32 -mno-shared -mno-mips16 -O2 $(F_OPTS)
-CFLAGS		= -I$(SDL_INCLUDE) $(CC_OPTS)
-CXXFLAGS	=$(CFLAGS) 
-LDFLAGS     = -lSDLmain -lSDL -lm -Wl,--as-needed -Wl,--gc-sections -flto -lz -s
+CFLAGS		= -msym32 -mlong-calls -fno-pic -fno-pie -O2 -mno-abicalls -fdata-sections -ffunction-sections -mips32 -mno-shared -mno-mips16
+CFLAGS		+= -std=gnu99 -DLSB_FIRST -DMAXIM_PSG
+CFLAGS 		+= -Isource -Isource/eighty -Isource/generic -I./source/sound -Isource/unzip -Isource/rs97 -Isource/sound/maxim_sn76489 -Iinclude
 
-# Files to be compiled
-SRCDIR    = . ./sound ./cpu ./rs97
+CXXFLAGS	= $(CFLAGS) 
+LDFLAGS     = -lSDL -lm -flto -lz  -Wl,--as-needed -Wl,--gc-sections -flto -s ./libportaudio.a
+
+# Files to be r
+SRCDIR    = ./source ./source/unzip ./source/eighty ./source/sound ./source/generic ./source/rs97 ./source/sound/maxim_sn76489
 VPATH     = $(SRCDIR)
 SRC_C   = $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.c))
 SRC_CP   = $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.cpp))
@@ -32,6 +31,9 @@ $(PRGNAME)$(EXESUFFIX): $(OBJS)
 
 $(OBJ_C) : %.o : %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(OBJ_CP) : %.o : %.cpp
+	$(CCP) $(CXXFLAGS) -c -o $@ $<
 
 clean:
 	rm -f $(PRGNAME)$(EXESUFFIX) *.o

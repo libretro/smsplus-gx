@@ -1,0 +1,9 @@
+*.elf
+*.a
+*.sms
+*.gg
+*.sg
+*.o
+include/
+source/nonfree/
+sms_sdl

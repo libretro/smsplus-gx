@@ -8,18 +8,15 @@ CCP         = g++
 LD          = gcc
 
 # add SDL dependencies
-SDL_LIB     = 
-SDL_INCLUDE = 
 
-# change compilation / linking flag options
-F_OPTS		= -DHOME_SUPPORT -Icpu -Isound -I.
-CC_OPTS		= -O0 -g $(F_OPTS)
-CFLAGS		= -I$(SDL_INCLUDE) $(CC_OPTS)
-CXXFLAGS	=$(CFLAGS) 
-LDFLAGS     = -lSDLmain -lSDL -lm -flto -lz
+CFLAGS		= -O2 -std=gnu99 -DINLINE=inline -DLSB_FIRST
+CFLAGS 		+= -I/usr/include/SDL -Isource -Isource/eighty -Isource/generic -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/crabemu_sn76489
+
+CXXFLAGS	= $(CFLAGS) 
+LDFLAGS     = -lSDL -lm -flto -lz -lportaudio
 
 # Files to be r
-SRCDIR    = . ./sound ./cpu ./sdl
+SRCDIR    = ./source ./source/unzip ./source/eighty ./source/sound ./source/generic ./source/sdl ./source/sound/crabemu_sn76489
 VPATH     = $(SRCDIR)
 SRC_C   = $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.c))
 SRC_CP   = $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.cpp))

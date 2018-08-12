@@ -1,0 +1,14 @@
+SMSPlus-GX RS97
+
+- While PortAudio is sufficent for Linux-based platforms and perhaps Windows & Macc OSX ones,
+it does not have ports to other platforms like the Dreamcast and KolibriOS for example.
+This is why we need better SDL sound code. I can't believe Genesis Plus GX still uses the same sound code
+SMS Plus SDL used to use, it's terrible and causes un-necesarry frameskipping even when it does run fullspeed.
+
+-  The GPLv2 EightyOne's Z80 CPU Core is very inaccurate. While it's much improved compared to last version,
+it's still much inferior to the original z80.c core. For example, Fantastic Dizzy is completely bugged with it.
+According to Flubba's VDP test, it's also not perfectly in sync with the display. 
+It could be an issue with timing too rather than accuracy... Unfortunely, that's way over my head :c
+
+I also tried to add support for CrabEmu's own z80 core but i couldn't manage to make it work.
+Perhaps i could try it again with CZ80 instead ?

@@ -1,10 +1,15 @@
-SMS_SDL Plus
+SMSPlus-GX RS97
 ==================
 
-This is a somewhat improved port of SMS_SDL with fixes for 64-bits, switching to EightyOne's Z80 core (changes from PocketSprite's SMS Plus fork) 
-and a somewhat tweaked GUI from SMS_SDL's Dingux. (That version is broken since GCC 7.x btw)
+It used to be based on SMS Plus 1.3 but then i realised SMS Plus GX had a lot of additions and was much better, while still being free software.
+It is now based on SMS Plus GX, with some other changes too such as :
+- Updated MAME FM core based on upstream (taken from CrabEmu, GPLv2 licensed)
+- EightyOne's Z80 CPU Core. (GPLv2 licensed unlike the other z80 cpu core)
+- PSG emulation based on CrabEmu's own PSG sound core. (also Maxim's psg as an option, set MAXIM_PSG)
+- Switching to PortAudio (much improved sound quality & syncing on RS-97)
+- Numerous fixes so it can build & work properly on 64-bits. (as well as 32-bits of course)
 
-To be fixed :
+And more...
 
-- Upgrade to SMS Plus 1.3 or 1.8 with TMS emulation.
-- Then switch that to our current z80 core.
+This emulator is fully free software under the GPLv2 or later. See docs/license for more details.
+Also, see docs/contributors to see who contributed (indirectly or directly) to SMS Plus (GX).
