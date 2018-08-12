@@ -22,7 +22,7 @@
 
 #include "shared.h"
 
-#define GAME_DATABASE_CNT 93
+#define GAME_DATABASE_CNT 94
 
 typedef struct
 {
@@ -123,7 +123,9 @@ rominfo_t game_list[GAME_DATABASE_CNT] =
    "Space Harrier [50 Hz]"}, 
   {0x85CFC9C9, 0, DEVICE_PAD2B, MAPPER_SEGA, DISPLAY_PAL, TERRITORY_EXPORT, CONSOLE_SMS2,
    "Taito Chase H.Q."},  
-
+  {0x38434560, 0, DEVICE_PAD2B, MAPPER_SEGA, DISPLAY_PAL, TERRITORY_EXPORT, CONSOLE_SMS2,
+   "Bad Apple SMS"},  
+   
   /* games requiring 315-5124 VDP (Mark-III, Sega Master System) */
   {0x32759751, 0, DEVICE_PAD2B, MAPPER_SEGA, DISPLAY_NTSC, TERRITORY_DOMESTIC, CONSOLE_SMS,
    "Y's (J)"},
@@ -375,14 +377,16 @@ int load_rom (char *filename)
 		int8_t name[PATH_MAX];
 		uint32_t size = cart.size;
 		cart.rom = loadFromZipByName(filename, name, &size);
-		if(!cart.rom) return 0;
+		if (!cart.rom)
+			return 0;
 		strcpy(option.game_name, name);
 	}
 	else
 	{
 		FILE *fd = NULL;
 		fd = fopen(filename, "rb");
-		if(!fd) return 0;
+		if (!fd) 
+			return 0;
 
 		/* Seek to end of file, and get size */
 		fseek(fd, 0, SEEK_END);
@@ -391,7 +395,8 @@ int load_rom (char *filename)
 
 		if (cart.size < 0x4000) cart.size = 0x4000;
 		cart.rom = malloc(cart.size);
-		if(!cart.rom) return 0;
+		if (!cart.rom)
+			return 0;
 		fread(cart.rom, cart.size, 1, fd);
 
 		fclose(fd);

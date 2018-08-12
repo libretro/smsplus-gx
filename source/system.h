@@ -46,48 +46,50 @@
 #define INPUT_PAUSE         0x00000002  /* Master System only */
 #define INPUT_RESET         0x00000004  /* Master System only */
 
-enum {
-  SRAM_SAVE   = 0,
-  SRAM_LOAD   = 1
+enum 
+{
+	SRAM_SAVE   = 0,
+	SRAM_LOAD   = 1
 };
-
 
 /* User input structure */
 typedef struct
 {
-  uint8 pad[2];
-  int analog[2][2];
-  uint8 system;
+  uint8_t pad[2];
+  int32_t analog[2][2];
+  uint8_t system;
 } input_t;
 
 /* Game image structure */
 typedef struct
 {
-  uint8 *rom;
-  uint8 loaded;
-  uint32 size;
-  uint8 pages;
-  uint32 crc;
-  uint32 sram_crc;
-  int8 mapper;
-  uint8 sram[0x8000];
-  uint8 fcr[4];
+  uint8_t *rom;
+  uint8_t loaded;
+  uint32_t size;
+  /* We need to use an unsigned short for pages, as Bad Apple SMS requires it !*/
+  uint16_t pages;
+  int32_t crc;
+  uint32_t sram_crc;
+  int8_t mapper;
+  uint8_t sram[0x8000];
+  uint8_t fcr[4];
 } cart_t;
 
 /* Bitmap structure */
 typedef struct
 {
-  unsigned char *data;
-  int width;
-  int height;
-  int pitch;
-  int depth;
-  int granularity;
-  struct {
-    int x, y, w, h;
-    int ox, oy, ow, oh;
-    int changed;
-  } viewport;    
+	uint8_t *data;
+	uint32_t width;
+	uint32_t height;
+	uint32_t pitch;
+	uint32_t depth;
+	uint32_t granularity;
+	struct 
+	{
+		int32_t x, y, w, h;
+		int32_t ox, oy, ow, oh;
+		int32_t changed;
+	} viewport;    
 } bitmap_t;
 
 /* Global variables */
@@ -96,7 +98,7 @@ extern cart_t cart;       /* Game cartridge data */
 extern input_t input;     /* Controller input */
 
 /* Function prototypes */
-extern void system_frame(int skip_render);
+extern void system_frame(uint32_t skip_render);
 extern void system_init(void);
 extern void system_shutdown(void);
 extern void system_reset(void);

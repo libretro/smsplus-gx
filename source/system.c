@@ -31,7 +31,7 @@ input_t input;
 extern uint32_t z80_cycle_count ;
 
 /* Run the virtual console emulation for one frame */
-void system_frame(int skip_render)
+void system_frame(uint32_t skip_render)
 {
 	uint32_t iline = 0, line_z80 = 0;
 
@@ -86,9 +86,9 @@ void system_frame(int skip_render)
 						/* IRQ line is latched between instructions, on instruction last cycle          */
 						/* This means that if Z80 cycle count is exactly a multiple of CYCLES_PER_LINE, */
 						/* interrupt should be triggered AFTER the next instruction.                    */
-					if (!(z80_get_elapsed_cycles()%CYCLES_PER_LINE))
-						z80_execute(1);
-					z80_set_irq_line(0, ASSERT_LINE);
+						if (!(z80_get_elapsed_cycles()%CYCLES_PER_LINE))
+							z80_execute(1);
+						z80_set_irq_line(0, ASSERT_LINE);
 					}
 				}
 			}
@@ -129,22 +129,22 @@ void system_init(void)
 
 void system_shutdown(void)
 {
-  sms_shutdown();
-  pio_shutdown();
-  vdp_shutdown();
-  render_shutdown();
-  sound_shutdown();
-  error_shutdown();
+	sms_shutdown();
+	pio_shutdown();
+	vdp_shutdown();
+	render_shutdown();
+	sound_shutdown();
+	error_shutdown();
 }
 
 void system_reset(void)
 {
-  sms_reset();
-  pio_reset();
-  vdp_reset();
-  render_reset();
-  sound_reset();
-  system_manage_sram(cart.sram, SLOT_CART, SRAM_LOAD);
+	sms_reset();
+	pio_reset();
+	vdp_reset();
+	render_reset();
+	sound_reset();
+	system_manage_sram(cart.sram, SLOT_CART, SRAM_LOAD);
 }
 
 

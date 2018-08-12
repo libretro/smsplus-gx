@@ -28,52 +28,52 @@
 #define CYCLES_PER_LINE 228
 
 enum {
-  SLOT_BIOS   = 0,
-  SLOT_CARD   = 1,
-  SLOT_CART   = 2,
-  SLOT_EXP    = 3
+	SLOT_BIOS   = 0,
+	SLOT_CARD   = 1,
+	SLOT_CART   = 2,
+	SLOT_EXP    = 3
 };
 
 enum {
-  MAPPER_NONE       = 0,
-  MAPPER_SEGA       = 1,
-  MAPPER_CODIES     = 2,
-  MAPPER_KOREA      = 3,
-  MAPPER_KOREA_MSX  = 4
+	MAPPER_NONE       = 0,
+	MAPPER_SEGA       = 1,
+	MAPPER_CODIES     = 2,
+	MAPPER_KOREA      = 3,
+	MAPPER_KOREA_MSX  = 4
 };
 
 enum {
-  DISPLAY_NTSC    = 0,
-  DISPLAY_PAL     = 1
+	DISPLAY_NTSC    = 0,
+	DISPLAY_PAL     = 1
 };
 
 enum {
-  FPS_NTSC    = 60,
-  FPS_PAL     = 50
+	FPS_NTSC    = 60,
+	FPS_PAL     = 50
 };
 
 enum {
-  CLOCK_NTSC      = 3579545,
-  CLOCK_PAL       = 3546895,
-  CLOCK_NTSC_SMS1 = 3579527
+	CLOCK_NTSC      = 3579545,
+	CLOCK_PAL       = 3546895,
+	CLOCK_NTSC_SMS1 = 3579527
 };
 
 enum {
-  CONSOLE_COLECO  = 0x10,
-  CONSOLE_SG1000  = 0x11,
-  CONSOLE_SC3000  = 0x12,
-  CONSOLE_SF7000  = 0x13,
+	CONSOLE_COLECO  = 0x10,
+	CONSOLE_SG1000  = 0x11,
+	CONSOLE_SC3000  = 0x12,
+	CONSOLE_SF7000  = 0x13,
 
-  CONSOLE_SMS     = 0x20,
-  CONSOLE_SMS2    = 0x21,
+	CONSOLE_SMS     = 0x20,
+	CONSOLE_SMS2    = 0x21,
 
-  CONSOLE_GG      = 0x40,
-  CONSOLE_GGMS    = 0x41,
+	CONSOLE_GG      = 0x40,
+	CONSOLE_GGMS    = 0x41,
 
-  CONSOLE_MD      = 0x80,
-  CONSOLE_MDPBC   = 0x81,
-  CONSOLE_GEN     = 0x82,
-  CONSOLE_GENPBC  = 0x83
+	CONSOLE_MD      = 0x80,
+	CONSOLE_MDPBC   = 0x81,
+	CONSOLE_GEN     = 0x82,
+	CONSOLE_GENPBC  = 0x83
 };
 
 #define HWTYPE_TMS  CONSOLE_COLECO
@@ -94,28 +94,29 @@ enum {
 /* SMS context */
 typedef struct
 {
-  uint8_t wram[0x2000];
-  uint8_t paused;
-  uint8_t save;
-  uint8_t territory;
-  uint8_t console;
-  uint8_t display;
-  uint8_t fm_detect;
-  uint8_t glasses_3d;
-  uint8_t hlatch;
-  uint8_t use_fm;
-  uint8_t memctrl;
-  uint8_t ioctrl;
-  uint8_t irq;
-  struct {
-    uint8_t pdr;    /* Parallel data register */
-    uint8_t ddr;    /* Data direction register */
-    uint8_t txdata; /* Transmit data buffer */
-    uint8_t rxdata; /* Receive data buffer */
-    uint8_t sctrl;  /* Serial mode control and status */
-  } sio;
-  uint8_t device[2];
-  uint8_t gun_offset;
+	uint8_t wram[0x2000];
+	uint8_t paused;
+	uint8_t save;
+	uint8_t territory;
+	uint8_t console;
+	uint8_t display;
+	uint8_t fm_detect;
+	uint8_t glasses_3d;
+	uint8_t hlatch;
+	uint8_t use_fm;
+	uint8_t memctrl;
+	uint8_t ioctrl;
+	uint8_t irq;
+	struct 
+	{
+		uint8_t pdr;    /* Parallel data register */
+		uint8_t ddr;    /* Data direction register */
+		uint8_t txdata; /* Transmit data buffer */
+		uint8_t rxdata; /* Receive data buffer */
+		uint8_t sctrl;  /* Serial mode control and status */
+	} sio;
+	uint8_t device[2];
+	uint8_t gun_offset;
 } sms_t;
 
 /* BIOS ROM */
@@ -129,16 +130,18 @@ typedef struct
 
 typedef struct
 {
-  uint8_t *rom;
-  uint8_t pages;
-  uint8_t *fcr;
-  uint8_t mapper;
+	uint8_t *rom;
+	/* We need to use an unsigned short for pages, as Bad Apple SMS requires it !*/
+	uint16_t pages;
+	uint8_t *fcr;
+	uint8_t mapper;
 } slot_t;
 
-typedef struct {
-  uint8_t rom[0x2000];  /* BIOS ROM */
-  uint8_t pio_mode;     /* PIO mode */
-  uint8_t keypad[2];    /* Keypad inputs */
+typedef struct 
+{
+	uint8_t rom[0x2000];  /* BIOS ROM */
+	uint8_t pio_mode;     /* PIO mode */
+	uint8_t keypad[2];    /* Keypad inputs */
 } t_coleco;
 
 /* Global data */

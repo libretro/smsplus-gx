@@ -84,6 +84,7 @@ Gameblabla, me
 Switced most variables to c99 data types. (Fixed rendering issues on 64-bits and somewhat broken PSG sound for Maxim's PSG core)
 Improving PocketSprite's EightyOne patches for making sure it works with the newer SMS Plus version. (not as straightfoward as it might seem)
 Disabled collision check for 9th sprite. Doing so passes Flubba's test.
+Fixed support for 256 pages. This fixes Bad Apple SMS. (also added it to the ROM database list as it requires PAL timings)
 Put everything together and making sure it works :' )
 
 Maxim
