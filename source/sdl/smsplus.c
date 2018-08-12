@@ -429,7 +429,7 @@ void Menu()
                     case SDLK_UP:
                         currentselection--;
                         if (currentselection == 0)
-                            currentselection = 4;
+                            currentselection = 5;
                         break;
                     case SDLK_DOWN:
                         currentselection++;

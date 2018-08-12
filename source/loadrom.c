@@ -375,8 +375,7 @@ int load_rom (char *filename)
 	if(check_zip(filename))
 	{
 		int8_t name[PATH_MAX];
-		uint32_t size = cart.size;
-		cart.rom = loadFromZipByName(filename, name, &size);
+		cart.rom = loadFromZipByName(filename, name, &cart.size);
 		if (!cart.rom)
 			return 0;
 		strcpy(option.game_name, name);
