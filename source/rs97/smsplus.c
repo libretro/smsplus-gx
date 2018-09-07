@@ -218,18 +218,18 @@ static int sdl_controls_update_input(SDLKey k, int32_t p)
 			else
 				input.pad[0] &= ~INPUT_RIGHT;
 		break;
-		case SDLK_LCTRL:
+		case SDLK_LALT:
 			if(p)
 				input.pad[0] |= INPUT_BUTTON1;
 			else
 				input.pad[0] &= ~INPUT_BUTTON1;
-		break;	
-		case SDLK_LALT:
+		break;
+		case SDLK_LCTRL:
 			if(p)
 				input.pad[0] |= INPUT_BUTTON2;
 			else
 				input.pad[0] &= ~INPUT_BUTTON2;
-		break;
+		break;	
 	}
 	return 1;
 }
