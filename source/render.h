@@ -31,8 +31,8 @@
 /* Used for blanking a line in whole or in part */
 #define BACKDROP_COLOR      (0x10 | (vdp.reg[7] & 0x0F))
 
-extern void (*render_bg)(int line);
-extern void (*render_obj)(int line);
+extern void (*render_bg)(int32_t line);
+extern void (*render_obj)(int32_t line);
 extern uint8 *linebuf;
 extern uint8 sms_cram_expand_table[4];
 extern uint8 gg_cram_expand_table[16];
@@ -43,9 +43,9 @@ extern uint16 bg_list_index;
 extern void render_shutdown(void);
 extern void render_init(void);
 extern void render_reset(void);
-extern void render_line(int line);
-extern void render_bg_sms(int line);
-extern void render_obj_sms(int line);
-extern void palette_sync(int index);
+extern void render_line(int32_t line);
+extern void render_bg_sms(int32_t line);
+extern void render_obj_sms(int32_t line);
+extern void palette_sync(int32_t index);
 
 #endif /* _RENDER_H_ */

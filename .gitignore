@@ -4,6 +4,11 @@
 *.gg
 *.sg
 *.o
+*.gcda
+*.zip
+*.bin
+core
 include/
 source/nonfree/
 sms_sdl
+*.out

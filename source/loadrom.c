@@ -22,7 +22,7 @@
 
 #include "shared.h"
 
-#define GAME_DATABASE_CNT 94
+#define GAME_DATABASE_CNT 96
 
 typedef struct
 {
@@ -244,8 +244,14 @@ rominfo_t game_list[GAME_DATABASE_CNT] =
   {0xE42E4998, 0, DEVICE_SPORTSPAD, MAPPER_SEGA, DISPLAY_NTSC, TERRITORY_EXPORT, CONSOLE_SMS2,
    "Sports Pad Football"},
   {0x41C948BF, 0, DEVICE_SPORTSPAD, MAPPER_SEGA, DISPLAY_NTSC, TERRITORY_EXPORT, CONSOLE_SMS2,
-   "Sports Pad Soccer"}
-
+   "Sports Pad Soccer"},
+   
+   /* Games using FM sound only when a certain region is set. Not required for the games to be playable
+    * but most people prefer the FM soundtrack anyway. */
+  {0x679E1676, 0, DEVICE_PAD2B, MAPPER_SEGA, DISPLAY_NTSC, TERRITORY_DOMESTIC, CONSOLE_SMS2,
+   "Wonder Boy III - The dragon's Trap"},
+  {0x22CCA9BB, 0, DEVICE_PAD2B, MAPPER_SEGA, DISPLAY_NTSC, TERRITORY_DOMESTIC, CONSOLE_SMS2,
+   "Turma da Monica em O Resgate"}
 };
 
 void set_config()

@@ -16,7 +16,7 @@ CXXFLAGS	= $(CFLAGS)
 LDFLAGS     = -lSDL -lm -flto -lz -lportaudio
 
 # Files to be r
-SRCDIR    = ./source ./source/unzip ./source/eighty ./source/sound ./source/generic ./source/sdl ./source/sound/crabemu_sn76489
+SRCDIR    = ./source ./source/unzip ./source/eighty ./source/sound ./source/generic ./source/amini ./source/sound/crabemu_sn76489
 VPATH     = $(SRCDIR)
 SRC_C   = $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.c))
 SRC_CP   = $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.cpp))

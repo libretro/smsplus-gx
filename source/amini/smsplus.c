@@ -7,8 +7,6 @@
 #include <unistd.h>
 #include <time.h>
 #include <SDL/SDL.h>
-#include <portaudio.h>
-
 #include "shared.h"
 #include "scaler.h"
 #include "smsplus.h"
@@ -16,16 +14,21 @@
 #include "bigfontwhite.h"
 #include "bigfontred.h"
 #include "font.h"
+#include <portaudio.h>
 
 static t_sdl_sound sdl_sound;
+static t_sdl_sync sdl_sync;
+uint32_t frames_rendered = 0;
 gamedata_t gdata;
 
 t_config option;
 
 SDL_Surface* sdl_screen, *sms_bitmap;
-static int32_t frames_rendered = 0;
+static SDL_Surface* img_background;
 uint32_t countedFrames = 0;
 uint32_t start;
+
+static SDL_Joystick* joystick[2];
 
 extern SDL_Surface *font;
 extern SDL_Surface *bigfontred;
@@ -37,8 +40,8 @@ uint8_t save_slot = 0;
 uint8_t showfps = 0;
 uint8_t quit = 0;
 
-#define SOUND_FREQUENCY 22050
-#define SOUND_SAMPLES_SIZE 1024
+#define SOUND_FREQUENCY 48000
+#define SOUND_SAMPLES_SIZE 2048
 static int16_t buffer_snd[SOUND_FREQUENCY * 2];
 
 /* Sound */
@@ -89,7 +92,6 @@ static void Sound_Close()
 	err = Pa_CloseStream( apu_stream );
 	err = Pa_Terminate();
 }
-
 static void video_update()
 {
 	SDL_LockSurface(sdl_screen);
@@ -98,16 +100,16 @@ static void video_update()
 		case 1:
         case 2: // aspect ratio
 		if(sms.console == CONSOLE_GG) 
-			upscale_160x144_to_320x480((uint32_t*)sdl_screen->pixels, (uint32_t*)sms_bitmap->pixels+24);
+			upscale_160x144_to_320x272_for_480x272((uint32_t*)sdl_screen->pixels, (uint32_t*)sms_bitmap->pixels+24);
 		else 
-			upscale_SMS_to_320x480((uint32_t*)sdl_screen->pixels, (uint32_t*)sms_bitmap->pixels, vdp.height);
+			upscale_256x192_to_384x272_for_480x272((uint32_t*)sdl_screen->pixels, (uint32_t*)sms_bitmap->pixels, vdp.height);
 		break;
         default: // native res
 		if(sms.console == CONSOLE_GG) 
-			bitmap_scale(48,0,160,144,160,288,256,sdl_screen->w-160,(uint16_t*)sms_bitmap->pixels,(uint16_t*)sdl_screen->pixels+(sdl_screen->w-160)/2+(sdl_screen->h-288)/2*sdl_screen->w);
+			bitmap_scale(48,0,160,144,160,144,256,sdl_screen->w-160,(uint16_t*)sms_bitmap->pixels,(uint16_t*)sdl_screen->pixels+(sdl_screen->w-160)/2+(sdl_screen->h-144)/2*sdl_screen->w);
 		else 
-			bitmap_scale(0,0,256,vdp.height,256,(vdp.height*2),256,sdl_screen->w-256,(uint16_t*)sms_bitmap->pixels,(uint16_t*)sdl_screen->pixels+(sdl_screen->w-256)/2+(sdl_screen->h-(vdp.height*2))/2*sdl_screen->w);
-		break;;
+			bitmap_scale(0,0,256,vdp.height,256,vdp.height,256,sdl_screen->w-256,(uint16_t*)sms_bitmap->pixels,(uint16_t*)sdl_screen->pixels+(sdl_screen->w-256)/2+(sdl_screen->h-vdp.height)/2*sdl_screen->w);
+		break;
 	}
 	SDL_UnlockSurface(sdl_screen);	
 	
@@ -186,52 +188,38 @@ static int sdl_controls_update_input(SDLKey k, int32_t p)
 		case SDLK_ESCAPE:
 			if(p)
 				selectpressed = 1;
-			else
-				selectpressed = 0;
+
 		break;
 		case SDLK_RETURN:
 			if(p)
 				input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
-			else
-				input.system &= (sms.console == CONSOLE_GG) ? ~INPUT_START : ~INPUT_PAUSE;
 		break;
 		case SDLK_UP:
 			if(p)
 				input.pad[0] |= INPUT_UP;
-			else
-				input.pad[0] &= ~INPUT_UP;
 		break;	
 		case SDLK_DOWN:
 			if(p)
 				input.pad[0] |= INPUT_DOWN;
-			else
-				input.pad[0] &= ~INPUT_DOWN;
 		break;
 		case SDLK_LEFT:
 			if(p)
 				input.pad[0] |= INPUT_LEFT;
-			else
-				input.pad[0] &= ~INPUT_LEFT;
 		break;	
 		case SDLK_RIGHT:
 			if(p)
 				input.pad[0] |= INPUT_RIGHT;
-			else
-				input.pad[0] &= ~INPUT_RIGHT;
-		break;
-		case SDLK_LALT:
-			if(p)
-				input.pad[0] |= INPUT_BUTTON1;
-			else
-				input.pad[0] &= ~INPUT_BUTTON1;
 		break;
 		case SDLK_LCTRL:
 			if(p)
-				input.pad[0] |= INPUT_BUTTON2;
-			else
-				input.pad[0] &= ~INPUT_BUTTON2;
+				input.pad[0] |= INPUT_BUTTON1;
 		break;	
+		case SDLK_LALT:
+			if(p)
+				input.pad[0] |= INPUT_BUTTON2;
+		break;
 	}
+	
 	return 1;
 }
 
@@ -331,8 +319,11 @@ void Menu()
     SDL_Rect dstRect;
     int8_t *cmd = NULL;
     SDL_Event Event;
+    /* Seriously, we need that mess due to crappy framebuffer drivers on the RS-07... */
     SDL_Surface* miniscreen = SDL_CreateRGBSurface(SDL_SWSURFACE, miniscreenwidth, miniscreenheight, 16, sdl_screen->format->Rmask, sdl_screen->format->Gmask, sdl_screen->format->Bmask, sdl_screen->format->Amask);
-    SDL_Surface* menu_surf = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16, 0, 0, 0, 0);
+    SDL_Surface* black_screen = SDL_CreateRGBSurface(SDL_SWSURFACE, sdl_screen->w, sdl_screen->h, 16, sdl_screen->format->Rmask, sdl_screen->format->Gmask, sdl_screen->format->Bmask, sdl_screen->format->Amask);
+    SDL_Surface* final_screen = SDL_CreateRGBSurface(SDL_SWSURFACE, sdl_screen->w, sdl_screen->h, 16, sdl_screen->format->Rmask, sdl_screen->format->Gmask, sdl_screen->format->Bmask, sdl_screen->format->Amask);
+	SDL_FillRect( black_screen, NULL, 0 );
 
     SDL_LockSurface(miniscreen);
     if(IS_GG)
@@ -347,117 +338,190 @@ void Menu()
     while (((currentselection != 1) && (currentselection != 5)) || (!pressed))
     {
         pressed = 0;
-        SDL_FillRect( menu_surf, NULL, 0 );
-
-        dstRect.x = menu_surf->w-5-miniscreenwidth;
+		
+        dstRect.x = sdl_screen->w-5-miniscreenwidth;
         dstRect.y = 30;
-        SDL_BlitSurface(miniscreen,NULL,menu_surf,&dstRect);
+		if (!img_background) SDL_BlitSurface(black_screen,NULL,final_screen,NULL);
+		else SDL_BlitSurface(img_background,NULL,final_screen,NULL);
+        SDL_BlitSurface(miniscreen,NULL,final_screen,&dstRect);
 
-        gfx_font_print_center(menu_surf,5,bigfontwhite,"SMSPlusGX");
+        gfx_font_print_center(final_screen,22,bigfontwhite,"SMSPlus-GX");
 
         if (currentselection == 1)
-            gfx_font_print(menu_surf,5,25,bigfontred,"Continue");
+            gfx_font_print(final_screen,5,25,bigfontred,"Continue");
         else
-            gfx_font_print(menu_surf,5,25,bigfontwhite,"Continue");
+            gfx_font_print(final_screen,5,25,bigfontwhite,"Continue");
 
         sprintf(text,"Save State %d",save_slot);
 
         if (currentselection == 2)
-            gfx_font_print(menu_surf,5,65,bigfontred,text);
+            gfx_font_print(final_screen,5,65,bigfontred,text);
         else
-            gfx_font_print(menu_surf,5,65,bigfontwhite,text);
+            gfx_font_print(final_screen,5,65,bigfontwhite,text);
 
         sprintf(text,"Load State %d",save_slot);
 
         if (currentselection == 3)
-            gfx_font_print(menu_surf,5,85,bigfontred,text);
+            gfx_font_print(final_screen,5,85,bigfontred,text);
         else
-            gfx_font_print(menu_surf,5,85,bigfontwhite,text);
+            gfx_font_print(final_screen,5,85,bigfontwhite,text);
 
         if (currentselection == 4)
         {
             if (fullscreen == 1)
-                gfx_font_print(menu_surf,5,105,bigfontred,"Stretched");
+                gfx_font_print(final_screen,5,105,bigfontred,"Stretched");
             else
-				gfx_font_print(menu_surf,5,105,bigfontred,"Native");
+				gfx_font_print(final_screen,5,105,bigfontred,"Native");
         }
         else
         {
             if (fullscreen == 1)
-                gfx_font_print(menu_surf,5,105,bigfontwhite,"Stretched");
+                gfx_font_print(final_screen,5,105,bigfontwhite,"Stretched");
             else
-				gfx_font_print(menu_surf,5,105,bigfontwhite,"Native");
+				gfx_font_print(final_screen,5,105,bigfontwhite,"Native");
         }
 
-        sprintf(text,"%s",showfps ? "Show fps on" : "Show fps off");
-
         if (currentselection == 5)
-            gfx_font_print(menu_surf,5,125,bigfontred,"Quit");
+            gfx_font_print(final_screen,5,125,bigfontred,"Quit");
         else
-            gfx_font_print(menu_surf,5,125,bigfontwhite,"Quit");
+            gfx_font_print(final_screen,5,125,bigfontwhite,"Quit");
 
-        gfx_font_print_center(menu_surf,menu_surf->h-40-gfx_font_height(font),font,"SMS_SDL for the RS-97");
-        gfx_font_print_center(menu_surf,menu_surf->h-30-gfx_font_height(font),font,"RS-97 port by gameblabla");
-        gfx_font_print_center(menu_surf,menu_surf->h-20-gfx_font_height(font),font,"Initial port: exmortis@yandex.ru,joyrider");
-        gfx_font_print_center(menu_surf,menu_surf->h-10-gfx_font_height(font),font,"Scaler code: Alekmaul, Harteex: TGA,bin2h");
+        gfx_font_print_center(final_screen,sdl_screen->h-50-gfx_font_height(font),font,"SMS_SDL for the RS-97");
+        gfx_font_print_center(final_screen,sdl_screen->h-40-gfx_font_height(font),font,"RS-97 port by gameblabla");
+        gfx_font_print_center(final_screen,sdl_screen->h-30-gfx_font_height(font),font,"See full credits on github:");
+        gfx_font_print_center(final_screen,sdl_screen->h-20-gfx_font_height(font),font,"https://github.com/gameblabla/sms_sdl");
+		
+
+
+		for(uint8_t i = 0; i < 2; i++)
+		{
+			if (joystick[i] == NULL) joystick[i] = SDL_JoystickOpen(i);
+		}
 
         while (SDL_PollEvent(&Event))
         {
-            if (Event.type == SDL_KEYDOWN)
-            {
-                switch(Event.key.keysym.sym)
-                {
-                    case SDLK_UP:
-                        currentselection--;
-                        if (currentselection == 0)
-                            currentselection = 5;
-                        break;
-                    case SDLK_DOWN:
-                        currentselection++;
-                        if (currentselection == 6)
-                            currentselection = 1;
-                        break;
-                    case SDLK_LCTRL:
-                    case SDLK_LALT:
-                    case SDLK_RETURN:
-                        pressed = 1;
-                        break;
-                    case SDLK_LEFT:
-                        switch(currentselection)
-                        {
-                            case 2:
-                            case 3:
-                                if (save_slot > 0) save_slot--;
-                                break;
-                            case 4:
-                                fullscreen--;
-                                    if (fullscreen < 0)
-                                        fullscreen = 1;
-                                break;
-                        }
-                        break;
-                    case SDLK_RIGHT:
-                        switch(currentselection)
-                        {
-                            case 2:
-                            case 3:
-                                save_slot++;
-								if (save_slot == 10)
-									save_slot = 9;
-                                break;
-                            case 4:
-                                fullscreen++;
-                                if (fullscreen > 1)
-                                    fullscreen = 0;
-                                break;
-                        }
-                        break;
+			switch(Event.type)
+			{
+				case SDL_KEYDOWN:
+				{
+					switch(Event.key.keysym.sym)
+					{
+						case SDLK_UP:
+							currentselection--;
+							if (currentselection == 0)
+								currentselection = 5;
+							break;
+						case SDLK_DOWN:
+							currentselection++;
+							if (currentselection == 6)
+								currentselection = 1;
+							break;
+						case SDLK_LCTRL:
+						case SDLK_LALT:
+						case SDLK_RETURN:
+							pressed = 1;
+							break;
+						case SDLK_LEFT:
+							switch(currentselection)
+							{
+								case 2:
+								case 3:
+									if (save_slot > 0) save_slot--;
+									break;
+								case 4:
+									fullscreen--;
+										if (fullscreen < 0)
+											fullscreen = 1;
+									break;
 
+							}
+							break;
+						case SDLK_RIGHT:
+							switch(currentselection)
+							{
+								case 2:
+								case 3:
+									save_slot++;
+									if (save_slot == 10)
+										save_slot = 9;
+									break;
+								case 4:
+									fullscreen++;
+									if (fullscreen > 1)
+										fullscreen = 0;
+									break;
+							}
+							break;
+					}
+					break;
+				}
+				case SDL_JOYAXISMOTION:
+					if (Event.jaxis.axis == 0)
+					{
+						if (Event.jaxis.value < -500)
+						{
+							switch(currentselection)
+							{
+								case 2:
+								case 3:
+									if (save_slot > 0) save_slot--;
+									break;
+								case 4:
+									fullscreen--;
+										if (fullscreen < 0)
+											fullscreen = 1;
+									break;
 
-                }
-            }
+							}
+						}
+						else if (Event.jaxis.value > 500)
+						{
+							switch(currentselection)
+							{
+								case 2:
+								case 3:
+									save_slot++;
+									if (save_slot == 10)
+										save_slot = 9;
+									break;
+								case 4:
+									fullscreen++;
+									if (fullscreen > 1)
+										fullscreen = 0;
+									break;
+							}
+						}
+					}
+					else if (Event.jaxis.axis == 1)
+					{
+						if (Event.jaxis.value < -500)
+						{
+							currentselection--;
+							if (currentselection == 0)
+								currentselection = 5;
+						}
+						else if (Event.jaxis.value > 500)
+						{
+							currentselection++;
+							if (currentselection == 6)
+								currentselection = 1;
+						}
+					}
+				break;
+				case SDL_JOYBUTTONDOWN:
+				switch(Event.jbutton.button)
+				{
+					case 1:
+					case 2:
+						pressed = 1;
+					break;
+				}
+				break;
+			}
         }
-
+        
+		SDL_JoystickUpdate();
+		
         if (pressed)
         {
             switch(currentselection)
@@ -478,21 +542,26 @@ void Menu()
             }
         }
 
-		SDL_SoftStretch(menu_surf, NULL, sdl_screen, NULL);
+		SDL_BlitSurface(final_screen, NULL, sdl_screen, NULL);
 		SDL_Flip(sdl_screen);
 		//++sdl_video.frames_rendered;
     }
     
-    if (menu_surf) SDL_FreeSurface(menu_surf);
-	if (miniscreen) SDL_FreeSurface(miniscreen);
-    
     if (currentselection == 5)
         quit = 1;
-
+	if (quit)
+	{
+		SDL_FreeSurface(miniscreen);
+		SDL_FreeSurface(black_screen);
+		SDL_FreeSurface(final_screen);
+	}
+        
 }
 
 int main (int argc, char *argv[]) 
 {
+	int16_t x_move = 0, y_move = 0;
+	Uint8 *keystate;
 	SDL_Event event;
 	// Print Header
 	fprintf(stdout, "%s %s\n", APP_NAME, APP_VERSION);
@@ -506,7 +575,7 @@ int main (int argc, char *argv[])
 	memset(&option, 0, sizeof(option));
 	
 	option.fm = 1;
-	option.spritelimit = 1;
+	option.spritelimit = 0;
 	option.filter = -1;
 	option.country = 0;
 	option.overscan = 0;
@@ -521,10 +590,18 @@ int main (int argc, char *argv[])
 	// Check the type of ROM
 	sms.console = strcmp(strrchr(argv[1], '.'), ".gg") ? CONSOLE_SMS : CONSOLE_GG;
 	
-	SDL_Init(SDL_INIT_VIDEO);
-	sdl_screen = SDL_SetVideoMode(320, 480, 16, SDL_HWSURFACE);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
+	SDL_JoystickEventState(SDL_ENABLE);
+	sdl_screen = SDL_SetVideoMode(480, 272, 16, SDL_HWSURFACE);
+	SDL_SetCursor(0);
+	
+	// Needed in order to clear the cursor
+	SDL_FillRect( sdl_screen, NULL, 0 );
+	SDL_Flip(sdl_screen);
+	
 	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 240, 16, 0, 0, 0, 0);
-	SDL_ShowCursor(0);
+	
+	img_background = SDL_LoadBMP("background.bmp");
 	
     font = gfx_tex_load_tga_from_array(fontarray);
     bigfontwhite = gfx_tex_load_tga_from_array(bigfontwhitearray);
@@ -552,7 +629,9 @@ int main (int argc, char *argv[])
 	
 	//sms.territory = settings.misc_region;
 	if (sms.console == CONSOLE_SMS || sms.console == CONSOLE_SMS2)
+	{ 
 		sms.use_fm = 1; 
+	}
 	
 	bios_init();
 
@@ -560,6 +639,8 @@ int main (int argc, char *argv[])
 	
 	// Initialize all systems and power on
 	system_poweron();
+	
+	frames_rendered = 0;
 	
 	// Loop until the user closes the window
 	while (!quit) 
@@ -573,6 +654,15 @@ int main (int argc, char *argv[])
 		// Execute frame(s)
 		system_frame(0);
 
+		++frames_rendered;
+
+		if (sms.console == CONSOLE_COLECO)
+		{
+			input.system = 0;
+			coleco.keypad[0] = 0xff;
+			coleco.keypad[1] = 0xff;
+		}
+
 		if (selectpressed == 1)
 		{
             Menu();
@@ -580,22 +670,67 @@ int main (int argc, char *argv[])
             input.system &= (IS_GG) ? ~INPUT_START : ~INPUT_PAUSE;
             selectpressed = 0;
 		}
-		
+
+		keystate = SDL_GetKeyState(NULL);
+	
+		for(uint8_t i=0;i<2;i++)
+		{
+				if (joystick[i] == NULL) joystick[i] = SDL_JoystickOpen(i);
+				
+				x_move = SDL_JoystickGetAxis(joystick[i], 0);
+				y_move = SDL_JoystickGetAxis(joystick[i], 1);
+
+				if (x_move > 500 || (i == 0 && keystate[SDLK_RIGHT]))
+					input.pad[i] |= INPUT_RIGHT;
+				else
+					input.pad[i] &= ~INPUT_RIGHT;
+					
+				if (x_move < -500 || (i == 0 && keystate[SDLK_LEFT]))
+					input.pad[i] |= INPUT_LEFT;
+				else
+					input.pad[i] &= ~INPUT_LEFT;
+
+				if (y_move > 500 || (i == 0 && keystate[SDLK_DOWN]))
+					input.pad[i] |= INPUT_DOWN;
+				else
+					input.pad[i] &= ~INPUT_DOWN;
+
+				if(y_move < -500 || (i == 0 && keystate[SDLK_UP]))
+					input.pad[i] |= INPUT_UP;
+				else
+					input.pad[i] &= ~INPUT_UP;
+
+				if(SDL_JoystickGetButton(joystick[i], 2) == SDL_PRESSED || (i == 0 && keystate[SDLK_LCTRL]))
+					input.pad[i] |= INPUT_BUTTON1;
+				else
+					input.pad[i] &= ~INPUT_BUTTON1;
+				
+				if(SDL_JoystickGetButton(joystick[i], 1) == SDL_PRESSED || (i == 0 && keystate[SDLK_LALT]))
+					input.pad[i] |= INPUT_BUTTON2;
+				else
+					input.pad[i] &= ~INPUT_BUTTON2;
+
+				if(i == 0 && SDL_JoystickGetButton(joystick[i], 9) == SDL_PRESSED || keystate[SDLK_RETURN])
+					input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
+				else
+					input.system &= ~(sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
+					
+				if(SDL_JoystickGetButton(joystick[i], 8) == SDL_PRESSED || keystate[SDLK_ESCAPE])
+					selectpressed = 1;
+		}
+
+		SDL_JoystickUpdate();
+
 		if(SDL_PollEvent(&event)) 
 		{
 			switch(event.type) 
 			{
-				case SDL_KEYUP:
-					sdl_controls_update_input(event.key.keysym.sym, 0);
-				break;
-				case SDL_KEYDOWN:
-					sdl_controls_update_input(event.key.keysym.sym, 1);
-				break;
 				case SDL_QUIT:
 					quit = 1;
 				return;
 			}
 		}
+		
 		SDL_Flip(sdl_screen);
 	}
 	
@@ -605,6 +740,11 @@ int main (int argc, char *argv[])
 	if (bigfontwhite) SDL_FreeSurface(bigfontwhite);
 	if (bigfontred) SDL_FreeSurface(bigfontred);
 	
+	for(uint8_t i=0;i<2;i++)
+	{
+			if (joystick[i]) SDL_JoystickClose(joystick[i]);
+	}
+	
 	// Deinitialize audio and video output
 	Sound_Close();
 	
@@ -613,6 +753,5 @@ int main (int argc, char *argv[])
 	// Shut down
 	system_poweroff();
 	system_shutdown();
-	
 	return 0;
 }

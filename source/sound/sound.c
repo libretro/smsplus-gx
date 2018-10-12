@@ -215,7 +215,7 @@ void sound_reset(void)
 }
 
 
-void sound_update(int line)
+void sound_update(uint32_t line)
 {
 	int16_t *fm[2], *psg[2];
 
@@ -272,7 +272,7 @@ void sound_update(int line)
 }
 
 /* Generic FM+PSG stereo mixer callback */
-void sound_mixer_callback(int16 **stream, int16 **output, int length)
+void sound_mixer_callback(int16_t **stream, int16_t **output, uint32_t length)
 {
 	uint32_t i;
 	for(i = 0; i < length; i++)
@@ -287,7 +287,7 @@ void sound_mixer_callback(int16 **stream, int16 **output, int length)
 /* Sound chip access handlers                                               */
 /*--------------------------------------------------------------------------*/
 
-void psg_stereo_w(int data)
+void psg_stereo_w(uint32_t data)
 {
 	if(!snd.enabled) return;
 	#ifdef MAXIM_PSG
@@ -297,12 +297,12 @@ void psg_stereo_w(int data)
 	#endif
 }
 
-void stream_update(int which, int position)
+void stream_update(uint32_t which, uint32_t position)
 {
 }
 
 
-void psg_write(int data)
+void psg_write(uint32_t data)
 {
 	if(!snd.enabled) return;
 	#ifdef MAXIM_PSG
@@ -321,13 +321,13 @@ int fmunit_detect_r(void)
 	return sms.fm_detect;
 }
 
-void fmunit_detect_w(int data)
+void fmunit_detect_w(uint32_t data)
 {
 	if(!snd.enabled || !sms.use_fm) return;
 	sms.fm_detect = data;
 }
 
-void fmunit_write(int offset, int data)
+void fmunit_write(uint32_t offset, uint32_t data)
 {
 	if(!snd.enabled || !sms.use_fm) return;
 	FM_Write(offset, data);

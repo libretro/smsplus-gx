@@ -7,8 +7,14 @@
 FM_Context fm_context;
 YM2413 *fmm;
 
+/* Only the 1st Master System supports FM sound. Because it is still processed even though it's not used,
+* don't process FM sound if it can't be used in any way.
+*/
+static uint32_t isfm_used = 0;
+
 void FM_Init(void)
 {
+	isfm_used = 0;
 	fmm = ym2413_init(snd.fm_clock, snd.sample_rate);
 	ym2413_reset(fmm);
 }
@@ -16,19 +22,21 @@ void FM_Init(void)
 
 void FM_Shutdown(void)
 {
+	isfm_used = 0;
 	ym2413_shutdown(fmm);
 }
 
 
 void FM_Reset(void)
 {
+	isfm_used = 0;
 	ym2413_reset(fmm);
 }
 
 
 void FM_Update(int16_t **buffer, uint32_t length)
 {
-	ym2413_update(fmm, buffer, length);
+	if (isfm_used) ym2413_update(fmm, buffer, length);
 }
 
 void FM_WriteReg(uint32_t reg, uint32_t data)
@@ -45,6 +53,7 @@ void FM_Write(uint32_t offset, uint32_t data)
         fm_context.latch = data;
 
 	ym2413_write(fmm, offset & 1, data);
+	isfm_used = 1;
 }
 
 

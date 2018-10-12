@@ -324,49 +324,51 @@ void render_init(void)
 /* Reset the rendering data */
 void render_reset(void)
 {
-  int32_t i;
+	int32_t i;
 
-  /* Clear display bitmap */
-  memset(bitmap.data, 0, bitmap.pitch * bitmap.height);
+	/* Clear display bitmap */
+	memset(bitmap.data, 0, bitmap.pitch * bitmap.height);
 
-  /* Clear palette */
-  for(i = 0; i < PALETTE_SIZE; i++)
-  {
-    palette_sync(i);
-  }
+	/* Clear palette */
+	for(i = 0; i < PALETTE_SIZE; i++)
+	{
+		palette_sync(i);
+	}
 
-  /* Invalidate pattern cache */
-  memset(bg_name_dirty, 0, sizeof(bg_name_dirty));
-  memset(bg_name_list, 0, sizeof(bg_name_list));
-  bg_list_index = 0;
-  memset(bg_pattern_cache, 0, sizeof(bg_pattern_cache));
+	/* Invalidate pattern cache */
+	memset(bg_name_dirty, 0, sizeof(bg_name_dirty));
+	memset(bg_name_list, 0, sizeof(bg_name_list));
+	bg_list_index = 0;
+	memset(bg_pattern_cache, 0, sizeof(bg_pattern_cache));
 
-  /* Pick default render routine */
-  if (vdp.reg[0] & 4)
-  {
-    render_bg = render_bg_sms;
-    render_obj = render_obj_sms;
-  }
-  else
-  {
-    render_bg = render_bg_tms;
-    render_obj = render_obj_tms;
-  }
+	/* Pick default render routine */
+	if (vdp.reg[0] & 4)
+	{
+		render_bg = render_bg_sms;
+		render_obj = render_obj_sms;
+	}
+	else
+	{
+		render_bg = render_bg_tms;
+		render_obj = render_obj_tms;
+	}
 }
 
-static int prev_line = -1;
+static int32_t prev_line = -1;
 
 /* Draw a line of the display */
 void render_line(int32_t line)
 {
 	int32_t view = 1;
-	/* ensure we have not already rendered this line */
+
+	/* Ensure we have not already rendered this line */
 	if (prev_line == line) return;
 	prev_line = line;
-	
+
 	/* Ensure we're within the VDP active area (incl. overscan) */
-		int32_t top_border = active_border[sms.display][vdp.extended];
+	int32_t top_border = active_border[sms.display][vdp.extended];
 	int32_t vline = (line + top_border) % vdp.lpf;
+
 	if (vline >= active_range[sms.display]) return;
 
 	/* adjust for Game Gear screen */
@@ -452,7 +454,7 @@ void render_line(int32_t line)
 }
 
 /* Draw the Master System background */
-void render_bg_sms(int line)
+void render_bg_sms(int32_t line)
 {
 	int32_t locked = 0;
 	int32_t yscroll_mask = (vdp.extended) ? 256 : 224;
@@ -706,7 +708,6 @@ void palette_sync(int32_t index)
 
 	pixel[index] = MAKE_PIXEL(r, g, b);
 }
-
 
 static void parse_satb(int32_t line)
 {

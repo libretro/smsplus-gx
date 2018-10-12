@@ -8,19 +8,20 @@ CCP         = /opt/rs97-toolchain/bin/mipsel-linux-g++
 LD          = /opt/rs97-toolchain/bin/mipsel-linux-gcc
 
 # add SDL dependencies
+# -msym32 -mlong-calls
 
-#-msym32 -mlong-calls
-CFLAGS		= -Ofast -msym32 -mlong-calls -fno-pic -fno-pie -mno-abicalls -fdata-sections -ffunction-sections -mips32 -mno-shared -mno-mips16
+CFLAGS		= -fno-pic -fno-pie -Ofast -msym32 -mlong-calls -mno-abicalls -fdata-sections -ffunction-sections -mips32 -mno-shared -mno-mips16
 CFLAGS		+= -std=gnu99 -DLSB_FIRST -DMAXIM_PSG
 CFLAGS 		+= -Isource -Isource/eighty -Isource/generic -I./source/sound -Isource/unzip -Isource/rs97 -Isource/sound/maxim_sn76489 -Iinclude
-#CFLAGS		+= -fprofile-generate -fprofile-dir=/mnt/int_sd/profile -funsafe-math-optimizations -fassociative-math -ffinite-math-only -fsingle-precision-constant -fsection-anchors -falign-functions=2 -mno-check-zero-division
-CFLAGS		+= -fprofile-use -fno-math-errno -funsafe-math-optimizations -fassociative-math -ffinite-math-only -fsingle-precision-constant -fsection-anchors -falign-functions=2 -mno-check-zero-division
+CFLAGS		+=  -funsafe-math-optimizations -fassociative-math -ffinite-math-only -fsingle-precision-constant -fsection-anchors -falign-functions=2 -mno-check-zero-division
+#CFLAGS		+= -fprofile-generate -fprofile-dir=/mnt/int_sd/profile
+CFLAGS		+= -fprofile-use
 
 CXXFLAGS	= $(CFLAGS) 
 LDFLAGS     = -lSDL -lm -flto -lz  -Wl,--as-needed -Wl,--gc-sections -flto -s ./libportaudio.a
 
 # Files to be r
-SRCDIR    = ./source ./source/unzip ./source/eighty ./source/sound ./source/generic ./source/rs97 ./source/sound/maxim_sn76489
+SRCDIR    = ./source ./source/unzip ./source/eighty ./source/sound ./source/generic ./source/amini ./source/sound/maxim_sn76489
 VPATH     = $(SRCDIR)
 SRC_C   = $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.c))
 SRC_CP   = $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.cpp))

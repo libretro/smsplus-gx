@@ -10,29 +10,27 @@ SDL_Surface *bigfontwhite = NULL;
 
 extern SDL_Surface* sdl_screen;
 
-uint16_t gfx_font_width(SDL_Surface* inFont, char* inString) 
-{
-    if((inFont == NULL) || (inString == NULL))
-        return 0;
-    uintptr_t i, tempCur, tempMax;
-    for(i = 0, tempCur = 0, tempMax = 0; inString[i] != '\0'; i++) {
-        if(inString[i] == '\t')
-            tempCur += 4;
-        else if((inString[i] == '\r') || (inString[i] == '\n'))
-            tempCur = 0;
-        else
-            tempCur++;
-        if(tempCur > tempMax) tempMax = tempCur;
-    }
-    tempMax *= (inFont->w >> 4);
-    return tempMax;
+uint16_t gfx_font_width(SDL_Surface* inFont, char* inString) {
+	if((inFont == NULL) || (inString == NULL))
+		return 0;
+	uintptr_t i, tempCur, tempMax;
+	for(i = 0, tempCur = 0, tempMax = 0; inString[i] != '\0'; i++) {
+		if(inString[i] == '\t')
+			tempCur += 4;
+		else if((inString[i] == '\r') || (inString[i] == '\n'))
+			tempCur = 0;
+		else
+			tempCur++;
+		if(tempCur > tempMax) tempMax = tempCur;
+	}
+	tempMax *= (inFont->w >> 4);
+	return tempMax;
 }
 
-uint16_t gfx_font_height(SDL_Surface* inFont) 
-{
-    if(inFont == NULL)
-        return 0;
-    return (inFont->h >> 4);
+uint16_t gfx_font_height(SDL_Surface* inFont) {
+	if(inFont == NULL)
+		return 0;
+	return (inFont->h >> 4);
 }
 
 void gfx_font_print(SDL_Surface* dest,int16_t inX, int16_t inY, SDL_Surface* inFont, char* inString) 

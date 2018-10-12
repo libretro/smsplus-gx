@@ -36,9 +36,9 @@ enum {
 /* Sound emulation structure */
 typedef struct
 {
-  void (*mixer_callback)(int16 **stream, int16 **output, int length);
-  int16 *output[2];
-  int16 *stream[STREAM_MAX];
+  void (*mixer_callback)(int16_t **stream, int16_t **output, uint32_t length);
+  int16_t *output[2];
+  int16_t *stream[STREAM_MAX];
   int fm_which;
   int enabled;
   int fps;
@@ -46,8 +46,8 @@ typedef struct
   int sample_count;
   int sample_rate;
   int done_so_far;
-  uint32 fm_clock;
-  uint32 psg_clock;
+  uint32_t fm_clock;
+  uint32_t psg_clock;
 } snd_t;
 
 
@@ -55,15 +55,15 @@ typedef struct
 extern snd_t snd;
 
 /* Function prototypes */
-void psg_write(int data);
-void psg_stereo_w(int data);
+void psg_write(uint32_t data);
+void psg_stereo_w(uint32_t data);
 int fmunit_detect_r(void);
-void fmunit_detect_w(int data);
-void fmunit_write(int offset, int data);
+void fmunit_detect_w(uint32_t data);
+void fmunit_write(uint32_t offset, uint32_t data);
 int sound_init(void);
 void sound_shutdown(void);
 void sound_reset(void);
-void sound_update(int line);
-void sound_mixer_callback(int16 **stream, int16 **output, int length);
+void sound_update(uint32_t line);
+void sound_mixer_callback(int16_t **stream, int16_t **output, uint32_t length);
 
 #endif /* _SOUND_H_ */

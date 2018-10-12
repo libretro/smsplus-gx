@@ -4,8 +4,6 @@
 
 #include "shared.h"
 
-
-
 #define SMSSDL_CORE_VER  "1"
 #define SMSSDL_RELEASE   "7"
 #define SMSSDL_TITLE     "SMS Plus/SDL v" SMSSDL_CORE_VER "R" SMSSDL_RELEASE
@@ -17,8 +15,10 @@
 
 #define FILTER_MARGIN_HEIGHT 3
 
-#define SOUND_FREQUENCY    48000
-#define SOUND_SAMPLES_SIZE  2048
+/*#define SOUND_FREQUENCY    48000
+#define SOUND_SAMPLES_SIZE  2048*/
+#define SOUND_FREQUENCY    22050
+#define SOUND_SAMPLES_SIZE  1024
 
 #define MACHINE_FPS 60
 
