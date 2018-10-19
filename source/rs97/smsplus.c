@@ -37,7 +37,7 @@ uint8_t save_slot = 0;
 uint8_t showfps = 0;
 uint8_t quit = 0;
 
-#define SOUND_FREQUENCY 22050
+#define SOUND_FREQUENCY 44100
 #define SOUND_SAMPLES_SIZE 1024
 static int16_t buffer_snd[SOUND_FREQUENCY * 2];
 
@@ -74,11 +74,10 @@ static uint32_t Sound_Init()
 static void Sound_Update()
 {
 	uint32_t i;
-	const float volumeMultiplier = 6.0f;
 	for (i = 0; i < (4 * (SOUND_FREQUENCY / snd.fps)); i++) 
 	{
-		buffer_snd[i * 2] = snd.output[1][i] * volumeMultiplier;
-		buffer_snd[i * 2 + 1] = snd.output[0][i] * volumeMultiplier;
+		buffer_snd[i * 2] = snd.output[1][i];
+		buffer_snd[i * 2 + 1] = snd.output[0][i];
 	}
 	Pa_WriteStream( apu_stream, buffer_snd, SOUND_FREQUENCY / snd.fps );
 }
@@ -183,6 +182,8 @@ static int sdl_controls_update_input(SDLKey k, int32_t p)
 	
 	switch(k)
 	{
+		case SDLK_END:
+		case SDLK_3:
 		case SDLK_ESCAPE:
 			if(p)
 				selectpressed = 1;
