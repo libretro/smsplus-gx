@@ -411,11 +411,11 @@ void render_line(int32_t line)
 
 			/* Blank leftmost column of display */
 			if((vdp.reg[0] & 0x20) && (IS_SMS || IS_MD))
-			memset(linebuf, BACKDROP_COLOR, 8);
+				memset(linebuf, BACKDROP_COLOR, 8);
 		}
 		else
 		{
-		/* Background color */
+			/* Background color */
 			memset(linebuf, BACKDROP_COLOR, bitmap.viewport.w + 2*bitmap.viewport.x);
 		}
 	}
@@ -427,6 +427,8 @@ void render_line(int32_t line)
 		parse_line(line);
 
 	/* LightGun mark */
+	#ifdef LIGHTGUN_ENABLED
+	/* Putting this in an ifdef because the condition loop is executed every render_line */
 	if (sms.device[0] == DEVICE_LIGHTGUN)
 	{
 		int dy = vdp.line - input.analog[0][1];
@@ -443,6 +445,7 @@ void render_line(int32_t line)
 			}
 		}
 	}
+	#endif
 	
 	/* Only draw lines within the video output range ! */
 	if (view)

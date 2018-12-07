@@ -12,3 +12,4 @@ include/
 source/nonfree/
 sms_sdl
 *.out
+log.txt

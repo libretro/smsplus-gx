@@ -245,6 +245,51 @@ void upscale_SMS_to_320x240(uint32_t *dst, uint32_t *src, uint32_t height_scale)
     }
 }
 
+void upscale_SMS_to_800x480(uint32_t *dst, uint32_t *src, uint32_t height_scale)
+{
+	int midh = 480 >> 1;
+	int Eh = 0;
+	int source = 0, target = 0;
+	int dh = 0;
+	int i, j;
+	uint32_t a, b;
+
+	for (i = 0; i < 480; i++)
+	{
+		//Ew = 0;
+		source = dh * height_scale;
+
+		for (j = 0; j < 800/2; j++)
+		{
+
+			__builtin_prefetch(dst + 4, 1);
+			__builtin_prefetch(src + source + 4, 0);
+
+			a = src[source] & 0xF7DEF7DE;
+
+			#define AVERAGE(z, x) ((((z) & 0xF7DEF7DE) >> 1) + (((x) & 0xF7DEF7DE) >> 1))
+			if(Eh >= midh) { // average + 320
+				a = AVERAGE(a, src[source+160]);
+			}
+			#undef AVERAGE
+
+			b = a & 0xFFFF0000;
+			b |= (b >> 16);
+
+			a &= 0xFFFF;
+			a |= (a << 16); 
+
+			*dst++ = a;
+			*dst++ = b;
+
+			source += 4;
+
+		}
+		Eh += height_scale; if(Eh >= 480) { Eh -= 480; dh++; } // 160 - real gba y size
+	}
+}
+
+
 
 /* Retro Arcade Mini scalers. Boo, ugly */
 
@@ -297,6 +342,55 @@ void upscale_160x144_to_320x272_for_480x272(uint32_t *dst, uint32_t *src)
     }
 }
 
+
+void upscale_160x144_to_320x272_for_800x480(uint32_t *dst, uint32_t *src)
+{
+    int midh = 480 / 2;
+    int Eh = 0;
+    int source = 0;
+    int dh = 0;
+    int i, j;
+
+    dst += (800-320)/4; // center correction for 800x480 mode
+
+    for (i = 0; i < 480; i++)
+    {
+        source = dh * 256 / 2;
+
+        for (j = 0; j < 800/8; j++)
+        {
+            uint32_t a, b, c, d, ab, cd;
+
+            __builtin_prefetch(dst + 4, 1);
+            __builtin_prefetch(src + source + 4, 0);
+
+            ab = src[source] & 0xF7DEF7DE;
+            cd = src[source + 1] & 0xF7DEF7DE;
+
+			/*if(Eh >= midh) {
+                ab = AVERAGE(ab, src[source+256/2]);
+                cd = AVERAGE(cd, src[source+256/2+1]);
+            }*/
+
+            a = (ab & 0xFFFF) | (ab << 16);
+            b = (ab & 0xFFFF0000) | (ab >> 16);
+            c = (cd & 0xFFFF) | (cd << 16);
+            d = (cd & 0xFFFF0000) | (cd >> 16);
+
+            *dst++ = a;
+            *dst++ = b;
+            *dst++ = c;
+            *dst++ = d;
+
+            source += 2;
+
+        }
+        dst += (800-320)/2; // pitch correction for 800x480 mode
+        Eh += 144; if(Eh >= 480) { Eh -= 480; dh++; }
+    }
+}
+
+
 void upscale_160x144_to_480x272(uint32_t *dst, uint32_t *src)
 {
     int midh = 272 / 2;
@@ -345,6 +439,55 @@ void upscale_160x144_to_480x272(uint32_t *dst, uint32_t *src)
     }
 }
 
+void upscale_160x144_to_800x480(uint32_t *dst, uint32_t *src)
+{
+    int midh = 480 / 2;
+    int Eh = 0;
+    int source = 0;
+    int dh = 0;
+    int i, j;
+
+    for (i = 0; i < 480; i++)
+    {
+        source = dh * 256 / 2;
+
+        for (j = 0; j < 800/12; j++)
+        {
+            uint32_t a, b, c, d, e, f, ab, cd;
+
+            __builtin_prefetch(dst + 4, 1);
+            __builtin_prefetch(src + source + 4, 0);
+
+            ab = src[source] & 0xF7DEF7DE;
+            cd = src[source + 1] & 0xF7DEF7DE;
+
+			/*if(Eh >= midh) {
+                ab = AVERAGE(ab, src[source+256/2]);
+                cd = AVERAGE(cd, src[source+256/2+1]);
+            }*/
+
+            a = (ab & 0xFFFF) | (ab << 16);
+            b = ab;
+            c = (ab & 0xFFFF0000) | (ab >> 16);
+            d = (cd & 0xFFFF) | (cd << 16);
+            e = cd;
+            f = (cd & 0xFFFF0000) | (cd >> 16);
+
+            *dst++ = a;
+            *dst++ = b;
+            *dst++ = c;
+            *dst++ = d;
+            *dst++ = e;
+            *dst++ = f;
+
+            source += 2;
+
+        }
+        Eh += 144; if(Eh >= 272) { Eh -= 272; dh++; }
+    }
+}
+
+
 void upscale_256x192_to_384x272_for_480x272(uint32_t *dst, uint32_t *src)
 {
     int midh = 272 / 2;
@@ -385,6 +528,48 @@ void upscale_256x192_to_384x272_for_480x272(uint32_t *dst, uint32_t *src)
         Eh += 192; if(Eh >= 272) { Eh -= 272; dh++; }
     }
 }
+
+void upscale_256x192_to_384x272_for_800x480(uint32_t *dst, uint32_t *src)
+{
+    int midh = 480 / 2;
+    int Eh = 0;
+    int source = 0;
+    int dh = 0;
+    int y, x;
+
+    dst += (800 - 384) / 4;
+
+    for (y = 0; y < 480; y++)
+    {
+        source = dh * 256 / 2;
+
+        for (x = 0; x < 384/6; x++)
+        {
+            register uint32_t ab, cd;
+
+            __builtin_prefetch(dst + 4, 1);
+            __builtin_prefetch(src + source + 4, 0);
+
+            ab = src[source] & 0xF7DEF7DE;
+            cd = src[source + 1] & 0xF7DEF7DE;
+
+            /*if(Eh >= midh) {
+                ab = AVERAGE(ab, src[source + 256/2]) & 0xF7DEF7DE; // to prevent overflow
+                cd = AVERAGE(cd, src[source + 256/2 + 1]) & 0xF7DEF7DE; // to prevent overflow
+            }*/
+
+            *dst++ = (ab & 0xFFFF) + AVERAGEHI(ab);
+            *dst++ = (ab >> 16) + ((cd & 0xFFFF) << 16);
+            *dst++ = (cd & 0xFFFF0000) + AVERAGELO(cd);
+
+            source += 2;
+
+        }
+        dst += (800 - 384) / 2; 
+        Eh += 192; if(Eh >= 480) { Eh -= 480; dh++; }
+    }
+}
+
 
 void upscale_256x192_to_480x272(uint32_t *dst, uint32_t *src)
 {
@@ -446,3 +631,49 @@ void upscale_256x192_to_480x272(uint32_t *dst, uint32_t *src)
         Eh += 192; if(Eh >= 272) { Eh -= 272; dh++; }
     }
 }
+
+/*
+void upscale_256x192_to_800x480(uint32_t *dst, uint32_t *src, uint32_t height_scale)
+{
+    int midh = 480 / 2;
+    int Eh = 0;
+    int source = 0;
+    int dh = 0;
+    int y, x;
+
+    for (y = 0; y < 480; y++)
+    {
+        source = dh * 256 / 2;
+
+        for (x = 0; x < 800/12; x++)
+        {
+            register uint32_t ab, cd, ef, gh;
+
+            __builtin_prefetch(dst + 4, 1);
+            __builtin_prefetch(src + source + 4, 0);
+
+            ab = src[source] & 0xF7DEF7DE;
+            cd = src[source + 1] & 0xF7DEF7DE;
+            ef = src[source + 2] & 0xF7DEF7DE;
+            gh = src[source + 3] & 0xF7DEF7DE;
+
+            if(Eh >= midh) {
+                ab = AVERAGE(ab, src[source + 256/2]) & 0xF7DEF7DE; // to prevent overflow
+                cd = AVERAGE(cd, src[source + 256/2 + 1]) & 0xF7DEF7DE; // to prevent overflow
+                ef = AVERAGE(ef, src[source + 256/2 + 2]) & 0xF7DEF7DE; // to prevent overflow
+                gh = AVERAGE(gh, src[source + 256/2 + 3]) & 0xF7DEF7DE; // to prevent overflow
+            }
+
+            *dst++ = ab;
+            *dst++  = ((ab >> 17) + ((cd & 0xFFFF) >> 1)) + (cd << 16);
+            *dst++  = (cd >> 16) + (ef << 16);
+            *dst++  = (ef >> 16) + (((ef & 0xFFFF0000) >> 1) + ((gh & 0xFFFF) << 15));
+            *dst++  = gh;
+
+            source += 4;
+
+        }
+        Eh += height_scale; if(Eh >= 480) { Eh -= 480; dh++; }
+    }
+}
+*/
