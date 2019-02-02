@@ -104,7 +104,11 @@ static void video_update()
 		if(sms.console == CONSOLE_GG) 
 			bitmap_scale(48,0,160,144,160,144,256,sdl_screen->w-160,(uint16_t*)sms_bitmap->pixels,(uint16_t*)sdl_screen->pixels+(sdl_screen->w-160)/2+(sdl_screen->h-144)/2*sdl_screen->w);
 		else 
-			bitmap_scale(0,0,256,vdp.height,256,vdp.height,256,sdl_screen->w-256,(uint16_t*)sms_bitmap->pixels,(uint16_t*)sdl_screen->pixels+(sdl_screen->w-256)/2+(sdl_screen->h-vdp.height)/2*sdl_screen->w);
+			bitmap_scale(0,0,
+			256,vdp.height,
+			256,vdp.height,
+			256, sdl_screen->w-256,
+			(uint16_t*)sms_bitmap->pixels,(uint16_t*)sdl_screen->pixels+(sdl_screen->w-256)/2+(sdl_screen->h-vdp.height)/2*sdl_screen->w);
 		break;
 	}
 	SDL_UnlockSurface(sdl_screen);	

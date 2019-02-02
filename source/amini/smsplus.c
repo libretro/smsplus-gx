@@ -40,7 +40,7 @@ uint8_t save_slot = 0;
 uint8_t showfps = 0;
 uint8_t quit = 0;
 
-#define SOUND_FREQUENCY 48000
+#define SOUND_FREQUENCY 44100
 #define SOUND_SAMPLES_SIZE 2048
 static int16_t buffer_snd[SOUND_FREQUENCY * 2];
 

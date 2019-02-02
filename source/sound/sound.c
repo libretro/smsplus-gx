@@ -35,7 +35,7 @@ int32_t smptab_len;
 sn76489_t psg_sn;
 #endif
 
-int sound_init(void)
+int SMSPLUS_sound_init(void)
 {
 	uint8_t *fmbuf = NULL;
 	uint8_t *psgbuf = NULL;
@@ -48,7 +48,7 @@ int sound_init(void)
 	snd.psg_clock = (sms.display == DISPLAY_NTSC) ? CLOCK_NTSC : CLOCK_PAL;
 	snd.sample_rate = option.sndrate;
 	snd.mixer_callback = NULL;
-
+	
 	/* Save register settings */
 	if(snd.enabled)
 	{
@@ -65,9 +65,9 @@ int sound_init(void)
 	}
 
 	/* If we are reinitializing, shut down sound emulation */
-	if(snd.enabled)
+	if (snd.enabled)
 	{
-		sound_shutdown();
+		SMSPLUS_sound_shutdown();
 	}
 
 	/* Disable sound until initialization is complete */
@@ -79,14 +79,14 @@ int sound_init(void)
 
 	/* Assign stream mixing callback if none provided */
 	if(!snd.mixer_callback)
-		snd.mixer_callback = sound_mixer_callback;
+		snd.mixer_callback = SMSPLUS_sound_mixer_callback;
 
 	/* Calculate number of samples generated per frame */
 	snd.sample_count = (snd.sample_rate / snd.fps);
 
 	/* Calculate size of sample buffer */
 	snd.buffer_size = snd.sample_count * 2;
-
+	
 	/* Free sample buffer position table if previously allocated */
 	if(smptab)
 	{
@@ -160,7 +160,7 @@ int sound_init(void)
 }
 
 
-void sound_shutdown(void)
+void SMSPLUS_sound_shutdown(void)
 {
 	uint32_t i;
 	
@@ -196,7 +196,7 @@ void sound_shutdown(void)
 }
 
 
-void sound_reset(void)
+void SMSPLUS_sound_reset(void)
 {
 	if(!snd.enabled)
 		return;
@@ -215,7 +215,7 @@ void sound_reset(void)
 }
 
 
-void sound_update(uint32_t line)
+void SMSPLUS_sound_update(uint32_t line)
 {
 	int16_t *fm[2], *psg[2];
 
@@ -272,7 +272,7 @@ void sound_update(uint32_t line)
 }
 
 /* Generic FM+PSG stereo mixer callback */
-void sound_mixer_callback(int16_t **stream, int16_t **output, uint32_t length)
+void SMSPLUS_sound_mixer_callback(int16_t **stream, int16_t **output, uint32_t length)
 {
 	uint32_t i;
 	for(i = 0; i < length; i++)

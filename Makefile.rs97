@@ -2,41 +2,31 @@ PRGNAME     = sms_sdl
 
 # define regarding OS, which compiler to use
 EXESUFFIX = 
-TOOLCHAIN = 
 CC          = /opt/rs97-toolchain/bin/mipsel-linux-gcc
-CCP         = /opt/rs97-toolchain/bin/mipsel-linux-g++
-LD          = /opt/rs97-toolchain/bin/mipsel-linux-gcc
 
 # add SDL dependencies
 
 #-msym32 -mlong-calls
-CFLAGS		= -Ofast -fno-pic -fno-pie -mno-abicalls -fdata-sections -ffunction-sections -mips32 -mno-shared -mno-mips16
+CFLAGS		= -Ofast -mips32 -fno-PIC -mno-abicalls
 CFLAGS		+= -std=gnu99 -DLSB_FIRST -DMAXIM_PSG
 CFLAGS 		+= -Isource -Isource/z80 -Isource/generic -I./source/sound -Isource/unzip -Isource/rs97 -Isource/sound/maxim_sn76489 -Iinclude
 #CFLAGS		+= -fprofile-generate -fprofile-dir=/mnt/int_sd/profile -funsafe-math-optimizations -fassociative-math -ffinite-math-only -fsingle-precision-constant -fsection-anchors -falign-functions=2 -mno-check-zero-division
-CFLAGS		+= -fprofile-use -msym32 -mlong-calls -fno-math-errno -funsafe-math-optimizations -fassociative-math -ffinite-math-only -fsingle-precision-constant -fsection-anchors -falign-functions=2 -mno-check-zero-division
 
-CXXFLAGS	= $(CFLAGS) 
-LDFLAGS     = -lSDL -lm -flto -lz  -Wl,--as-needed -Wl,--gc-sections -flto -s ./libportaudio.a
+LDFLAGS     = -lSDL -lportaudio -lm -lz -lc -no-pie
 
 # Files to be r
 SRCDIR    = ./source ./source/unzip ./source/z80 ./source/sound ./source/generic ./source/rs97 ./source/sound/maxim_sn76489
 VPATH     = $(SRCDIR)
 SRC_C   = $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.c))
-SRC_CP   = $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.cpp))
 OBJ_C   = $(notdir $(patsubst %.c, %.o, $(SRC_C)))
-OBJ_CP   = $(notdir $(patsubst %.cpp, %.o, $(SRC_CP)))
-OBJS     = $(OBJ_C) $(OBJ_CP)
+OBJS     = $(OBJ_C)
 
 # Rules to make executable
-$(PRGNAME)$(EXESUFFIX): $(OBJS)  
-	$(LD) $(CFLAGS) -o $(PRGNAME)$(EXESUFFIX) $^ $(LDFLAGS)
+$(PRGNAME): $(OBJS)  
+	$(CC) $(CFLAGS) -o $(PRGNAME) $^ $(LDFLAGS)
 
 $(OBJ_C) : %.o : %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
-
-$(OBJ_CP) : %.o : %.cpp
-	$(CCP) $(CXXFLAGS) -c -o $@ $<
-
+	
 clean:
 	rm -f $(PRGNAME)$(EXESUFFIX) *.o

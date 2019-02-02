@@ -10,15 +10,15 @@ LD          = /opt/rs97-toolchain/bin/mipsel-linux-gcc
 # add SDL dependencies
 # -msym32 -mlong-calls
 
-CFLAGS		= -fno-pic -fno-pie -Ofast -msym32 -mlong-calls -mno-abicalls -fdata-sections -ffunction-sections -mips32 -mno-shared -mno-mips16
+CFLAGS		= -fno-pic -fno-pie -Ofast -mlong-calls -mno-abicalls -fdata-sections -ffunction-sections -mips32
+CFLAGS		+= -fsingle-precision-constant -falign-functions=2 -mno-check-zero-division
 CFLAGS		+= -std=gnu99 -DLSB_FIRST -DMAXIM_PSG
 CFLAGS 		+= -Isource -Isource/z80 -Isource/generic -I./source/sound -Isource/unzip -Isource/rs97 -Isource/sound/maxim_sn76489 -Iinclude
-CFLAGS		+=  -funsafe-math-optimizations -fassociative-math -ffinite-math-only -fsingle-precision-constant -fsection-anchors -falign-functions=2 -mno-check-zero-division
 #CFLAGS		+= -fprofile-generate -fprofile-dir=/mnt/int_sd/profile
 CFLAGS		+= -fprofile-use
 
 CXXFLAGS	= $(CFLAGS) 
-LDFLAGS     = -lSDL -lm -flto -lz  -Wl,--as-needed -Wl,--gc-sections -flto -s ./libportaudio.a
+LDFLAGS     = -lSDL -lportaudio -lm -flto -lz  -Wl,--as-needed -Wl,--gc-sections -flto -s -no-pie
 
 # Files to be r
 SRCDIR    = ./source ./source/unzip ./source/z80 ./source/sound ./source/generic ./source/amini ./source/sound/maxim_sn76489

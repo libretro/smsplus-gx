@@ -60,10 +60,10 @@ void psg_stereo_w(uint32_t data);
 int fmunit_detect_r(void);
 void fmunit_detect_w(uint32_t data);
 void fmunit_write(uint32_t offset, uint32_t data);
-int sound_init(void);
-void sound_shutdown(void);
-void sound_reset(void);
-void sound_update(uint32_t line);
-void sound_mixer_callback(int16_t **stream, int16_t **output, uint32_t length);
+int SMSPLUS_sound_init(void);
+void SMSPLUS_sound_shutdown(void);
+void SMSPLUS_sound_reset(void);
+void SMSPLUS_sound_update(uint32_t line);
+void SMSPLUS_sound_mixer_callback(int16_t **stream, int16_t **output, uint32_t length);
 
 #endif /* _SOUND_H_ */

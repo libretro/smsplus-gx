@@ -9,14 +9,14 @@ LD          = gcc
 
 # add SDL dependencies
 
-CFLAGS		= -O2 -pg -std=gnu99 -DINLINE=inline -DLSB_FIRST
+CFLAGS		= -O0 -g -std=gnu99 -DINLINE=inline -DLSB_FIRST
 CFLAGS 		+= -I/usr/include/SDL -Isource -Isource/z80 -Isource/generic -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/crabemu_sn76489
 
 CXXFLAGS	= $(CFLAGS) 
 LDFLAGS     = -lSDL -lm -flto -lz -lportaudio
 
 # Files to be r
-SRCDIR    = ./source ./source/unzip ./source/z80 ./source/sound ./source/generic ./source/k3s ./source/sound/crabemu_sn76489
+SRCDIR    = ./source ./source/unzip ./source/z80 ./source/sound ./source/generic ./source/rs97 ./source/sound/crabemu_sn76489
 VPATH     = $(SRCDIR)
 SRC_C   = $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.c))
 SRC_CP   = $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.cpp))

@@ -76,7 +76,7 @@ void system_load_state(FILE* fd)
 
 	/** restore video & audio settings (needed if timing changed) ***/
 	vdp_init();
-	sound_init();
+	SMSPLUS_sound_init();
 
 	for(i=0;i<4;i++)
 		cart.fcr[i] = fgetc(fd);

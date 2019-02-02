@@ -401,7 +401,10 @@ int load_rom (char *filename)
 		if (cart.size < 0x4000) cart.size = 0x4000;
 		cart.rom = malloc(cart.size);
 		if (!cart.rom)
+		{
+			fclose(fd);
 			return 0;
+		}
 		fread(cart.rom, cart.size, 1, fd);
 
 		fclose(fd);
