@@ -7,12 +7,12 @@ CC          = /opt/rs97-toolchain/bin/mipsel-linux-gcc
 # add SDL dependencies
 
 #-msym32 -mlong-calls
-CFLAGS		= -Ofast -mips32 -fno-PIC -mno-abicalls
+CFLAGS		= -Ofast -fdata-sections -ffunction-sections -fno-common -mips32 -fno-PIC -mno-abicalls -fprofile-use
 CFLAGS		+= -std=gnu99 -DLSB_FIRST -DMAXIM_PSG
 CFLAGS 		+= -Isource -Isource/z80 -Isource/generic -I./source/sound -Isource/unzip -Isource/rs97 -Isource/sound/maxim_sn76489 -Iinclude
-#CFLAGS		+= -fprofile-generate -fprofile-dir=/mnt/int_sd/profile -funsafe-math-optimizations -fassociative-math -ffinite-math-only -fsingle-precision-constant -fsection-anchors -falign-functions=2 -mno-check-zero-division
+#CFLAGS		+= -fprofile-generate=/home/retrofw/profile -fprofile-dir=/mnt/int_sd/profile -funsafe-math-optimizations -fassociative-math -ffinite-math-only -fsingle-precision-constant -fsection-anchors -falign-functions=2 -mno-check-zero-division
 
-LDFLAGS     = -lSDL -lportaudio -lm -lz -lc -no-pie
+LDFLAGS     = -lSDL -lportaudio -lm -lz -lc -no-pie  -Wl,--as-needed -Wl,--gc-sections -s
 
 # Files to be r
 SRCDIR    = ./source ./source/unzip ./source/z80 ./source/sound ./source/generic ./source/rs97 ./source/sound/maxim_sn76489

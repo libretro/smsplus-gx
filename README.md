@@ -11,5 +11,5 @@ It is now based on SMS Plus GX, with some other changes too such as :
 
 And more...
 
-This emulator is fully free software under the GPLv2 or later. See docs/license for more details.
+This emulator is free software under the GPLv2 or later. See docs/license for more details.
 Also, see docs/contributors to see who contributed (indirectly or directly) to SMS Plus (GX).

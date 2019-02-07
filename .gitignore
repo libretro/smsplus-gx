@@ -16,3 +16,4 @@ log.txt
 Makefile
 Makefile.*
 ./sms_sdl
+*.ipk

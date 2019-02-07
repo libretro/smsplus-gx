@@ -37,7 +37,7 @@ uint8_t save_slot = 0;
 uint8_t showfps = 0;
 uint8_t quit = 0;
 
-#define SOUND_FREQUENCY 44100
+#define SOUND_FREQUENCY 22050
 #define SOUND_SAMPLES_SIZE 1024
 static int16_t buffer_snd[SOUND_FREQUENCY * 2];
 
@@ -76,11 +76,12 @@ static uint32_t Sound_Init()
 static void Sound_Update()
 {
 	uint32_t i;
+	const float volumeMultiplier = 3.0f;
 
 	for (i = 0; i < (4 * (SOUND_FREQUENCY / snd.fps)); i++) 
 	{
-		buffer_snd[i * 2] = snd.output[1][i];
-		buffer_snd[i * 2 + 1] = snd.output[0][i];
+		buffer_snd[i * 2] = snd.output[1][i] * volumeMultiplier;
+		buffer_snd[i * 2 + 1] = snd.output[0][i] * volumeMultiplier;
 	}
 	Pa_WriteStream( apu_stream, buffer_snd, SOUND_FREQUENCY / snd.fps );
 }
@@ -120,7 +121,6 @@ void smsp_state(uint8_t slot, uint8_t mode)
 	// Save and Load States
 	int8_t stpath[PATH_MAX];
 	snprintf(stpath, sizeof(stpath), "%s%s.st%d", gdata.stdir, gdata.gamename, slot);
-	printf("Path state %s\n", stpath);
 	FILE *fd;
 	
 	switch(mode) {
@@ -224,12 +224,14 @@ static int sdl_controls_update_input(SDLKey k, int32_t p)
 				input.pad[0] &= ~INPUT_RIGHT;
 		break;
 		case SDLK_LALT:
+		case SDLK_SPACE:
 			if(p)
 				input.pad[0] |= INPUT_BUTTON1;
 			else
 				input.pad[0] &= ~INPUT_BUTTON1;
 		break;
 		case SDLK_LCTRL:
+		case SDLK_LSHIFT:
 			if(p)
 				input.pad[0] |= INPUT_BUTTON2;
 			else
@@ -357,21 +359,21 @@ void Menu()
         dstRect.y = 30;
         SDL_BlitSurface(miniscreen,NULL,menu_surf,&dstRect);
 
-        gfx_font_print_center(menu_surf,5,bigfontwhite,"SMSPlusGX");
+        gfx_font_print_center(menu_surf,5,bigfontwhite,"SMS Plus GX");
 
         if (currentselection == 1)
             gfx_font_print(menu_surf,5,25,bigfontred,"Continue");
         else
             gfx_font_print(menu_surf,5,25,bigfontwhite,"Continue");
 
-        sprintf(text,"Save State %d",save_slot);
+        sprintf(text,"Load State %d",save_slot);
 
         if (currentselection == 2)
             gfx_font_print(menu_surf,5,65,bigfontred,text);
         else
             gfx_font_print(menu_surf,5,65,bigfontwhite,text);
 
-        sprintf(text,"Load State %d",save_slot);
+        sprintf(text,"Save State %d",save_slot);
 
         if (currentselection == 3)
             gfx_font_print(menu_surf,5,85,bigfontred,text);
@@ -472,20 +474,26 @@ void Menu()
                         fullscreen = 0;
                     break;
                 case 2 :
-                    smsp_state(save_slot, 0);
+                    smsp_state(save_slot, 1);
 					currentselection = 1;
                     break;
                 case 3 :
-					smsp_state(save_slot, 1);
+					smsp_state(save_slot, 0);
 					currentselection = 1;
 				break;
             }
         }
 
-		SDL_SoftStretch(menu_surf, NULL, sdl_screen, NULL);
+		SDL_BlitSurface(menu_surf, NULL, sdl_screen, NULL);
 		SDL_Flip(sdl_screen);
-		//++sdl_video.frames_rendered;
     }
+    
+    SDL_FillRect(sdl_screen, NULL, 0);
+    SDL_Flip(sdl_screen);
+    #ifdef SDL_TRIPLEBUF
+    SDL_FillRect(sdl_screen, NULL, 0);
+    SDL_Flip(sdl_screen);
+    #endif
     
     if (menu_surf) SDL_FreeSurface(menu_surf);
 	if (miniscreen) SDL_FreeSurface(miniscreen);
@@ -533,7 +541,6 @@ int main (int argc, char *argv[])
 	);
 	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 240, 16, 0, 0, 0, 0);
 	SDL_ShowCursor(0);
-	
 	
 	Sound_Init();
 	

@@ -177,9 +177,7 @@ unsigned char *cpu_writemap[64];
 #define _IFF2	Z80.IFF2
 #define _HALT	Z80.HALT
 
-#define	Z80_ICOUNT	z80_ICount
-
-int Z80_ICOUNT;
+extern int32_t z80_ICount;
 static Z80_Regs Z80;
 Z80_Regs *Z80_Context = &Z80;
 static uint32_t EA;
@@ -462,7 +460,7 @@ static inline void BURNODD(int cycles, int opcodes, int cyclesum)
 	if( cycles > 0 )
 	{
 		_R += (cycles / cyclesum) * opcodes;
-		Z80_ICOUNT -= (cycles / cyclesum) * cyclesum;
+		z80_ICount -= (cycles / cyclesum) * cyclesum;
 	}
 }
 
@@ -474,7 +472,7 @@ static inline void BURNODD(int cycles, int opcodes, int cyclesum)
 /***************************************************************
  * adjust cycle count by n T-states
  ***************************************************************/
-#define CC(prefix,opcode) Z80_ICOUNT -= cc[Z80_TABLE_##prefix][opcode]
+#define CC(prefix,opcode) z80_ICount -= cc[Z80_TABLE_##prefix][opcode]
 
 /***************************************************************
  * execute an opcode
@@ -571,7 +569,7 @@ static inline void BURNODD(int cycles, int opcodes, int cyclesum)
 	_PC--;														\
 	_HALT = 1;													\
 	if( !after_EI ) 											\
-		z80_burn( Z80_ICOUNT ); 								\
+		z80_burn( z80_ICount ); 								\
 }
 
 /***************************************************************
@@ -684,7 +682,7 @@ static inline uint32_t ARG16(void)
 	if( _PCD == oldpc ) 										\
 	{															\
 		if( !after_EI ) 										\
-			BURNODD( Z80_ICOUNT, 1, cc[Z80_TABLE_op][0xc3] );	\
+			BURNODD( z80_ICount, 1, cc[Z80_TABLE_op][0xc3] );	\
 	}															\
 	else														\
 	{															\
@@ -695,7 +693,7 @@ static inline uint32_t ARG16(void)
 			if ( op == 0x00 || op == 0xfb ) 					\
 			{													\
 				if( !after_EI ) 								\
-					BURNODD( Z80_ICOUNT-cc[Z80_TABLE_op][0x00], \
+					BURNODD( z80_ICount-cc[Z80_TABLE_op][0x00], \
 						2, cc[Z80_TABLE_op][0x00]+cc[Z80_TABLE_op][0xc3]); \
 			}													\
 		}														\
@@ -704,7 +702,7 @@ static inline uint32_t ARG16(void)
 		if( _PCD == oldpc-3 && op == 0x31 ) 					\
 		{														\
 			if( !after_EI ) 									\
-				BURNODD( Z80_ICOUNT-cc[Z80_TABLE_op][0x31], 	\
+				BURNODD( z80_ICount-cc[Z80_TABLE_op][0x31], 	\
 					2, cc[Z80_TABLE_op][0x31]+cc[Z80_TABLE_op][0xc3]); \
 		}														\
 	}															\
@@ -744,7 +742,7 @@ static inline uint32_t ARG16(void)
 	if( _PCD == oldpc ) 										\
 	{															\
 		if( !after_EI ) 										\
-			BURNODD( Z80_ICOUNT, 1, cc[Z80_TABLE_op][0x18] );	\
+			BURNODD( z80_ICount, 1, cc[Z80_TABLE_op][0x18] );	\
 	}															\
 	else														\
 	{															\
@@ -755,7 +753,7 @@ static inline uint32_t ARG16(void)
 			if ( op == 0x00 || op == 0xfb ) 					\
 			{													\
 				if( !after_EI ) 								\
-				   BURNODD( Z80_ICOUNT-cc[Z80_TABLE_op][0x00],	\
+				   BURNODD( z80_ICount-cc[Z80_TABLE_op][0x00],	\
 					   2, cc[Z80_TABLE_op][0x00]+cc[Z80_TABLE_op][0x18]); \
 			}													\
 		}														\
@@ -764,7 +762,7 @@ static inline uint32_t ARG16(void)
 		if( _PCD == oldpc-3 && op == 0x31 ) 					\
 		{														\
 			if( !after_EI ) 									\
-			   BURNODD( Z80_ICOUNT-cc[Z80_TABLE_op][0x31],		\
+			   BURNODD( z80_ICount-cc[Z80_TABLE_op][0x31],		\
 				   2, cc[Z80_TABLE_op][0x31]+cc[Z80_TABLE_op][0x18]); \
 		}														\
 	}															\
@@ -3063,7 +3061,7 @@ if( _BC > 1 && _PCD < 0xfffc ) {									\
 				cc[Z80_TABLE_op][0xb1] +							\
 				cc[Z80_TABLE_op][0x20] +							\
 				cc[Z80_TABLE_ex][0x20]; 							\
-			while( _BC > 0 && Z80_ICOUNT > cnt )					\
+			while( _BC > 0 && z80_ICount > cnt )					\
 			{														\
 				BURNODD( cnt, 4, cnt ); 							\
 				_BC--;												\
@@ -3081,7 +3079,7 @@ if( _BC > 1 && _PCD < 0xfffc ) {									\
 					cc[Z80_TABLE_op][0xb1] +						\
 					cc[Z80_TABLE_op][0xc2] +						\
 					cc[Z80_TABLE_ex][0xc2]; 						\
-				while( _BC > 0 && Z80_ICOUNT > cnt )				\
+				while( _BC > 0 && z80_ICount > cnt )				\
 				{													\
 					BURNODD( cnt, 4, cnt ); 						\
 					_BC--;											\
@@ -3106,7 +3104,7 @@ if( _DE > 1 && _PCD < 0xfffc ) {									\
 				cc[Z80_TABLE_op][0xb3] +							\
 				cc[Z80_TABLE_op][0x20] +							\
 				cc[Z80_TABLE_ex][0x20]; 							\
-			while( _DE > 0 && Z80_ICOUNT > cnt )					\
+			while( _DE > 0 && z80_ICount > cnt )					\
 			{														\
 				BURNODD( cnt, 4, cnt ); 							\
 				_DE--;												\
@@ -3124,7 +3122,7 @@ if( _DE > 1 && _PCD < 0xfffc ) {									\
 					cc[Z80_TABLE_op][0xb3] +						\
 					cc[Z80_TABLE_op][0xc2] +						\
 					cc[Z80_TABLE_ex][0xc2]; 						\
-				while( _DE > 0 && Z80_ICOUNT > cnt )				\
+				while( _DE > 0 && z80_ICount > cnt )				\
 				{													\
 					BURNODD( cnt, 4, cnt ); 						\
 					_DE--;											\
@@ -3149,7 +3147,7 @@ if( _HL > 1 && _PCD < 0xfffc ) {									\
 				cc[Z80_TABLE_op][0xb5] +							\
 				cc[Z80_TABLE_op][0x20] +							\
 				cc[Z80_TABLE_ex][0x20]; 							\
-			while( _HL > 0 && Z80_ICOUNT > cnt )					\
+			while( _HL > 0 && z80_ICount > cnt )					\
 			{														\
 				BURNODD( cnt, 4, cnt ); 							\
 				_HL--;												\
@@ -3167,7 +3165,7 @@ if( _HL > 1 && _PCD < 0xfffc ) {									\
 					cc[Z80_TABLE_op][0xb5] +						\
 					cc[Z80_TABLE_op][0xc2] +						\
 					cc[Z80_TABLE_ex][0xc2]; 						\
-				while( _HL > 0 && Z80_ICOUNT > cnt )				\
+				while( _HL > 0 && z80_ICount > cnt )				\
 				{													\
 					BURNODD( cnt, 4, cnt ); 						\
 					_HL--;											\
@@ -3700,10 +3698,10 @@ void z80_exit(void)
  ****************************************************************************/
 int z80_execute(int cycles)
 {
-	Z80_ICOUNT = cycles - Z80.extra_cycles;
+	z80_ICount = cycles - Z80.extra_cycles;
 	Z80.extra_cycles = 0;
 
-    z80_requested_cycles = Z80_ICOUNT;
+    z80_requested_cycles = z80_ICount;
     z80_exec = 1;
 
 	do
@@ -3711,16 +3709,16 @@ int z80_execute(int cycles)
 		_PPC = _PCD;
 		_R++;
 		EXEC_INLINE(op,ROP());
-	} while( Z80_ICOUNT > 0 );
+	} while( z80_ICount > 0 );
 
-	Z80_ICOUNT -= Z80.extra_cycles;
+	z80_ICount -= Z80.extra_cycles;
 	Z80.extra_cycles = 0;
 
     // add cycles executed to running total
     z80_exec = 0;
-    z80_cycle_count += (cycles - Z80_ICOUNT);
+    z80_cycle_count += (cycles - z80_ICount);
 
-	return cycles - Z80_ICOUNT;
+	return cycles - z80_ICount;
 }
 
 /****************************************************************************
@@ -3733,7 +3731,7 @@ void z80_burn(int cycles)
 		/* NOP takes 4 cycles per instruction */
 		int n = (cycles + 3) / 4;
 		_R += n;
-		Z80_ICOUNT -= 4 * n;
+		z80_ICount -= 4 * n;
 	}
 }
 

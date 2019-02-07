@@ -59,12 +59,15 @@ https://github.com/PocketSprite/8bkc-gamegear/commit/cd3510d12feb8f922c0505a2a47
 (Based on that)
 https://github.com/libretro/81-libretro/tree/master/81/z80
 
-See PocketSprite's patches. We're using this z80 cpu core instead of z80.c.
-Btw, i did contact Jurgeen about z80.c and he refused to re-license the old versions due to potential legal issues.
-So for a full GPLv2 release, this was the first step towards it.
-As a result, z80.c and all related code got removed.
+See PocketSprite's patches. This CPU core is much less accurate and is unable to run games like Dizzy and some SG-1000 games.
+Juergen's z80 cpu core on the other hand, does not suffer from these issues.
 
-Anyway, i haven't noticed any nasty regressions as far emulation is concerned so yay for me.
+Juergen Buchmueller
+====================
+
+He made the z80 core for SMS Plus. He declined to relicense the old code to the GPLv2 (despite the license granting him the right to revoke it).
+Maybe someday someone will take MAME's code (which is under the GPLv2) and port it back to C.
+When that happens, i can remove EightyOne's z80 core.
 
 CrabEmu
 ========
@@ -86,6 +89,9 @@ Improving PocketSprite's EightyOne patches for making sure it works with the new
 Disabled collision check for 9th sprite. Doing so passes Flubba's test.
 Fixed support for 256 pages. This fixes Bad Apple SMS. (also added it to the ROM database list as it requires PAL timings)
 Put everything together and making sure it works :' )
+
+I also made specific changes for each devices, like the RS-97. They can be found under their own subfolders.
+I am releasing the changes under the GPLv2+, just to make things clear.
 
 Maxim
 =====

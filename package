@@ -1,0 +1,47 @@
+#!/bin/sh
+
+mkdir -p ipkg/home/retrofw/emus/sms_sdl
+mkdir -p ipkg/home/retrofw/apps/gmenu2x/sections/emulators
+cp sms_sdl ipkg/home/retrofw/emus/sms_sdl/sms_sdl
+cp sms_sdl.png ipkg/home/retrofw/emus/sms_sdl/sms_sdl.png
+
+cd ipkg
+
+# https://unix.stackexchange.com/questions/219268/how-to-add-new-lines-when-using-echo
+print()
+	case    ${IFS- } in
+	(\ *)   printf  %b\\n "$*";;
+	(*)     IFS=\ $IFS
+	printf  %b\\n "$*"
+	IFS=${IFS#?}
+esac
+
+# Create GmenuNx entry file plus other things
+
+print 'Package: sms_sdl
+Version: 20190203
+Description: SMS/GG emulator
+Section: emus
+Priority: optional
+Maintainer: gameblabla
+Architecture: mipsel
+Homepage: https://github.com/gameblabla/sms_sdl
+Depends:
+Source: https://github.com/gameblabla/sms_sdl' > control
+
+print '2.0' > debian-binary
+
+print 'title=SMS Plus GX
+description=Master System/GG Emulator
+exec=/home/retrofw/emus/sms_sdl/sms_sdl
+clock=600
+selectordir=/home/retrofw/roms
+selectorfilter=.sms,.bin,.gg,.zip,.rom,.sg
+' > home/retrofw/apps/gmenu2x/sections/emulators/sms_sdl
+
+tar -czvf control.tar.gz control
+tar -czvf data.tar.gz home
+ar rv ../sms_sdl.ipk control.tar.gz data.tar.gz debian-binary
+
+cd ..
+rm -r ipkg
