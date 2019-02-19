@@ -57,12 +57,12 @@ void z80_set_irq_line(int32_t irqline, int32_t state);
 void z80_reset_cycle_count(void);
 int z80_get_elapsed_cycles(void);
 
-uint8_t *cpu_readmap[64];
-uint8_t *cpu_writemap[64];
+extern uint8_t *cpu_readmap[64];
+extern uint8_t *cpu_writemap[64];
 
-void (*cpu_writemem16)(uint16_t address, uint8_t data);
-void (*cpu_writeport16)(uint16_t port, uint8_t data);
-uint8_t (*cpu_readport16)(uint16_t port);
+extern void (*cpu_writemem16)(uint16_t address, uint8_t data);
+extern void (*cpu_writeport16)(uint16_t port, uint8_t data);
+extern uint8_t (*cpu_readport16)(uint16_t port);
 
 #endif
 

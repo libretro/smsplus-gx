@@ -224,6 +224,13 @@ static uint8_t SZHV_dec[256]; /* zero, sign, half carry and overflow flags DEC r
 static uint8_t *SZHVC_add = 0;
 static uint8_t *SZHVC_sub = 0;
 
+uint8_t *cpu_readmap[64];
+uint8_t *cpu_writemap[64];
+
+void (*cpu_writemem16)(uint16_t address, uint8_t data);
+void (*cpu_writeport16)(uint16_t port, uint8_t data);
+uint8_t (*cpu_readport16)(uint16_t port);
+
 static const uint8_t cc_op[0x100] = {
  4,10, 7, 6, 4, 4, 7, 4, 4,11, 7, 6, 4, 4, 7, 4,
  8,10, 7, 6, 4, 4, 7, 4,12,11, 7, 6, 4, 4, 7, 4,

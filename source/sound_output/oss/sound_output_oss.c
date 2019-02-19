@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/ioctl.h>
-#include <sys/fcntl.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/soundcard.h>
 #include "smsplus.h"
@@ -59,7 +59,7 @@ void Sound_Update()
 		buffer_snd[i * 2] = snd.output[1][i] * volumeMultiplier;
 		buffer_snd[i * 2 + 1] = snd.output[0][i] * volumeMultiplier;
 	}
-	write(oss_audio_fd, buffer_snd, SOUND_FREQUENCY / snd.fps );
+	write(oss_audio_fd, buffer_snd, 4 * (SOUND_FREQUENCY / snd.fps) );
 }
 
 void Sound_Close()
