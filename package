@@ -19,7 +19,7 @@ esac
 # Create GmenuNx entry file plus other things
 
 print 'Package: sms_sdl
-Version: 20190203
+Version: 20190219
 Description: SMS/GG emulator
 Section: emus
 Priority: optional

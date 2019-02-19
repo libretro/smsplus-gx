@@ -28,7 +28,7 @@ bitmap_t bitmap;
 cart_t cart;
 input_t input;
 
-extern uint32_t z80_cycle_count ;
+extern uint32_t z80_cycle_count;
 
 /* Run the virtual console emulation for one frame */
 void system_frame(uint32_t skip_render)

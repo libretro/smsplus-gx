@@ -551,7 +551,7 @@ void mapper_16k_w(uint16_t address, uint8_t data)
   }
 }
 
-int sms_irq_callback(int param)
+int32_t sms_irq_callback(int32_t param)
 {
-  return 0xFF;
+	return 0xFF;
 }

@@ -15,6 +15,7 @@
 #include "bigfontwhite.h"
 #include "bigfontred.h"
 #include "font.h"
+#include "sound_output.h"
 
 gamedata_t gdata;
 
@@ -129,14 +130,14 @@ static int sdl_controls_update_input(SDLKey k, int32_t p)
 	switch(k)
 	{
 		case SDLK_END:
-		case SDLK_3:
-		case SDLK_ESCAPE:
+		case SDLK_RCTRL:
 			if(p)
 				selectpressed = 1;
 			else
 				selectpressed = 0;
 		break;
 		case SDLK_RETURN:
+		case SDLK_ESCAPE:
 			if(p)
 				input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
 			else
@@ -432,6 +433,13 @@ void Menu()
     
     if (menu_surf) SDL_FreeSurface(menu_surf);
 	if (miniscreen) SDL_FreeSurface(miniscreen);
+	
+    SDL_FillRect(sdl_screen, NULL, 0);
+    SDL_Flip(sdl_screen);
+    #ifdef SDL_TRIPLEBUF
+    SDL_FillRect(sdl_screen, NULL, 0);
+    SDL_Flip(sdl_screen);
+    #endif
     
     if (currentselection == 5)
         quit = 1;
@@ -467,11 +475,10 @@ int main (int argc, char *argv[])
 	sms.console = strcmp(strrchr(argv[1], '.'), ".gg") ? CONSOLE_SMS : CONSOLE_GG;
 	
 	SDL_Init(SDL_INIT_VIDEO);
-	sdl_screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE);
+	sdl_screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
 	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 240, 16, 0, 0, 0, 0);
 	SDL_ShowCursor(0);
-	
-	
+
 	Sound_Init();
 	
     font = gfx_tex_load_tga_from_array(fontarray);

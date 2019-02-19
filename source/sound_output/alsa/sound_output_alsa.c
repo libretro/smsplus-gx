@@ -123,9 +123,14 @@ void Sound_Update()
 		buffer_snd[i * 2 + 1] = snd.output[0][i] * volumeMultiplier;
 	}
 	
-	snd_pcm_nonblock(handle, 0);
-
 	int rc = snd_pcm_writei(handle, buffer_snd, (SOUND_FREQUENCY / snd.fps));
+	if (rc == -EPIPE)
+	{
+		/* EPIPE means underrun */
+		fprintf(stderr, "ALSA: underrun occurred\n");
+		snd_pcm_prepare(handle);
+		snd_pcm_writei(handle, buffer_snd, (SOUND_FREQUENCY / snd.fps));
+	}
 }
 
 void Sound_Close()

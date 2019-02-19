@@ -125,6 +125,7 @@
 
 #define VERBOSE 0
 
+#undef INLINE
 #define INLINE static __inline__
 
 #if VERBOSE
@@ -133,6 +134,7 @@
 #define LOG(x)
 #endif
 
+int32_t z80_ICount = 0;
 uint32_t z80_cycle_count = 0;        /* running total of cycles executed */
 
 #define cpu_readmem16(a)        cpu_readmap[(a) >> 10][(a) & 0x03FF]
@@ -143,8 +145,6 @@ uint32_t z80_cycle_count = 0;        /* running total of cycles executed */
 #ifndef BIG_SWITCH
 #define BIG_SWITCH      1
 #endif
-
-
 
 #define CF  0x01
 #define NF  0x02
@@ -3517,16 +3517,16 @@ void z80_set_irq_line(int32_t irqline, int32_t state)
  ****************************************************************************/
  void z80_reset_cycle_count(void)
 {
-  z80_cycle_count = 0;
+	z80_cycle_count = 0;
 }
 
 int32_t z80_get_elapsed_cycles(void)
 {
-  if(z80_exec == 1)
-  {
-    // inside execution loop
-    return z80_cycle_count + (z80_requested_cycles - z80_ICount);
-  }
-
-  return z80_cycle_count;
+	if(z80_exec == 1)
+	{
+		// inside execution loop
+		return z80_cycle_count + (z80_requested_cycles - z80_ICount);
+	}
+	
+	return z80_cycle_count;
 }

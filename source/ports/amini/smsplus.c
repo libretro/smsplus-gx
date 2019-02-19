@@ -14,6 +14,7 @@
 #include "bigfontwhite.h"
 #include "bigfontred.h"
 #include "font.h"
+#include "sound_output.h"
 
 uint32_t frames_rendered = 0;
 gamedata_t gdata;
