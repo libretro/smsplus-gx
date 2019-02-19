@@ -10,6 +10,7 @@ typedef signed short int int16;
 typedef signed long int int32;
 
 /* Convenience stuff... */
+#undef INLINE
 #if __STDC_VERSION__ >= 199901L
 #    define INLINE static inline
 #elif defined(__GNUC__) || defined(__GNUG__)

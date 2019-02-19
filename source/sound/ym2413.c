@@ -58,6 +58,7 @@ to do:
 #include <math.h>
 
 /* Convenience stuff... */
+#undef INLINE
 #if __STDC_VERSION__ >= 199901L
 #    define INLINE static inline
 #elif defined(__GNUC__) || defined(__GNUG__)

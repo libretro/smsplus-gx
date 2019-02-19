@@ -2,10 +2,11 @@ Charles Mcdonald
 ================
 
 Released his SMS emulator since 0.9 under the GPLv2+.
-It stayed like so until after versopn 1.5 (source code to version 1.5 got lost unfortunately but we still have SmSPlus-GX thankfully).
-After version 1.5, he decided for unknown reasons to switch it to a non-commercial license, turning it proprietary again.
-Another newer upstream fork also uses this license. Therefore, i need to be very careful about this and make sure we're not using 
-any code from that version to the full extent of the jam. (i mean law)
+It stayed like so until after version 1.5 (source code to version 1.5 got lost unfortunately but we still have SmSPlus-GX thankfully).
+After version 1.5, he decided to switch it to a non-commercial license, turning it proprietary again.
+(The reason being he got legal threats from some companies using his emulator)
+Another newer upstream fork also uses this license.
+Therefore, i need to be very careful about this and make sure we're not using any code from that version to the full extent of the jam. (i mean law)
 
 He also contributed modifications to sn76489.c, i contacted him and he told me it fell under the same license as Maxim's.
 
@@ -35,10 +36,14 @@ https://github.com/dmitrysmagin/sms_sdl-rzx50
 
 The fonts were also taken from that repository.
 
+I suspect he also did the SDL sound code that was found in FBA-SDL.
+That code is so much better than what we used to have so thank you Dmitry !
+
 exmortis@yandex.ru, joyrider
 ============================
 They are mostly responsible for making the initial port of Dingux-SMS for the Dingoo.
 I don't think there's much of their code left, if any.
+The SDL sound code was very poor and got entirely replaced by the one found in FBA-SDL.
 
 PocketSprite
 ============
@@ -84,13 +89,13 @@ It shares little to no similarity with Maxim's code and it is also released unde
 Gameblabla, me
 ==============
 
-Switced most variables to c99 data types. (Fixed rendering issues on 64-bits and somewhat broken PSG sound for Maxim's PSG core)
-Improving PocketSprite's EightyOne patches for making sure it works with the newer SMS Plus version. (not as straightfoward as it might seem)
-Disabled collision check for 9th sprite. Doing so passes Flubba's test.
+I switced most variables to c99 data types: this fixed rendering issues on 64-bits and somewhat broken PSG sound for Maxim's PSG core.
+I also improved PocketSprite's EightyOne patches for making sure it works with the newer SMS Plus version. (not as straightfoward as it might seem !)
+Disabled collision check for 9th sprite : doing so passes Flubba's test.
 Fixed support for 256 pages. This fixes Bad Apple SMS. (also added it to the ROM database list as it requires PAL timings)
-Put everything together and making sure it works :' )
 
-I also made specific changes for each devices, like the RS-97. They can be found under their own subfolders.
+I made specific changes for each devices, like the RS-97. They can be found under their own subfolders in src/ports.
+Another thing i did was to port it to several sound APIs such as ALSA, OSS, Portaudio, libao and pulseaudio.
 I am releasing the changes under the GPLv2+, just to make things clear.
 
 Maxim

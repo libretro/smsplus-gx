@@ -1,21 +1,32 @@
 PRGNAME     = sms_sdl
 
 # define regarding OS, which compiler to use
-EXESUFFIX = 
-CC          = /opt/rs97-toolchain/bin/mipsel-linux-gcc
+CC			= /opt/rs97-toolchain/bin/mipsel-linux-gcc
 
 # add SDL dependencies
+PORT		= rs97
+SOUND_OUTPUT = oss
+SOUND_ENGINE = maxim_sn76489
+Z80_CORE = z80
+PROFILE		= 0
 
-#-msym32 -mlong-calls
-CFLAGS		= -Ofast -fdata-sections -ffunction-sections -fno-common -mips32 -fno-PIC -mno-abicalls -fprofile-use
+CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-check-zero-division -funsafe-math-optimizations -fsingle-precision-constant -fno-common -mips32 -fno-PIC -mno-abicalls
 CFLAGS		+= -std=gnu99 -DLSB_FIRST -DMAXIM_PSG
-CFLAGS 		+= -Isource -Isource/z80 -Isource/generic -I./source/sound -Isource/unzip -Isource/rs97 -Isource/sound/maxim_sn76489 -Iinclude
-#CFLAGS		+= -fprofile-generate=/home/retrofw/profile -fprofile-dir=/mnt/int_sd/profile -funsafe-math-optimizations -fassociative-math -ffinite-math-only -fsingle-precision-constant -fsection-anchors -falign-functions=2 -mno-check-zero-division
+CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/generic -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
+ifeq ($(PROFILE), 1)
+CFLAGS 		+= -fprofile-generate=/home/retrofw/profile
+else
+CFLAGS		+= -fprofile-use
+endif
 
-LDFLAGS     = -lSDL -lportaudio -lm -lz -lc -no-pie  -Wl,--as-needed -Wl,--gc-sections -s
+ifeq ($(SOUND_ENGINE), maxim_sn76489)
+CFLAGS 		+= -DMAXIM_PSG
+endif
+
+LDFLAGS     = -lSDL -lm -lz -lc -no-pie -Wl,--as-needed -Wl,--gc-sections -s -flto
 
 # Files to be r
-SRCDIR    = ./source ./source/unzip ./source/z80 ./source/sound ./source/generic ./source/rs97 ./source/sound/maxim_sn76489
+SRCDIR    = ./source ./source/unzip ./source/cpu_cores/$(Z80_CORE) ./source/sound ./source/sound_output/$(SOUND_OUTPUT) ./source/generic ./source/ports/$(PORT) ./source/sound/$(SOUND_ENGINE)
 VPATH     = $(SRCDIR)
 SRC_C   = $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.c))
 OBJ_C   = $(notdir $(patsubst %.c, %.o, $(SRC_C)))
@@ -29,4 +40,4 @@ $(OBJ_C) : %.o : %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 	
 clean:
-	rm -f $(PRGNAME)$(EXESUFFIX) *.o
+	rm -f $(PRGNAME) *.o
