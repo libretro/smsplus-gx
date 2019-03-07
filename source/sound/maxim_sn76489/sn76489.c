@@ -107,7 +107,7 @@ uint8_t *SN76489_GetContextPtr(int32_t which)
     return (uint8_t *)&SN76489[which];
 }
 
-int32_t SN76489_GetContextSize(void)
+uint32_t SN76489_GetContextSize(void)
 {
     return sizeof(SN76489_Context);
 }

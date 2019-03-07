@@ -1,6 +1,6 @@
 
-#ifndef _SN76489_H_
-#define _SN76489_H_
+#ifndef SN76489_H_
+#define SN76489_H_
 
 #define MAX_SN76489     4
 
@@ -36,16 +36,16 @@ enum mute_values {
 typedef struct
 {
     /* expose this for inspection/modification for channel muting */
-    int32_t Mute;
-    int32_t BoostNoise;
-    int32_t VolumeArray;
+    uint32_t Mute;
+    uint32_t BoostNoise;
+    uint32_t VolumeArray;
     
     /* Variables */
     float Clock;
     float dClock;
-    int32_t PSGStereo;
-    int32_t NumClocksForSample;
-    int32_t WhiteNoiseFeedback;
+    uint32_t PSGStereo;
+    uint32_t NumClocksForSample;
+    uint32_t WhiteNoiseFeedback;
     
     /* PSG registers: */
     uint16_t Registers[8];        /* Tone, vol x4 */
@@ -71,11 +71,11 @@ void SN76489_Shutdown(void);
 void SN76489_Config(int32_t which, int32_t mute, int32_t boost, int32_t volume, int32_t feedback);
 void SN76489_SetContext(int32_t which, uint8_t *data);
 void SN76489_GetContext(int32_t which, uint8_t *data);
-uint8 *SN76489_GetContextPtr(int32_t which);
-int SN76489_GetContextSize(void);
+uint8_t *SN76489_GetContextPtr(int32_t which);
+uint32_t SN76489_GetContextSize(void);
 void SN76489_Write(int32_t which, int32_t data);
 void SN76489_GGStereoWrite(int32_t which, int32_t data);
 void SN76489_Update(int32_t which, int16_t **buffer, int32_t length);
 
-#endif /* _SN76489_H_ */
+#endif /* SN76489_H_ */
 
