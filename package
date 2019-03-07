@@ -39,8 +39,8 @@ selectordir=/home/retrofw/roms
 selectorfilter=.sms,.bin,.gg,.zip,.rom,.sg
 ' > home/retrofw/apps/gmenu2x/sections/emulators/sms_sdl
 
-tar -czvf control.tar.gz control
-tar -czvf data.tar.gz home
+tar -czvf control.tar.gz control --owner=0 --group=0
+tar -czvf data.tar.gz home --owner=0 --group=0
 ar rv ../sms_sdl.ipk control.tar.gz data.tar.gz debian-binary
 
 cd ..
