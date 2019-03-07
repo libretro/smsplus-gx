@@ -48,9 +48,13 @@ void FM_WriteReg(uint32_t reg, uint32_t data)
 void FM_Write(uint32_t offset, uint32_t data)
 {
     if(offset & 1)
+    {
         fm_context.reg[ fm_context.latch ] = data;
+	}
     else
+    {
         fm_context.latch = data;
+	}
 
 	ym2413_write(fmm, offset & 1, data);
 	isfm_used = 1;
@@ -104,12 +108,12 @@ void FM_SetContext(uint8_t *data)
     FM_Write(0, fm_context.latch);
 }
 
-int FM_GetContextSize(void)
+uint32_t FM_GetContextSize(void)
 {
     return sizeof(FM_Context);
 }
 
-uint8 *FM_GetContextPtr(void)
+uint8_t *FM_GetContextPtr(void)
 {
     return (uint8_t *)&fm_context;
 }
