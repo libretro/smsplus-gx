@@ -6,6 +6,12 @@
 #define Z80_Regs z80_t
 #define Z80_Context &Z80
 
+#define true 1
+#define false 0
+
+#define Z80_INPUT_LINE_WAIT 4
+#define Z80_INPUT_LINE_BUSRQ 5
+
 enum
 {
   Z80_PC, Z80_SP,
@@ -31,31 +37,42 @@ enum {
 /****************************************************************************/
 typedef struct
 {
-  PAIR  pc,sp,af,bc,de,hl,ix,iy,wz;
-  PAIR  af2,bc2,de2,hl2;
-  uint8_t  r,r2,iff1,iff2,halt,im,i;
-  uint8_t  nmi_state;      /* nmi line state */
-  uint8_t  nmi_pending;    /* nmi pending */
-  uint8_t  irq_state;      /* irq line state */
-  uint8_t  after_ei;      /* are we in the EI shadow? */
-  const struct z80_irq_daisy_chain *daisy;
-  int32_t    (*irq_callback)(int32_t irqline);
+	PAIR  pc,sp,af,bc,de,hl,ix,iy,wz;
+	PAIR  af2,bc2,de2,hl2;
+	PAIR prvpc;
+	uint8_t  r,r2,iff1,iff2,halt,im,i;
+	uint8_t  after_ei;      /* are we in the EI shadow? */
+	uint8_t after_ldair; /* same, but for LD A,I or LD A,R */
+  
+	uint8_t *cc_op;
+	uint8_t *cc_cb;
+	uint8_t *cc_ed;
+	uint8_t *cc_xy;
+	uint8_t *cc_xycb;
+	uint8_t *cc_ex;
+	
+	uint16_t ea;
+	
+	int32_t  nmi_state;      /* nmi line state */
+	uint32_t  nmi_pending;    /* nmi pending */
+	uint32_t  irq_state;      /* irq line state */
+	int32_t    (*irq_callback)(void);
+	int32_t icount;
+	int32_t wait_state;         // wait line state
+	int32_t busrq_state;        // bus request line state
 }  Z80_Regs;
 
 
-extern uint32_t z80_cycle_count;
+extern int32_t z80_cycle_count;
 extern Z80_Regs Z80;
 
-void z80_init(int32_t index, int32_t clock, const void *config, int32_t (*irqcallback)(int32_t));
+void z80_init(int32_t (*irqcallback)(void));
 void z80_reset (void);
 void z80_exit (void);
-int z80_execute(int32_t cycles);
-void z80_burn(int32_t cycles);
-void z80_get_context (void *dst);
-void z80_set_context (void *src);
+int32_t z80_execute(int32_t cycles);
 void z80_set_irq_line(int32_t irqline, int32_t state);
 void z80_reset_cycle_count(void);
-int z80_get_elapsed_cycles(void);
+int32_t z80_get_elapsed_cycles(void);
 
 extern uint8_t *cpu_readmap[64];
 extern uint8_t *cpu_writemap[64];

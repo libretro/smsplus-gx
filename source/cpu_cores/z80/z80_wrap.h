@@ -8,7 +8,7 @@
 #define INPUT_LINE_IRQ0 0
 
 #define CPUZ80_Init() \
-	z80_init(0,0,0,sms_irq_callback);
+	z80_init(sms_irq_callback);
 
 #define CPUZ80_Reset() \
 	z80_reset(); \
