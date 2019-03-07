@@ -22,7 +22,6 @@ gamedata_t gdata;
 t_config option;
 
 SDL_Surface* sdl_screen, *sms_bitmap;
-static int32_t frames_rendered = 0;
 uint32_t countedFrames = 0;
 uint32_t start;
 
@@ -62,7 +61,7 @@ static void video_update()
 void smsp_state(uint8_t slot, uint8_t mode)
 {
 	// Save and Load States
-	int8_t stpath[PATH_MAX];
+	char stpath[PATH_MAX];
 	snprintf(stpath, sizeof(stpath), "%s%s.st%d", gdata.stdir, gdata.gamename, slot);
 	printf("Path state %s\n", stpath);
 	FILE *fd;
@@ -118,7 +117,7 @@ void system_manage_sram(uint8_t *sram, uint8_t slot, uint8_t mode)
 	}
 }
 
-static int sdl_controls_update_input(SDLKey k, int32_t p)
+static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 {
 	if (sms.console == CONSOLE_COLECO)
     {
@@ -179,6 +178,8 @@ static int sdl_controls_update_input(SDLKey k, int32_t p)
 			else
 				input.pad[0] &= ~INPUT_BUTTON2;
 		break;	
+		default:
+		break;
 	}
 	return 1;
 }
@@ -187,7 +188,7 @@ static int sdl_controls_update_input(SDLKey k, int32_t p)
 static void bios_init()
 {
 	FILE *fd;
-	int8_t bios_path[256];
+	char bios_path[256];
 	
 	bios.rom = malloc(0x100000);
 	bios.enabled = 0;
@@ -220,10 +221,10 @@ static void bios_init()
 }
 
 
-static void smsp_gamedata_set(int8_t *filename) 
+static void smsp_gamedata_set(char *filename) 
 {
 	// Set paths, create directories
-	int8_t home_path[256];
+	char home_path[256];
 	snprintf(home_path, sizeof(home_path), "%s/.smsplus/", getenv("HOME"));
 	
 	if (mkdir(home_path, 0755) && errno != EEXIST) {
@@ -234,7 +235,7 @@ static void smsp_gamedata_set(int8_t *filename)
 	snprintf(gdata.gamename, sizeof(gdata.gamename), "%s", basename(filename));
 	
 	// Strip the file extension off
-	for (int i = strlen(gdata.gamename) - 1; i > 0; i--) {
+	for (uint32_t i = strlen(gdata.gamename) - 1; i > 0; i--) {
 		if (gdata.gamename[i] == '.') {
 			gdata.gamename[i] = '\0';
 			break;
@@ -277,7 +278,6 @@ void Menu()
     uint16_t miniscreenwidth = 140;
     uint16_t miniscreenheight = 135;
     SDL_Rect dstRect;
-    int8_t *cmd = NULL;
     SDL_Event Event;
     SDL_Surface* miniscreen = SDL_CreateRGBSurface(SDL_SWSURFACE, miniscreenwidth, miniscreenheight, 16, sdl_screen->format->Rmask, sdl_screen->format->Gmask, sdl_screen->format->Bmask, sdl_screen->format->Amask);
     SDL_Surface* menu_surf = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16, 0, 0, 0, 0);
@@ -378,9 +378,10 @@ void Menu()
                                 if (save_slot > 0) save_slot--;
                                 break;
                             case 4:
-                                fullscreen--;
-                                    if (fullscreen < 0)
-                                        fullscreen = 1;
+								if (fullscreen == 0)
+									fullscreen = 1;
+								else
+									fullscreen--;
                                 break;
                         }
                         break;
@@ -400,8 +401,8 @@ void Menu()
                                 break;
                         }
                         break;
-
-
+					default:
+					break;
                 }
             }
         }
@@ -467,15 +468,22 @@ int main (int argc, char *argv[])
 	option.console = 0;
 	option.nosound = 0;
 	
-	strcpy(option.game_name, argv[1]);
-	
 	smsp_gamedata_set(argv[1]);
 	
 	// Check the type of ROM
 	sms.console = strcmp(strrchr(argv[1], '.'), ".gg") ? CONSOLE_SMS : CONSOLE_GG;
 	
+	// Load ROM
+	if(!load_rom(argv[1])) 
+	{
+		fprintf(stderr, "Error: Failed to load %s.\n", argv[1]);
+		return 0;
+	}
+	
+	strcpy(option.game_name, argv[1]);
+	
 	SDL_Init(SDL_INIT_VIDEO);
-	sdl_screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
+	sdl_screen = SDL_SetVideoMode(320, 240, 16, SDL_SWSURFACE);
 	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 240, 16, 0, 0, 0, 0);
 	SDL_ShowCursor(0);
 
@@ -484,12 +492,6 @@ int main (int argc, char *argv[])
     font = gfx_tex_load_tga_from_array(fontarray);
     bigfontwhite = gfx_tex_load_tga_from_array(bigfontwhitearray);
     bigfontred = gfx_tex_load_tga_from_array(bigfontredarray);
-	
-	// Load ROM
-	if(!load_rom(argv[1])) {
-		fprintf(stderr, "Error: Failed to load %s.\n", argv[1]);
-		exit(1);
-	}
 	
 	fprintf(stdout, "CRC : %08X\n", cart.crc);
 	
@@ -525,6 +527,17 @@ int main (int argc, char *argv[])
             selectpressed = 0;
 		}
 		
+		// Refresh video data
+		video_update();
+		
+		// Output audio
+		Sound_Update();
+		
+		// Execute frame(s)
+		system_frame(0);
+		
+		SDL_Flip(sdl_screen);
+		
 		if (SDL_PollEvent(&event)) 
 		{
 			switch(event.type) 
@@ -540,17 +553,6 @@ int main (int argc, char *argv[])
 				break;
 			}
 		}
-		
-		// Refresh video data
-		video_update();
-		
-		// Output audio
-		Sound_Update();
-		
-		// Execute frame(s)
-		system_frame(0);
-		
-		SDL_Flip(sdl_screen);
 	}
 	
 	if (sdl_screen) SDL_FreeSurface(sdl_screen);

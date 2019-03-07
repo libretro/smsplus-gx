@@ -117,7 +117,7 @@ void system_manage_sram(uint8_t *sram, uint8_t slot, uint8_t mode)
 	}
 }
 
-static int sdl_controls_update_input(SDLKey k, int32_t p)
+static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 {
 	if (sms.console == CONSOLE_COLECO)
     {
@@ -235,7 +235,7 @@ static void smsp_gamedata_set(int8_t *filename)
 	snprintf(gdata.gamename, sizeof(gdata.gamename), "%s", basename(filename));
 	
 	// Strip the file extension off
-	for (int i = strlen(gdata.gamename) - 1; i > 0; i--) {
+	for (uint32_t i = strlen(gdata.gamename) - 1; i > 0; i--) {
 		if (gdata.gamename[i] == '.') {
 			gdata.gamename[i] = '\0';
 			break;
@@ -280,16 +280,15 @@ void Menu()
     SDL_Rect dstRect;
     int8_t *cmd = NULL;
     SDL_Event Event;
-    SDL_Surface* miniscreen = SDL_CreateRGBSurface(SDL_SWSURFACE, miniscreenwidth, miniscreenheight, 16, sdl_screen->format->Rmask, sdl_screen->format->Gmask, sdl_screen->format->Bmask, sdl_screen->format->Amask);
-    SDL_Surface* menu_surf = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16, 0, 0, 0, 0);
+    SDL_Surface* menu_surf = SDL_CreateRGBSurface(SDL_SWSURFACE, miniscreenwidth, miniscreenheight, 16, sdl_screen->format->Rmask, sdl_screen->format->Gmask, sdl_screen->format->Bmask, sdl_screen->format->Amask);
 
-    SDL_LockSurface(miniscreen);
+    SDL_LockSurface(menu_surf);
     if(IS_GG)
-        bitmap_scale(48,0,160,144,miniscreenwidth,miniscreenheight,256,0,(uint16_t*)sms_bitmap->pixels,(uint16_t*)miniscreen->pixels);
+        bitmap_scale(48,0,160,144,miniscreenwidth,miniscreenheight,256,0,(uint16_t*)sms_bitmap->pixels,(uint16_t*)menu_surf->pixels);
     else
-        bitmap_scale(0,0,256,192,miniscreenwidth,miniscreenheight,256,0,(uint16_t*)sms_bitmap->pixels,(uint16_t*)miniscreen->pixels);
+        bitmap_scale(0,0,256,192,miniscreenwidth,miniscreenheight,256,0,(uint16_t*)sms_bitmap->pixels,(uint16_t*)menu_surf->pixels);
         
-    SDL_UnlockSurface(miniscreen);
+    SDL_UnlockSurface(menu_surf);
     char text[50];
 
     SDL_PollEvent(&Event);
@@ -300,7 +299,7 @@ void Menu()
 
         dstRect.x = menu_surf->w-5-miniscreenwidth;
         dstRect.y = 30;
-        SDL_BlitSurface(miniscreen,NULL,menu_surf,&dstRect);
+        SDL_BlitSurface(menu_surf,NULL,menu_surf,&dstRect);
 
         gfx_font_print_center(menu_surf,5,bigfontwhite,"SMS Plus GX");
 
@@ -439,11 +438,9 @@ void Menu()
     #endif
     
     if (menu_surf) SDL_FreeSurface(menu_surf);
-	if (miniscreen) SDL_FreeSurface(miniscreen);
     
     if (currentselection == 5)
         quit = 1;
-
 }
 
 int main (int argc, char *argv[]) 
@@ -475,7 +472,13 @@ int main (int argc, char *argv[])
 	sms.console = strcmp(strrchr(argv[1], '.'), ".gg") ? CONSOLE_SMS : CONSOLE_GG;
 	
 	SDL_Init(SDL_INIT_VIDEO);
-	sdl_screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE);
+	sdl_screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE
+#ifdef SDL_TRIPLEBUF
+	| SDL_TRIPLEBUF
+#else
+	| SDL_DOUBLEBUF
+#endif
+	);
 	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 240, 16, 0, 0, 0, 0);
 	SDL_ShowCursor(0);
 	
@@ -517,6 +520,17 @@ int main (int argc, char *argv[])
 	// Loop until the user closes the window
 	while (!quit) 
 	{
+		// Refresh video data
+		video_update();
+		
+		// Output audio
+		Sound_Update();
+		
+		// Execute frame(s)
+		system_frame(0);
+		
+		SDL_Flip(sdl_screen);
+		
 		if (selectpressed == 1)
 		{
             Menu();
@@ -540,17 +554,6 @@ int main (int argc, char *argv[])
 				break;
 			}
 		}
-		
-		// Refresh video data
-		video_update();
-		
-		// Output audio
-		Sound_Update();
-		
-		// Execute frame(s)
-		system_frame(0);
-		
-		SDL_Flip(sdl_screen);
 	}
 	
 	if (sdl_screen) SDL_FreeSurface(sdl_screen);

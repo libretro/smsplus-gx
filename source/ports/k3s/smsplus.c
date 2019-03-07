@@ -212,7 +212,7 @@ void system_manage_sram(uint8_t *sram, uint8_t slot, uint8_t mode)
 	}
 }
 
-static int sdl_controls_update_input(SDLKey k, int32_t p)
+static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 {
 	if (sms.console == CONSOLE_COLECO)
     {
@@ -312,7 +312,7 @@ static void smsp_gamedata_set(int8_t *filename)
 	snprintf(gdata.gamename, sizeof(gdata.gamename), "%s", basename(filename));
 	
 	// Strip the file extension off
-	for (int i = strlen(gdata.gamename) - 1; i > 0; i--) {
+	for (uint32_t i = strlen(gdata.gamename) - 1; i > 0; i--) {
 		if (gdata.gamename[i] == '.') {
 			gdata.gamename[i] = '\0';
 			break;
@@ -715,7 +715,9 @@ int main (int argc, char *argv[])
 		system_frame(0);
 
 		++frames_rendered;
-
+		
+		SDL_Flip(sdl_screen);
+		
 		if (sms.console == CONSOLE_COLECO)
 		{
 			input.system = 0;
@@ -790,8 +792,6 @@ int main (int argc, char *argv[])
 				return;
 			}
 		}
-		
-		SDL_Flip(sdl_screen);
 	}
 	
 	if (sdl_screen) SDL_FreeSurface(sdl_screen);
@@ -802,7 +802,7 @@ int main (int argc, char *argv[])
 	
 	for(uint8_t i=0;i<2;i++)
 	{
-			if (joystick[i]) SDL_JoystickClose(joystick[i]);
+		if (joystick[i]) SDL_JoystickClose(joystick[i]);
 	}
 	
 	// Deinitialize audio and video output

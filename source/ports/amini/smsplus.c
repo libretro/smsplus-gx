@@ -43,18 +43,23 @@ static void video_update()
 	SDL_LockSurface(sdl_screen);
 	switch(fullscreen) 
 	{
-		case 1:
-        case 2: // aspect ratio
-		if(sms.console == CONSOLE_GG) 
-			upscale_160x144_to_320x272_for_480x272((uint32_t*)sdl_screen->pixels, (uint32_t*)sms_bitmap->pixels+24);
-		else 
-			upscale_256x192_to_384x272_for_480x272((uint32_t*)sdl_screen->pixels, (uint32_t*)sms_bitmap->pixels, vdp.height);
-		break;
-        default: // native res
+        case 0: // native res
 		if(sms.console == CONSOLE_GG) 
 			bitmap_scale(48,0,160,144,160,144,256,sdl_screen->w-160,(uint16_t*)sms_bitmap->pixels,(uint16_t*)sdl_screen->pixels+(sdl_screen->w-160)/2+(sdl_screen->h-144)/2*sdl_screen->w);
 		else 
 			bitmap_scale(0,0,256,vdp.height,256,vdp.height,256,sdl_screen->w-256,(uint16_t*)sms_bitmap->pixels,(uint16_t*)sdl_screen->pixels+(sdl_screen->w-256)/2+(sdl_screen->h-vdp.height)/2*sdl_screen->w);
+		break;
+		case 1: // Fullscreen
+		if(sms.console == CONSOLE_GG) 
+			upscale_160x144_to_480x272((uint32_t*)sdl_screen->pixels, (uint32_t*)sms_bitmap->pixels+24);
+		else 
+			upscale_256xXXX_to_480x272((uint32_t*)sdl_screen->pixels, (uint32_t*)sms_bitmap->pixels, vdp.height);
+		break;
+        case 2: // aspect ratio
+		if(sms.console == CONSOLE_GG) 
+			upscale_160x144_to_320x272_for_480x272((uint32_t*)sdl_screen->pixels, (uint32_t*)sms_bitmap->pixels+24);
+		else 
+			upscale_256xXXX_to_384x272_for_480x272((uint32_t*)sdl_screen->pixels, (uint32_t*)sms_bitmap->pixels, vdp.height);
 		break;
 	}
 	SDL_UnlockSurface(sdl_screen);	
@@ -120,7 +125,7 @@ void system_manage_sram(uint8_t *sram, uint8_t slot, uint8_t mode)
 	}
 }
 
-static int sdl_controls_update_input(SDLKey k, int32_t p)
+static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 {
 	if (sms.console == CONSOLE_COLECO)
     {
@@ -220,7 +225,7 @@ static void smsp_gamedata_set(int8_t *filename)
 	snprintf(gdata.gamename, sizeof(gdata.gamename), "%s", basename(filename));
 	
 	// Strip the file extension off
-	for (int i = strlen(gdata.gamename) - 1; i > 0; i--) {
+	for (uint32_t i = strlen(gdata.gamename) - 1; i > 0; i--) {
 		if (gdata.gamename[i] == '.') {
 			gdata.gamename[i] = '\0';
 			break;
@@ -316,6 +321,8 @@ void Menu()
         {
             if (fullscreen == 1)
                 gfx_font_print(final_screen,5,105,bigfontred,"Stretched");
+			else if (fullscreen == 2)
+				gfx_font_print(final_screen,5,105,bigfontred,"Keep Aspect");
             else
 				gfx_font_print(final_screen,5,105,bigfontred,"Native");
         }
@@ -323,6 +330,8 @@ void Menu()
         {
             if (fullscreen == 1)
                 gfx_font_print(final_screen,5,105,bigfontwhite,"Stretched");
+			else if (fullscreen == 2)
+				gfx_font_print(final_screen,5,105,bigfontwhite,"Keep Aspect");
             else
 				gfx_font_print(final_screen,5,105,bigfontwhite,"Native");
         }
@@ -375,9 +384,10 @@ void Menu()
 									if (save_slot > 0) save_slot--;
 									break;
 								case 4:
-									fullscreen--;
-										if (fullscreen < 0)
-											fullscreen = 1;
+									if (fullscreen == 0)
+										fullscreen = 2;
+									else
+										fullscreen--;
 									break;
 
 							}
@@ -393,7 +403,7 @@ void Menu()
 									break;
 								case 4:
 									fullscreen++;
-									if (fullscreen > 1)
+									if (fullscreen > 2)
 										fullscreen = 0;
 									break;
 							}
@@ -413,9 +423,10 @@ void Menu()
 									if (save_slot > 0) save_slot--;
 									break;
 								case 4:
-									fullscreen--;
-										if (fullscreen < 0)
-											fullscreen = 1;
+									if (fullscreen == 0)
+										fullscreen = 2;
+									else
+										fullscreen--;
 									break;
 
 							}
@@ -432,7 +443,7 @@ void Menu()
 									break;
 								case 4:
 									fullscreen++;
-									if (fullscreen > 1)
+									if (fullscreen > 2)
 										fullscreen = 0;
 									break;
 							}
@@ -474,7 +485,7 @@ void Menu()
             {
                 case 4 :
                     fullscreen++;
-                    if (fullscreen > 1)
+                    if (fullscreen > 2)
                         fullscreen = 0;
                     break;
                 case 2 :
@@ -494,14 +505,13 @@ void Menu()
     }
     
     if (currentselection == 5)
+    {
         quit = 1;
-	if (quit)
-	{
-		SDL_FreeSurface(miniscreen);
-		SDL_FreeSurface(black_screen);
-		SDL_FreeSurface(final_screen);
 	}
-        
+	
+	if (miniscreen) SDL_FreeSurface(miniscreen);
+	if (black_screen) SDL_FreeSurface(black_screen);
+	if (final_screen) SDL_FreeSurface(final_screen);
 }
 
 int main (int argc, char *argv[]) 
@@ -529,12 +539,17 @@ int main (int argc, char *argv[])
 	option.console = 0;
 	option.nosound = 0;
 	
-	strcpy(option.game_name, argv[1]);
-	
 	smsp_gamedata_set(argv[1]);
-	
 	// Check the type of ROM
 	sms.console = strcmp(strrchr(argv[1], '.'), ".gg") ? CONSOLE_SMS : CONSOLE_GG;
+	
+	// Load ROM
+	if(!load_rom(argv[1])) {
+		fprintf(stderr, "Error: Failed to load %s.\n", argv[1]);
+		return 0;
+	}
+	
+	strcpy(option.game_name, argv[1]);
 	
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
 	SDL_JoystickEventState(SDL_ENABLE);
@@ -552,12 +567,6 @@ int main (int argc, char *argv[])
     font = gfx_tex_load_tga_from_array(fontarray);
     bigfontwhite = gfx_tex_load_tga_from_array(bigfontwhitearray);
     bigfontred = gfx_tex_load_tga_from_array(bigfontredarray);
-	
-	// Load ROM
-	if(!load_rom(argv[1])) {
-		fprintf(stderr, "Error: Failed to load %s.\n", argv[1]);
-		exit(1);
-	}
 	
 	fprintf(stdout, "CRC : %08X\n", cart.crc);
 	
@@ -601,7 +610,9 @@ int main (int argc, char *argv[])
 		system_frame(0);
 
 		++frames_rendered;
-
+		
+		SDL_Flip(sdl_screen);
+		
 		if (sms.console == CONSOLE_COLECO)
 		{
 			input.system = 0;
@@ -676,8 +687,6 @@ int main (int argc, char *argv[])
 				return;
 			}
 		}
-		
-		SDL_Flip(sdl_screen);
 	}
 	
 	if (sdl_screen) SDL_FreeSurface(sdl_screen);
