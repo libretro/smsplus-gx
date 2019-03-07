@@ -22,8 +22,8 @@
  *
  ******************************************************************************/
 
-#ifndef _SMS_H_
-#define _SMS_H_
+#ifndef SMS_H_
+#define SMS_H_
 
 #define CYCLES_PER_LINE 228
 
@@ -122,19 +122,19 @@ typedef struct
 /* BIOS ROM */
 typedef struct
 {
-  uint8_t *rom;
-  uint8_t enabled;
-  uint8_t pages;
-  uint8_t fcr[4];
+	uint8_t *rom;
+	uint8_t enabled;
+	uint8_t fcr[4];
+	uint16_t pages;
 } bios_t;
 
 typedef struct
 {
 	uint8_t *rom;
-	/* We need to use an unsigned short for pages, as Bad Apple SMS requires it !*/
-	uint16_t pages;
 	uint8_t *fcr;
 	uint8_t mapper;
+	/* We need to use an unsigned short for pages, as Bad Apple SMS requires it !*/
+	uint16_t pages;
 } slot_t;
 
 typedef struct 
@@ -159,6 +159,6 @@ extern void sms_shutdown(void);
 extern void mapper_reset(void);
 extern void mapper_8k_w(uint16_t address, uint8_t data);
 extern void mapper_16k_w(uint16_t address, uint8_t data);
-extern int sms_irq_callback(int param);
+extern int32_t sms_irq_callback(void);
 
-#endif /* _SMS_H_ */
+#endif /* SMS_H_ */

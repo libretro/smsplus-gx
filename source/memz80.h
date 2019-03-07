@@ -22,28 +22,28 @@
  *
  ******************************************************************************/
 
-#ifndef _MEMZ80_H_
-#define _MEMZ80_H_
+#ifndef MEMZ80_H_
+#define MEMZ80_H_
 
 /* Global data */
-extern uint8 data_bus_pullup;
-extern uint8 data_bus_pulldown;
+extern uint8_t data_bus_pullup;
+extern uint8_t data_bus_pulldown;
 
 /* Function prototypes */
-extern uint8 z80_read_unmapped(void);
-extern void gg_port_w(uint16 port, uint8 data);
-extern uint8 gg_port_r(uint16 port);
-extern void ggms_port_w(uint16 port, uint8 data);
-extern uint8 ggms_port_r(uint16 port);
-extern void sms_port_w(uint16 port, uint8 data);
-extern uint8 sms_port_r(uint16 port);
-extern void smsj_port_w(uint16 port, uint8 data);
-extern uint8 smsj_port_r(uint16 port);
-extern void md_port_w(uint16 port, uint8 data);
-extern uint8 md_port_r(uint16 port);
-extern void tms_port_w(uint16 port, uint8 data);
-extern uint8 tms_port_r(uint16 port);
-extern void coleco_port_w(uint16 port, uint8 data);
-extern uint8 coleco_port_r(uint16 port);
+extern uint8_t z80_read_unmapped(void);
+extern void gg_port_w(uint16_t  port, uint8_t data);
+extern uint8_t gg_port_r(uint16_t  port);
+extern void ggms_port_w(uint16_t  port, uint8_t data);
+extern uint8_t ggms_port_r(uint16_t  port);
+extern void sms_port_w(uint16_t  port, uint8_t data);
+extern uint8_t sms_port_r(uint16_t  port);
+extern void smsj_port_w(uint16_t  port, uint8_t data);
+extern uint8_t smsj_port_r(uint16_t  port);
+extern void md_port_w(uint16_t  port, uint8_t data);
+extern uint8_t md_port_r(uint16_t  port);
+extern void tms_port_w(uint16_t  port, uint8_t data);
+extern uint8_t tms_port_r(uint16_t  port);
+extern void coleco_port_w(uint16_t  port, uint8_t data);
+extern uint8_t coleco_port_r(uint16_t  port);
 
-#endif /* _MEMZ80_H_ */
+#endif /* MEMZ80_H_ */

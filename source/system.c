@@ -28,12 +28,13 @@ bitmap_t bitmap;
 cart_t cart;
 input_t input;
 
-extern uint32_t z80_cycle_count;
+extern int32_t z80_cycle_count;
 
 /* Run the virtual console emulation for one frame */
 void system_frame(uint32_t skip_render)
 {
-	uint32_t iline = 0, line_z80 = 0;
+	int32_t iline = 0;
+	uint32_t line_z80 = 0;
 
 	/* Debounce pause key */
 	if(input.system & INPUT_PAUSE)
@@ -72,6 +73,7 @@ void system_frame(uint32_t skip_render)
 		/* VDP line rendering */
 		if(!skip_render) render_line(vdp.line);
 
+		#ifndef PERFORMANCE_HACK
 		/* Horizontal Interrupt */
 		if (sms.console >= CONSOLE_SMS)
 		{
@@ -93,6 +95,7 @@ void system_frame(uint32_t skip_render)
 				}
 			}
 		}
+		#endif
 
 		/* Run Z80 CPU */
 		line_z80 += CYCLES_PER_LINE;
@@ -119,7 +122,6 @@ void system_frame(uint32_t skip_render)
 
 void system_init(void)
 {
-	error_init();
 	sms_init();
 	pio_init();
 	vdp_init();
@@ -134,7 +136,6 @@ void system_shutdown(void)
 	vdp_shutdown();
 	render_shutdown();
 	SMSPLUS_sound_shutdown();
-	error_shutdown();
 }
 
 void system_reset(void)
@@ -150,11 +151,11 @@ void system_reset(void)
 
 void system_poweron(void)
 {
-  system_init();
-  system_reset();
+	system_init();
+	system_reset();
 }
 
 void system_poweroff(void)
 {
-  system_manage_sram(cart.sram, SLOT_CART, SRAM_SAVE);
+	system_manage_sram(cart.sram, SLOT_CART, SRAM_SAVE);
 }

@@ -22,8 +22,8 @@
  *
  ******************************************************************************/
 
-#ifndef _SYSTEM_H_
-#define _SYSTEM_H_
+#ifndef SYSTEM_H_
+#define SYSTEM_H_
 
 #define APP_NAME            "SMS Plus"
 #define APP_VERSION         "1.3"
@@ -55,24 +55,24 @@ enum
 /* User input structure */
 typedef struct
 {
-  uint8_t pad[2];
-  int32_t analog[2][2];
-  uint8_t system;
+	uint8_t pad[2];
+	uint32_t analog[2][2];
+	uint8_t system;
 } input_t;
 
 /* Game image structure */
 typedef struct
 {
-  uint8_t *rom;
-  uint8_t loaded;
-  uint32_t size;
-  /* We need to use an unsigned short for pages, as Bad Apple SMS requires it !*/
-  uint16_t pages;
-  int32_t crc;
-  uint32_t sram_crc;
-  int8_t mapper;
-  uint8_t sram[0x8000];
-  uint8_t fcr[4];
+	uint32_t size;
+	uint32_t crc;
+	uint32_t sram_crc;
+	uint8_t *rom;
+	uint8_t loaded;
+	uint8_t mapper;
+	uint8_t sram[0x8000];
+	uint8_t fcr[4];
+	/* We need to use an unsigned short for pages, as Bad Apple SMS requires it !*/
+	uint16_t pages;
 } cart_t;
 
 /* Bitmap structure */
@@ -106,6 +106,6 @@ extern void system_manage_sram(uint8_t *sram, uint8_t slot, uint8_t mode);
 extern void system_poweron(void);
 extern void system_poweroff(void);
 
-#endif /* _SYSTEM_H_ */
+#endif /* SYSTEM_H_ */
 
 

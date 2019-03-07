@@ -39,16 +39,16 @@ uint8_t dummy_read[0x400];
 
 static void writemem_mapper_none(uint16_t offset, uint8_t data)
 {
-  cpu_writemap[offset >> 10][offset & 0x03FF] = data;
+	cpu_writemap[offset >> 10][offset & 0x03FF] = data;
 }
 
 static void writemem_mapper_sega(uint16_t offset, uint8_t data)
 {
-  if(offset >= 0xFFFC)
-  {
-    mapper_16k_w(offset & 3, data);
-  }
-  cpu_writemap[offset >> 10][offset & 0x03FF] = data;
+	if(offset >= 0xFFFC)
+	{
+		mapper_16k_w(offset & 3, data);
+	}
+	cpu_writemap[offset >> 10][offset & 0x03FF] = data;
 }
 
 static void writemem_mapper_codies(uint16_t offset, uint8_t data)
@@ -122,13 +122,13 @@ void sms_init(void)
 {
 	CPUZ80_Init();
 
-  /* Default: open bus */
-  data_bus_pullup   = 0x00;
-  data_bus_pulldown = 0x00;
+	/* Default: open bus */
+	data_bus_pullup   = 0x00;
+	data_bus_pulldown = 0x00;
 
-  /* Initialize port handlers */
-  switch(sms.console)
-  {
+	/* Initialize port handlers */
+	switch(sms.console)
+	{
     case CONSOLE_COLECO:
       cpu_writeport16 = coleco_port_w;
       cpu_readport16 = coleco_port_r;
@@ -188,7 +188,7 @@ void sms_shutdown(void)
 
 void sms_reset(void)
 {
-  int i;
+  uint32_t i;
 
   /* reset Z80 state */
   CPUZ80_Reset();
@@ -364,10 +364,10 @@ void sms_reset(void)
 
 void mapper_8k_w(uint16_t address, uint8_t data)
 {
-  int i;
+  uint8_t i;
 
   /* cartridge ROM page (8k) index */
-  uint8 page = data % (slot.pages << 1);
+  uint8_t page = data % (slot.pages << 1);
   
   /* Save frame control register data */
   slot.fcr[address] = data;
@@ -414,10 +414,10 @@ void mapper_8k_w(uint16_t address, uint8_t data)
     
 void mapper_16k_w(uint16_t address, uint8_t data)
 {
-  int i;
+  uint8_t i;
 
   /* cartridge ROM page (16k) index */
-  uint8 page = data % slot.pages;
+  uint8_t page = data % slot.pages;
   
   /* page index increment (SEGA mapper) */
   if (slot.fcr[0] & 0x03)
@@ -435,7 +435,7 @@ void mapper_16k_w(uint16_t address, uint8_t data)
       if(data & 0x08)
       {
         /* external RAM (upper or lower 16K) mapped at $8000-$BFFF */
-        int offset = (data & 0x04) ? 0x4000 : 0x0000;
+        uint32_t offset = (data & 0x04) ? 0x4000 : 0x0000;
         for(i = 0x20; i <= 0x2F; i++)
         {
           cpu_readmap[i] = cpu_writemap[i] = &cart.sram[offset + ((i & 0x0F) << 10)];
@@ -551,7 +551,7 @@ void mapper_16k_w(uint16_t address, uint8_t data)
   }
 }
 
-int32_t sms_irq_callback(int32_t param)
+int32_t sms_irq_callback(void)
 {
 	return 0xFF;
 }

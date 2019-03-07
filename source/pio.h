@@ -22,8 +22,8 @@
  *
  ******************************************************************************/
 
-#ifndef _PIO_H_
-#define _PIO_H_
+#ifndef PIO_H_
+#define PIO_H_
 
 #define SIO_TXFL    (1 << 0)    /* 1= Transmit buffer full */
 #define SIO_RXRD    (1 << 1)    /* 1= Receive buffer full */
@@ -61,10 +61,10 @@ enum {
 extern void pio_init(void);
 extern void pio_reset(void);
 extern void pio_shutdown(void);
-extern void pio_ctrl_w(uint8 data);
-extern uint8 pio_port_r(int offset);
-extern void sio_w(int offset, int data);
-extern uint8 sio_r(int offset);
-extern uint8 coleco_pio_r(int port);
+extern void pio_ctrl_w(uint8_t data);
+extern uint8_t pio_port_r(uint32_t offset);
+extern void sio_w(uint32_t offset, uint8_t data);
+extern uint8_t sio_r(uint32_t offset);
+extern uint8_t coleco_pio_r(uint32_t port);
 
-#endif /* _PIO_H_ */
+#endif /* PIO_H_ */

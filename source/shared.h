@@ -1,13 +1,5 @@
-#ifndef _SHARED_H_
-#define _SHARED_H_
-
-typedef unsigned char uint8;
-typedef unsigned short int uint16;
-typedef unsigned long int uint32;
-
-typedef signed char int8;
-typedef signed short int int16;
-typedef signed long int int32;
+#ifndef SHARED_H_
+#define SHARED_H_
 
 /* Convenience stuff... */
 #undef INLINE
@@ -52,12 +44,12 @@ typedef signed long int int32;
 #include "fmintf.h"
 #include "sound.h"
 #include "system.h"
-#include "error.h"
 #include "loadrom.h"
 #include "config.h"
 #include "state.h"
 #include "z80_wrap.h"
 #include "fileio.h"
 #include "unzip.h"
+#include "sound_output.h"
 
-#endif /* _SHARED_H_ */
+#endif /* SHARED_H_ */

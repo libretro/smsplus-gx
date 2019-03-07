@@ -25,22 +25,22 @@
 #include "shared.h"
 
 /* Pull-up resistors on data bus */
-uint8 data_bus_pullup   = 0x00;
-uint8 data_bus_pulldown = 0x00;
+uint8_t data_bus_pullup   = 0x00;
+uint8_t data_bus_pulldown = 0x00;
 
 /* Read unmapped memory */
-uint8 z80_read_unmapped(void)
+uint8_t z80_read_unmapped(void)
 {
   //int pc = Z80.pc.w.l;
-  int pc = 0;
-  uint8 data;
+  uint32_t pc = 0;
+  uint8_t data;
   pc = (pc - 1) & 0xFFFF;
   data = cpu_readmap[pc >> 13][pc & 0x03FF];
   return ((data | data_bus_pullup) & ~data_bus_pulldown);
 }
 
 /* Port $3E (Memory Control Port) */
-void memctrl_w(uint8 data)
+void memctrl_w(uint8_t data)
 {
   /* detect CARTRIDGE/BIOS enabled/disabled */
   if (IS_SMS)
@@ -106,7 +106,7 @@ void memctrl_w(uint8 data)
     }
     else
     {
-      uint8 i;
+      uint8_t i;
       for(i = 0x00; i <= 0x2F; i++)
       {
         cpu_readmap[i]  = dummy_read;
@@ -122,7 +122,7 @@ void memctrl_w(uint8 data)
 /*--------------------------------------------------------------------------*/
 /* Sega Master System port handlers                                         */
 /*--------------------------------------------------------------------------*/
-void sms_port_w(uint16 port, uint8 data)
+void sms_port_w(uint16_t  port, uint8_t data)
 {
   port &= 0xFF;
 
@@ -171,7 +171,7 @@ void sms_port_w(uint16 port, uint8 data)
   }
 }
 
-uint8 sms_port_r(uint16 port)
+uint8_t sms_port_r(uint16_t  port)
 {
   port &= 0xFF;
 
@@ -195,14 +195,14 @@ uint8 sms_port_r(uint16 port)
   }
 
   /* Just to please the compiler */
-  return -1;
+  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
 /* Game Gear port handlers                                                  */
 /*--------------------------------------------------------------------------*/
 
-void gg_port_w(uint16 port, uint8 data)
+void gg_port_w(uint16_t  port, uint8_t data)
 {
   port &= 0xFF;
 
@@ -234,7 +234,7 @@ void gg_port_w(uint16 port, uint8 data)
 }
 
 
-uint8 gg_port_r(uint16 port)
+uint8_t gg_port_r(uint16_t  port)
 {
   port &= 0xFF;
 
@@ -265,14 +265,14 @@ uint8 gg_port_r(uint16 port)
   }
 
   /* Just to please the compiler */
-  return -1;
+  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
 /* Game Gear (MS) port handlers                                             */
 /*--------------------------------------------------------------------------*/
 
-void ggms_port_w(uint16 port, uint8 data)
+void ggms_port_w(uint16_t port, uint8_t data)
 {
   port &= 0xFF;
 
@@ -303,7 +303,7 @@ void ggms_port_w(uint16 port, uint8 data)
   }
 }
 
-uint8 ggms_port_r(uint16 port)
+uint8_t ggms_port_r(uint16_t  port)
 {
   port &= 0xFF;
 
@@ -334,14 +334,14 @@ uint8 ggms_port_r(uint16 port)
   }
 
   /* Just to please the compiler */
-  return -1;
+  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
 /* MegaDrive / Genesis port handlers                                        */
 /*--------------------------------------------------------------------------*/
 
-void md_port_w(uint16 port, uint8 data)
+void md_port_w(uint16_t  port, uint8_t data)
 {
   switch(port & 0xC1)
   {
@@ -366,7 +366,7 @@ void md_port_w(uint16 port, uint8 data)
 }
 
 
-uint8 md_port_r(uint16 port)
+uint8_t md_port_r(uint16_t  port)
 {
   switch(port & 0xC0)
   {
@@ -392,14 +392,14 @@ uint8 md_port_r(uint16 port)
   }
 
   /* Just to please the compiler */
-  return -1;
+  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
 /* SG1000,SC3000,SF7000 port handlers                                       */
 /*--------------------------------------------------------------------------*/
 
-void tms_port_w(uint16 port, uint8 data)
+void tms_port_w(uint16_t  port, uint8_t data)
 {
   switch(port & 0xC0)
   {
@@ -416,7 +416,7 @@ void tms_port_w(uint16 port, uint8 data)
   }
 }
 
-uint8 tms_port_r(uint16 port)
+uint8_t tms_port_r(uint16_t  port)
 {
   switch(port & 0xC0)
   {
@@ -434,7 +434,7 @@ uint8 tms_port_r(uint16 port)
 /*--------------------------------------------------------------------------*/
 /* Colecovision port handlers                                               */
 /*--------------------------------------------------------------------------*/
-void coleco_port_w(uint16 port, uint8 data)
+void coleco_port_w(uint16_t  port, uint8_t data)
 {
   /* A7 is used as enable input */
   /* A6 & A5 are used to decode the address */
@@ -461,7 +461,7 @@ void coleco_port_w(uint16 port, uint8 data)
   }
 }
 
-uint8 coleco_port_r(uint16 port)
+uint8_t coleco_port_r(uint16_t  port)
 {
   /* A7 is used as enable input */
   /* A6 & A5 are used to decode the address */

@@ -22,8 +22,8 @@
  *
  ******************************************************************************/
 
-#ifndef _RENDER_H_
-#define _RENDER_H_
+#ifndef RENDER_H_
+#define RENDER_H_
 
 /* Pack RGB data into a 16-bit RGB 5:6:5 format */
 #define MAKE_PIXEL(r,g,b)   (((r << 8) & 0xF800) | ((g << 3) & 0x07E0) | ((b >> 3) & 0x001F))
@@ -33,12 +33,12 @@
 
 extern void (*render_bg)(int32_t line);
 extern void (*render_obj)(int32_t line);
-extern uint8 *linebuf;
-extern uint8 sms_cram_expand_table[4];
-extern uint8 gg_cram_expand_table[16];
-extern uint8 bg_name_dirty[0x200];
-extern uint16 bg_name_list[0x200];
-extern uint16 bg_list_index;
+extern uint8_t *linebuf;
+extern uint8_t sms_cram_expand_table[4];
+extern uint8_t gg_cram_expand_table[16];
+extern uint8_t bg_name_dirty[0x200];
+extern uint16_t bg_name_list[0x200];
+extern uint16_t bg_list_index;
 
 extern void render_shutdown(void);
 extern void render_init(void);
@@ -48,4 +48,4 @@ extern void render_bg_sms(int32_t line);
 extern void render_obj_sms(int32_t line);
 extern void palette_sync(int32_t index);
 
-#endif /* _RENDER_H_ */
+#endif /* RENDER_H_ */

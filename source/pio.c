@@ -26,10 +26,10 @@
 #include <math.h>
 
 typedef struct {
-  uint8 tr_level[2];  /* TR pin output level */
-  uint8 th_level[2];  /* TH pin output level */
-  uint8 tr_dir[2];    /* TR pin direction */
-  uint8 th_dir[2];    /* TH pin direction */
+  uint8_t tr_level[2];  /* TR pin output level */
+  uint8_t th_level[2];  /* TH pin output level */
+  uint8_t tr_dir[2];    /* TR pin direction */
+  uint8_t th_dir[2];    /* TH pin direction */
 } io_state;
 
 static io_state io_lut[2][256];
@@ -63,7 +63,7 @@ static io_state *io_current;
 
 void pio_init(void)
 {
-  int i, j;
+  uint32_t i, j;
 
   /* Make pin state LUT */
   for(j = 0; j < 2; j++)
@@ -119,9 +119,9 @@ void pio_shutdown(void)
 
 
 /* I/O port control */
-void pio_ctrl_w(uint8 data)
+void pio_ctrl_w(uint8_t data)
 {
-  uint8 th_level[2];
+  uint8_t th_level[2];
 
   /* save old TH values */
   th_level[0] = io_current->th_level[0];
@@ -156,12 +156,12 @@ void pio_ctrl_w(uint8 data)
   0   Up pin input
 */
 
-static uint8 paddle_toggle[2] = {0,0};
-static uint8 lightgun_latch =0;
+static uint8_t paddle_toggle[2] = {0,0};
+static uint8_t lightgun_latch =0;
 
-static uint8 device_r(int port)
+static uint8_t device_r(uint32_t port)
 {
-  uint8 temp = 0x7F;
+  uint8_t temp = 0x7F;
 
   switch(sms.device[port])
   {
@@ -229,12 +229,12 @@ static uint8 device_r(int port)
       /* check TH INPUT */
       if (io_current->th_dir[port] == PIN_DIR_IN)
       {
-        int hc = hc_256[z80_get_elapsed_cycles() % CYCLES_PER_LINE];
-        int dx = input.analog[port][0] - (hc*2);
-        int dy = input.analog[port][1] - vdp.line;
+        uint32_t hc = hc_256[z80_get_elapsed_cycles() % CYCLES_PER_LINE];
+        uint32_t dx = input.analog[port][0] - (hc*2);
+        uint32_t dy = input.analog[port][1] - vdp.line;
 
         /* is current pixel is within lightgun spot ? */
-        if ((abs(dy) <= 5) && (abs(dx) <= 60))
+        if ((dy <= 5) && (dx <= 60))
         {
           /* set TH low */
           temp &= ~0x40;
@@ -243,7 +243,7 @@ static uint8 device_r(int port)
           if (!lightgun_latch)
           {
             /* latch estimated HC value */
-            sms.hlatch = sms.gun_offset + (input.analog[port][0])/2;
+			sms.hlatch = sms.gun_offset + (input.analog[port][0])/2;
             lightgun_latch = 1; 
           }
         }
@@ -263,9 +263,9 @@ static uint8 device_r(int port)
 }
 
 
-uint8 pio_port_r(int offset)
+uint8_t pio_port_r(uint32_t offset)
 {
-  uint8 temp = 0xFF;
+  uint8_t temp = 0xFF;
 
   /* 
     If I/O chip is disabled, reads return last byte of instruction
@@ -331,14 +331,14 @@ uint8 pio_port_r(int offset)
       /* read I/O port B low pins (Game Gear is special case) */
       if (IS_GG)
       {
-        uint8 state = sio_r(0x01);
+        uint8_t state = sio_r(0x01);
         temp = (state & 0x3C) >> 2;     /* Insert TR,TL,D3,D2       */
         temp |= ((state & 0x40) << 1);  /* Insert TH2               */
         temp |= 0x40;                   /* Insert TH1 (unconnected) */
       }
       else
       {
-        uint8 state = device_r(1);
+        uint8_t state = device_r(1);
         temp = (state & 0x3C) >> 2;   /* Insert TR,TL,D3,D2 */
         temp |= ((state & 0x40) << 1);  /* Insert TH2 */
         temp |= (device_r(0) & 0x40);   /* Insert TH1 */
@@ -376,9 +376,9 @@ uint8 pio_port_r(int offset)
 }
 
 /* Game Gear specific IO ports */
-uint8 sio_r(int offset)
+uint8_t sio_r(uint32_t offset)
 {
-  uint8 temp;
+  uint8_t temp;
 
   switch(offset & 0xFF)
   {
@@ -417,11 +417,11 @@ uint8 sio_r(int offset)
       return 0xFF;
   }
 
-  /* Just to please compiler */
-  return -1;
+	/* Just to please compiler */
+	return 0;
 }
 
-void sio_w(int offset, int data)
+void sio_w(uint32_t offset, uint8_t data)
 {
   switch(offset & 0xFF)
   {
@@ -454,7 +454,7 @@ void sio_w(int offset, int data)
 }
 
 /* Colecovision I/O chip support */
-static uint8 keymask[12] = 
+static uint8_t keymask[12] = 
 {
   0x7a, /* 0 */
   0x7d, /* 1 */
@@ -470,9 +470,9 @@ static uint8 keymask[12] =
   0x76  /* # */
 };
 
-uint8 coleco_pio_r(int port)
+uint8_t coleco_pio_r(uint32_t port)
 {
-  uint8 temp = 0x7f;
+  uint8_t temp = 0x7f;
 
   if (coleco.pio_mode)
   {

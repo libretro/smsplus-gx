@@ -22,8 +22,8 @@
  *
  ******************************************************************************/
 
-#ifndef _STATE_H_
-#define _STATE_H_
+#ifndef STATE_H_
+#define STATE_H_
 
 
 #define STATE_VERSION   0x0104      /* Version 1.4 (BCD) */
@@ -33,4 +33,4 @@
 extern uint32_t system_save_state(FILE *mem);
 extern void system_load_state(FILE *mem);
 
-#endif /* _STATE_H_ */
+#endif /* STATE_H_ */

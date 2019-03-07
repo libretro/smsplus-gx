@@ -21,14 +21,13 @@
  *  Video Display Processor (VDP) emulation.
  *
  ******************************************************************************/
-
 #include "shared.h"
 #include "hvc.h"
 
 /* Mark a pattern as dirty */
 #define MARK_BG_DIRTY(addr)                         \
 {                                                   \
-  int name = (addr >> 5) & 0x1FF;                   \
+  uint32_t name = (addr >> 5) & 0x1FF;              \
   if(bg_name_dirty[name] == 0)                      \
   {                                                 \
     bg_name_list[bg_list_index] = name;             \
@@ -44,25 +43,24 @@ vdp_t vdp;
 /* Initialize VDP emulation */
 void vdp_init(void)
 {
-  /* display area */
-  if ((sms.console == CONSOLE_GG) && (!option.extra_gg))
-  {
-    bitmap.viewport.w = 160;
-    bitmap.viewport.x = 48;
-  }
-  else
-  {
-    bitmap.viewport.w = 256;
-    bitmap.viewport.x = 0;
-  }
+	/* display area */
+	if ((sms.console == CONSOLE_GG) && (!option.extra_gg))
+	{
+		bitmap.viewport.w = 160;
+		bitmap.viewport.x = 48;
+	}
+	else
+	{
+		bitmap.viewport.w = 256;
+		bitmap.viewport.x = 0;
+	}
 
+	/* number of scanlines */
+	vdp.lpf = sms.display ? 313 : 262;
 
-  /* number of scanlines */
-  vdp.lpf = sms.display ? 313 : 262;
-
-  /* reset viewport */
-  viewport_check();
-  bitmap.viewport.changed = 1;
+	/* reset viewport */
+	viewport_check();
+	bitmap.viewport.changed = 1;
 }
 
 void vdp_shutdown(void)
@@ -73,139 +71,139 @@ void vdp_shutdown(void)
 /* Reset VDP emulation */
 void vdp_reset(void)
 {
-  /* reset VDP structure */
-  memset(&vdp, 0, sizeof(vdp_t));
+	/* reset VDP structure */
+	memset(&vdp, 0, sizeof(vdp_t));
 
-  /* number of scanlines */
-  vdp.lpf = sms.display ? 313 : 262;
+	/* number of scanlines */
+	vdp.lpf = sms.display ? 313 : 262;
 
-  /* VDP registers default values (usually set by BIOS) */
-  if (IS_SMS && (bios.enabled != 3))
-  {
-    vdp.reg[0]  = 0x36; 
-    vdp.reg[1]  = 0x80; 
-    vdp.reg[2]  = 0xFF;
-    vdp.reg[3]  = 0xFF;
-    vdp.reg[4]  = 0xFF;
-    vdp.reg[5]  = 0xFF;
-    vdp.reg[6]  = 0xFB;
-    vdp.reg[10] = 0xFF;
-  }
+	/* VDP registers default values (usually set by BIOS) */
+	if (IS_SMS && (bios.enabled != 3))
+	{
+		vdp.reg[0]  = 0x36; 
+		vdp.reg[1]  = 0x80; 
+		vdp.reg[2]  = 0xFF;
+		vdp.reg[3]  = 0xFF;
+		vdp.reg[4]  = 0xFF;
+		vdp.reg[5]  = 0xFF;
+		vdp.reg[6]  = 0xFB;
+		vdp.reg[10] = 0xFF;
+	}
 
-  /* VDP interrupt */
-  if (sms.console == CONSOLE_COLECO)
-    vdp.irq = INPUT_LINE_NMI;
-  else
-    vdp.irq = INPUT_LINE_IRQ0;
+	/* VDP interrupt */
+	if (sms.console == CONSOLE_COLECO)
+		vdp.irq = INPUT_LINE_NMI;
+	else
+		vdp.irq = INPUT_LINE_IRQ0;
 
-  /* reset VDP viewport */
-  viewport_check();
+	/* reset VDP viewport */
+	viewport_check();
 
-  /* reset VDP internals */
-  vdp.ct    = (vdp.reg[3] <<  6) & 0x3FC0;
-  vdp.pg    = (vdp.reg[4] << 11) & 0x3800;
-  vdp.satb  = (vdp.reg[5] << 7) & 0x3F00;
-  vdp.sa    = (vdp.reg[5] <<  7) & 0x3F80;
-  vdp.sg    = (vdp.reg[6] << 11) & 0x3800;
-  vdp.bd    = (vdp.reg[7] & 0x0F);
+	/* reset VDP internals */
+	vdp.ct    = (vdp.reg[3] <<  6) & 0x3FC0;
+	vdp.pg    = (vdp.reg[4] << 11) & 0x3800;
+	vdp.satb  = (vdp.reg[5] << 7) & 0x3F00;
+	vdp.sa    = (vdp.reg[5] <<  7) & 0x3F80;
+	vdp.sg    = (vdp.reg[6] << 11) & 0x3800;
+	vdp.bd    = (vdp.reg[7] & 0x0F);
 
-  bitmap.viewport.changed = 1;
+	bitmap.viewport.changed = 1;
 }
 
 
 void viewport_check(void)
 {
-  int i;
-  int m1 = (vdp.reg[1] >> 4) & 1;
-  int m3 = (vdp.reg[1] >> 3) & 1;
-  int m2 = (vdp.reg[0] >> 1) & 1;
-  int m4 = (vdp.reg[0] >> 2) & 1;
+	uint32_t i;
+	uint32_t m1 = (vdp.reg[1] >> 4) & 1;
+	uint32_t m3 = (vdp.reg[1] >> 3) & 1;
+	uint32_t m2 = (vdp.reg[0] >> 1) & 1;
+	uint32_t m4 = (vdp.reg[0] >> 2) & 1;
+	
+	vdp.mode = (m4 << 3 | m3 << 2 | m2 << 1 | m1 << 0);
 
-  vdp.mode = (m4 << 3 | m3 << 2 | m2 << 1 | m1 << 0);
+	/* Check for extended modes */
+	if (sms.console >= CONSOLE_SMS2)
+	{
+		switch (vdp.mode)
+		{
+		  case 0x0B:  /* Mode 4 extended (224 lines) */
+			vdp.height = 224;
+			vdp.extended = 1;
+			vdp.ntab = ((vdp.reg[2] << 10) & 0x3000) | 0x0700;
+			break;
 
-  /* Check for extended modes */
-  if (sms.console >= CONSOLE_SMS2)
-  {
-    switch (vdp.mode)
-    {
-      case 0x0B:  /* Mode 4 extended (224 lines) */
-        vdp.height = 224;
-        vdp.extended = 1;
-        vdp.ntab = ((vdp.reg[2] << 10) & 0x3000) | 0x0700;
-        break;
+		  case 0x0E:  /* Mode 4 extended (240 lines) */
+			vdp.height = 240;
+			vdp.extended = 2;
+			vdp.ntab = ((vdp.reg[2] << 10) & 0x3000) | 0x0700;
+			break;
 
-      case 0x0E:  /* Mode 4 extended (240 lines) */
-        vdp.height = 240;
-        vdp.extended = 2;
-        vdp.ntab = ((vdp.reg[2] << 10) & 0x3000) | 0x0700;
-        break;
+		  default:  /* Mode 4 (192 lines) */
+			vdp.height = 192;
+			vdp.extended = 0;
+			vdp.ntab = (vdp.reg[2] << 10) & 0x3800;
 
-      default:  /* Mode 4 (192 lines) */
-        vdp.height = 192;
-        vdp.extended = 0;
-        vdp.ntab = (vdp.reg[2] << 10) & 0x3800;
+			/* invalid text mode (Mode 4) */
+			if ((vdp.mode & 0x0B) == 0x09) vdp.mode = 1;
+			break;
+		}
+	}
+	else
+	{
+		/* always use Mode 4 (192 lines) */
+		vdp.height = 192;
+		vdp.extended = 0;
+		vdp.ntab = (vdp.reg[2] << 10) & 0x3800;
 
-        /* invalid text mode (Mode 4) */
-        if ((vdp.mode & 0x0B) == 0x09) vdp.mode = 1;
-        break;
-    }
-  }
-  else
-  {
-    /* always use Mode 4 (192 lines) */
-    vdp.height = 192;
-    vdp.extended = 0;
-    vdp.ntab = (vdp.reg[2] << 10) & 0x3800;
+		/* invalid text mode (Mode 4) */
+		if ((vdp.mode & 0x09) == 0x09) vdp.mode = 1;
+	}
 
-    /* invalid text mode (Mode 4) */
-    if ((vdp.mode & 0x09) == 0x09) vdp.mode = 1;
-  }
+	/* update display area */
+	if ((sms.console != CONSOLE_GG) || option.extra_gg)
+	{
+		if(bitmap.viewport.h != vdp.height)
+		{
+		  bitmap.viewport.oh = bitmap.viewport.h;
+		  bitmap.viewport.h = vdp.height;
+		  bitmap.viewport.changed = 1;
+		}
+	}
+	else
+	{
+		/* GG display area is fixed */
+		bitmap.viewport.h = 144;
+	}
 
-  /* update display area */
-  if ((sms.console != CONSOLE_GG) || option.extra_gg)
-  {
-    if(bitmap.viewport.h != vdp.height)
-    {
-      bitmap.viewport.oh = bitmap.viewport.h;
-      bitmap.viewport.h = vdp.height;
-      bitmap.viewport.changed = 1;
-    }
-  }
-  else
-  {
-    /* GG display area is fixed */
-    bitmap.viewport.h = 144;
-  }
+	/* update border area */
+	bitmap.viewport.y = 0;
 
-  /* update border area */
-  bitmap.viewport.y = 0;
+	/* check if this is switching in/out of tms */
+	if (IS_SMS || IS_GG)
+	{
+		/* Restore palette */
+		for(i = 0; i < PALETTE_SIZE; i++)
+		{
+			palette_sync(i);
+		}
+	}
 
-  /* check if this is switching in/out of tms */
-  if (IS_SMS || IS_GG)
-  {
-    /* Restore palette */
-    for(i = 0; i < PALETTE_SIZE; i++)
-    {
-      palette_sync(i);
-    }
-  }
+	vdp.pn = (vdp.reg[2] << 10) & 0x3C00;
 
-  vdp.pn = (vdp.reg[2] << 10) & 0x3C00;
-
-  if (vdp.mode & 8)
-  {
-    render_bg  = render_bg_sms;
-    render_obj = render_obj_sms;
-  }
-  else
-  {
-    render_bg  = render_bg_tms;
-    render_obj = render_obj_tms;
-  }
+	if (vdp.mode & 8)
+	{
+		render_bg  = render_bg_sms;
+		render_obj = render_obj_sms;
+	}
+	else
+	{
+		render_bg  = render_bg_tms;
+		render_obj = render_obj_tms;
+	}
 }
 
 
-void vdp_reg_w(uint8 r, uint8 d)
+void vdp_reg_w(uint8_t r, uint8_t d)
 {
   /* Store register data */
   vdp.reg[r] = d;
@@ -259,9 +257,9 @@ void vdp_reg_w(uint8 r, uint8 d)
 }
 
 
-void vdp_write(int offset, uint8 data)
+void vdp_write(uint32_t offset, uint8_t data)
 {
-  int index;
+  uint32_t index;
 
   if (((z80_get_elapsed_cycles() + 1) / CYCLES_PER_LINE) > vdp.line)
   {
@@ -323,8 +321,8 @@ void vdp_write(int offset, uint8 data)
     
         if(vdp.code == 2)
         {
-          int r = (data & 0x0F);
-          int d = vdp.latch;
+          uint8_t r = (data & 0x0F);
+          uint8_t d = vdp.latch;
           vdp_reg_w(r, d);
         }
       }
@@ -332,9 +330,9 @@ void vdp_write(int offset, uint8 data)
   }
 }
 
-uint8 vdp_read(int offset)
+uint8_t vdp_read(uint32_t offset)
 {
-  uint8 temp;
+  uint8_t temp;
 
   switch(offset & 1)
   {
@@ -348,8 +346,8 @@ uint8 vdp_read(int offset)
     case 1: /* Status flags */
     {
       /* cycle-accurate SPR_OVR and INT flags */
-      int cyc   = z80_get_elapsed_cycles();
-      int line  = vdp.line;
+      uint32_t cyc = z80_get_elapsed_cycles();
+      uint32_t line = vdp.line;
       if ((cyc / CYCLES_PER_LINE) > line)
       {
         if (line == vdp.height) vdp.status |= 0x80;
@@ -370,7 +368,7 @@ uint8 vdp_read(int offset)
       /* cycle-accurate SPR_COL flag */
       if (temp & 0x20)
       {
-        uint8 hc = hc_256[(cyc + 1) % CYCLES_PER_LINE];
+        uint8_t hc = hc_256[(cyc + 1) % CYCLES_PER_LINE];
         if ((line == (vdp.spr_col >> 8)) && ((hc < (vdp.spr_col & 0xff)) || (hc > 0xf3)))
         {
           vdp.status |= 0x20;
@@ -383,10 +381,10 @@ uint8 vdp_read(int offset)
   }
 
   /* Just to please the compiler */
-  return -1;
+  return 0;
 }
 
-uint8 vdp_counter_r(int offset)
+uint8_t vdp_counter_r(uint32_t offset)
 {
   switch(offset & 1)
   {
@@ -398,7 +396,7 @@ uint8 vdp_counter_r(int offset)
   }
 
   /* Just to please the compiler */
-  return -1;
+  return 0;
 }
 
 
@@ -406,15 +404,15 @@ uint8 vdp_counter_r(int offset)
 /* Game Gear VDP handlers                           */
 /*--------------------------------------------------------------------------*/
 
-void gg_vdp_write(int offset, uint8 data)
+void gg_vdp_write(uint32_t offset, uint8_t data)
 {
-  int index;
+  uint32_t index;
 
-  if (((z80_get_elapsed_cycles() + 1) / CYCLES_PER_LINE) > vdp.line)
-  {
-    /* render next line now BEFORE updating register */
-    render_line((vdp.line+1)%vdp.lpf);
-  }
+	if (((z80_get_elapsed_cycles() + 1) / CYCLES_PER_LINE) > vdp.line)
+	{
+		/* render next line now BEFORE updating register */
+		render_line((vdp.line+1)%vdp.lpf);
+	}
 
   switch(offset & 1)
   {
@@ -473,8 +471,8 @@ void gg_vdp_write(int offset, uint8 data)
     
         if(vdp.code == 2)
         {
-          int r = (data & 0x0F);
-          int d = vdp.latch;
+          uint8_t r = (data & 0x0F);
+          uint8_t d = vdp.latch;
           vdp_reg_w(r, d);
         }
       }
@@ -486,9 +484,9 @@ void gg_vdp_write(int offset, uint8 data)
 /* MegaDrive / Genesis VDP handlers                     */
 /*--------------------------------------------------------------------------*/
 
-void md_vdp_write(int offset, uint8 data)
+void md_vdp_write(uint32_t offset, uint8_t data)
 {
-  int index;
+  uint32_t index;
 
   switch(offset & 1)
   {
@@ -541,8 +539,8 @@ void md_vdp_write(int offset, uint8 data)
     
         if(vdp.code == 2)
         {
-          int r = (data & 0x0F);
-          int d = vdp.latch;
+          uint8_t r = (data & 0x0F);
+          uint8_t d = vdp.latch;
           vdp_reg_w(r, d);
         }
       }
@@ -554,9 +552,9 @@ void md_vdp_write(int offset, uint8 data)
 /* TMS9918 VDP handlers                           */
 /*--------------------------------------------------------------------------*/
 
-void tms_write(int offset, int data)
+void tms_write(uint32_t offset, uint8_t data)
 {
-  int index;
+  uint32_t index;
 
   switch(offset & 1)
   {
@@ -601,8 +599,8 @@ void tms_write(int offset, int data)
     
         if(vdp.code == 2)
         {
-          int r = (data & 0x07);
-          int d = vdp.latch;
+          uint8_t r = (data & 0x07);
+          uint8_t d = vdp.latch;
           vdp_reg_w(r, d);
         }
       }

@@ -22,44 +22,45 @@
 
 #include "shared.h"
 
-int text_counter;               /* Text offset counter */
+uint32_t text_counter;               /* Text offset counter */
 
-static uint8 tms_lookup[16][256][2];   /* Expand BD, PG data into 8-bit pixels (G1,G2) */
-static uint8 mc_lookup[16][256][8];    /* Expand BD, PG data into 8-bit pixels (MC) */
-static uint8 txt_lookup[256][2];       /* Expand BD, PG data into 8-bit pixels (TX) */
-static uint8 bp_expand[256][8];        /* Expand PG data into 8-bit pixels */
-static uint8 tms_obj_lut[16*256];      /* Look up priority between SG and display pixels */
+static uint8_t tms_lookup[16][256][2];   /* Expand BD, PG data into 8-bit pixels (G1,G2) */
+static uint8_t mc_lookup[16][256][8];    /* Expand BD, PG data into 8-bit pixels (MC) */
+static uint8_t txt_lookup[256][2];       /* Expand BD, PG data into 8-bit pixels (TX) */
+static uint8_t bp_expand[256][8];        /* Expand PG data into 8-bit pixels */
+static uint8_t tms_obj_lut[16*256];      /* Look up priority between SG and display pixels */
 
-static const uint8 diff_mask[]  = {0x07, 0x07, 0x0F, 0x0F};
-static const uint8 name_mask[]  = {0xFF, 0xFF, 0xFC, 0xFC};
-static const uint8 diff_shift[] = {0, 1, 0, 1};
-static const uint8 size_tab[]   = {8, 16, 16, 32};
+static const uint8_t diff_mask[]  = {0x07, 0x07, 0x0F, 0x0F};
+static const uint8_t name_mask[]  = {0xFF, 0xFF, 0xFC, 0xFC};
+static const uint8_t diff_shift[] = {0, 1, 0, 1};
+static const uint8_t size_tab[]   = {8, 16, 16, 32};
 
 /* Internally latched sprite data in the VDP */
 typedef struct {
-    int xpos;
-    uint8 attr;
-    uint8 sg[2];
+    int32_t xpos;
+    uint8_t attr;
+    uint8_t sg[2];
 } tms_sprite;
 
 static tms_sprite sprites[4];
-static int sprites_found;
+static uint32_t sprites_found;
 
-static void render_bg_m0(int line);
-static void render_bg_m1(int line);
-static void render_bg_m1x(int line);
-static void render_bg_inv(int line);
-static void render_bg_m3(int line);
-static void render_bg_m3x(int line);
-static void render_bg_m2(int line);
+static void render_bg_m0(int32_t line);
+static void render_bg_m1(int32_t line);
+static void render_bg_m1x(int32_t line);
+static void render_bg_inv(void);
+static void render_bg_m3(int32_t line);
+static void render_bg_m3x(int32_t line);
+static void render_bg_m2(int32_t line);
 
-void parse_line(int line)
+void parse_line(int32_t line)
 {
-    int yp, i;
-    int mode = vdp.reg[1] & 3;
-    int size = size_tab[mode];
-    int diff, name;
-    uint8 *sa, *sg;
+    int32_t yp;
+    uint32_t i;
+    uint32_t mode = vdp.reg[1] & 3;
+    int32_t size = size_tab[mode];
+    uint32_t diff, name;
+    uint8_t *sa, *sg;
     tms_sprite *p;
 
     /* Reset # of sprites found */
@@ -129,11 +130,12 @@ parse_end:
     vdp.status = (vdp.status & 0xE0) | (i & 0x1F);
 }
 
-void render_obj_tms(int line)
+void render_obj_tms(int32_t line)
 {
-    int i, x = 0;
-    int size, start, end, mode;
-    uint8 *lb, *lut, *ex[2];
+    uint32_t i;
+    int32_t size, x = 0;
+    int32_t start, end, mode;
+    uint8_t *lb, *lut, *ex[2];
     tms_sprite *p;
 
     mode = vdp.reg[1] & 3;
@@ -290,19 +292,19 @@ void render_obj_tms(int line)
 
 void make_tms_tables(void)
 {
-    int i, j, x;
-    int bd, pg, ct;
-    int sx, bx;
+    uint32_t i, j, x, ct;
+    uint32_t bd, pg;
+    uint32_t sx, bx;
 
     for(sx = 0; sx < 16; sx++)
     {
         for(bx = 0; bx < 256; bx++)
         {
-//          uint8 bd = (bx & 0x0F);
-            uint8 bs = (bx & 0x40);
-//          uint8 bt = (bd == 0) ? 1 : 0;
-            uint8 sd = (sx & 0x0F);
-//          uint8 st = (sd == 0) ? 1 : 0;
+//          uint8_t bd = (bx & 0x0F);
+            uint8_t bs = (bx & 0x40);
+//          uint8_t bt = (bd == 0) ? 1 : 0;
+            uint8_t sd = (sx & 0x0F);
+//          uint8_t st = (sd == 0) ? 1 : 0;
 
             // opaque sprite pixel, choose 2nd pal and set sprite marker
             if(sd && !bs)
@@ -326,8 +328,8 @@ void make_tms_tables(void)
     /* Text lookup table */
     for(bd = 0; bd < 256; bd++)
     {
-        uint8 bg = (bd >> 0) & 0x0F;
-        uint8 fg = (bd >> 4) & 0x0F;
+        uint32_t bg = (bd >> 0) & 0x0F;
+        uint32_t fg = (bd >> 4) & 0x0F;
 
         /* If foreground is transparent, use background color */
         if(fg == 0) fg = bg;
@@ -341,8 +343,8 @@ void make_tms_tables(void)
     {
         for(pg = 0; pg < 256; pg++)
         {
-            int l = (pg >> 4) & 0x0F;
-            int r = (pg >> 0) & 0x0F;
+            uint32_t l = (pg >> 4) & 0x0F;
+            uint32_t r = (pg >> 0) & 0x0F;
 
             /* If foreground is transparent, use background color */
             if(l == 0) l = bd;
@@ -351,7 +353,7 @@ void make_tms_tables(void)
             /* Unpack 2 nibbles across eight pixels */
             for(x = 0; x < 8; x++)
             {
-                int c = (x & 4) ? r : l;
+                uint32_t c = (x & 4) ? r : l;
 
                 mc_lookup[bd][pg][x] = c;
             }
@@ -364,7 +366,7 @@ void make_tms_tables(void)
     {
         for(j = 0; j < 8; j++)
         {
-            int c = (i >> (j ^ 7)) & 1;
+            uint32_t c = (i >> (j ^ 7)) & 1;
             bp_expand[i][j] = c;
         }
     }
@@ -374,9 +376,9 @@ void make_tms_tables(void)
     {
         for(ct = 0; ct < 0x100; ct++)
         {
-            int backdrop = (bd & 0x0F);
-            int background = (ct >> 0) & 0x0F;
-            int foreground = (ct >> 4) & 0x0F;
+            uint8_t backdrop = (bd & 0x0F);
+            uint8_t background = (ct >> 0) & 0x0F;
+            uint8_t foreground = (ct >> 4) & 0x0F;
 
             /* If foreground is transparent, use background color */
             if(background == 0) background = backdrop;
@@ -389,7 +391,7 @@ void make_tms_tables(void)
 }
 
 
-void render_bg_tms(int line)
+void render_bg_tms(int32_t line)
 {
     switch(vdp.mode & 7)
     {
@@ -414,7 +416,7 @@ void render_bg_tms(int line)
             break;
 
         case 5: /* Invalid (1+3) */
-            render_bg_inv(line);
+            render_bg_inv();
             break;
 
         case 6: /* Multicolor (Extended PG) */
@@ -422,24 +424,24 @@ void render_bg_tms(int line)
             break;
 
         case 7: /* Invalid (1+2+3) */
-            render_bg_inv(line);
+            render_bg_inv();
             break;
     }
 }
 
 /* Graphics I */
-static void render_bg_m0(int line)
+static void render_bg_m0(int32_t line)
 {
-    int v_row  = (line & 7);
-    int column;
-    int name;
+    uint32_t v_row  = (line & 7);
+    uint32_t column;
+    uint32_t name;
 
-    uint8 *clut;
-    uint8 *bpex;
-    uint8 *lb = &linebuf[0];
-    uint8 *pn = &vdp.vram[vdp.pn + ((line >> 3) << 5)];
-    uint8 *ct = &vdp.vram[vdp.ct];
-    uint8 *pg = &vdp.vram[vdp.pg | (v_row)];
+    uint8_t *clut;
+    uint8_t *bpex;
+    uint8_t *lb = &linebuf[0];
+    uint8_t *pn = &vdp.vram[vdp.pn + ((line >> 3) << 5)];
+    uint8_t *ct = &vdp.vram[vdp.ct];
+    uint8_t *pg = &vdp.vram[vdp.pg | (v_row)];
 
     for(column = 0; column < 32; column++)
     {
@@ -451,20 +453,20 @@ static void render_bg_m0(int line)
 }
 
 /* Text */
-static void render_bg_m1(int line)
+static void render_bg_m1(int32_t line)
 {
-    int v_row  = (line & 7);
-    int column;
+    uint32_t v_row  = (line & 7);
+    uint32_t column;
 
-    uint8 *clut;
-    uint8 *bpex;
-    uint8 *lb = &linebuf[0];
-//  uint8 *pn = &vdp.vram[vdp.pn + ((line >> 3) * 40)];
+    uint8_t *clut;
+    uint8_t *bpex;
+    uint8_t *lb = &linebuf[0];
+//  uint8_t *pn = &vdp.vram[vdp.pn + ((line >> 3) * 40)];
 
-    uint8 *pn = &vdp.vram[vdp.pn + text_counter];
+    uint8_t *pn = &vdp.vram[vdp.pn + text_counter];
 
-    uint8 *pg = &vdp.vram[vdp.pg | (v_row)];
-    uint8 bk = vdp.reg[7];
+    uint8_t *pg = &vdp.vram[vdp.pg | (v_row)];
+    uint8_t bk = vdp.reg[7];
 
     clut = &txt_lookup[bk][0];
 
@@ -482,17 +484,17 @@ static void render_bg_m1(int line)
 }
 
 /* Text + extended PG */
-static void render_bg_m1x(int line)
+static void render_bg_m1x(int32_t line)
 {
-    int v_row  = (line & 7);
-    int column;
+    uint32_t v_row  = (line & 7);
+    uint32_t column;
 
-    uint8 *clut;
-    uint8 *bpex;
-    uint8 *lb = &linebuf[0];
-    uint8 *pn = &vdp.vram[vdp.pn + ((line >> 3) * 40)];
-    uint8 *pg = &vdp.vram[vdp.pg + (v_row) + ((line & 0xC0) << 5)];
-    uint8 bk = vdp.reg[7];
+    uint8_t *clut;
+    uint8_t *bpex;
+    uint8_t *lb = &linebuf[0];
+    uint8_t *pn = &vdp.vram[vdp.pn + ((line >> 3) * 40)];
+    uint8_t *pg = &vdp.vram[vdp.pg + (v_row) + ((line & 0xC0) << 5)];
+    uint8_t bk = vdp.reg[7];
 
     clut = &tms_lookup[0][bk][0];
 
@@ -505,13 +507,13 @@ static void render_bg_m1x(int line)
 }
 
 /* Invalid (2+3/1+2+3) */
-static void render_bg_inv(int line)
+static void render_bg_inv()
 {
-    int column;
-    uint8 *clut;
-    uint8 *bpex;
-    uint8 *lb = &linebuf[0];
-    uint8 bk = vdp.reg[7];
+    uint32_t column;
+    uint8_t *clut;
+    uint8_t *bpex;
+    uint8_t *lb = &linebuf[0];
+    uint8_t bk = vdp.reg[7];
 
     clut = &txt_lookup[bk][0];
 
@@ -523,14 +525,14 @@ static void render_bg_inv(int line)
 }
 
 /* Multicolor */
-static void render_bg_m3(int line)
+static void render_bg_m3(int32_t line)
 {
-    int column;
-    uint8 *mcex;
-    uint8 *lb = &linebuf[0];
+    uint32_t column;
+    uint8_t *mcex;
+    uint8_t *lb = &linebuf[0];
 
-    uint8 *pn = &vdp.vram[vdp.pn + ((line >> 3) << 5)];
-    uint8 *pg = &vdp.vram[vdp.pg + ((line >> 2) & 7)];
+    uint8_t *pn = &vdp.vram[vdp.pn + ((line >> 3) << 5)];
+    uint8_t *pg = &vdp.vram[vdp.pg + ((line >> 2) & 7)];
 
     for(column = 0; column < 32; column++)
     {
@@ -540,13 +542,13 @@ static void render_bg_m3(int line)
 }
 
 /* Multicolor + extended PG */
-static void render_bg_m3x(int line)
+static void render_bg_m3x(int32_t line)
 {
-    int column;
-    uint8 *mcex;
-    uint8 *lb = &linebuf[0];
-    uint8 *pn = &vdp.vram[vdp.pn + ((line >> 3) << 5)];
-    uint8 *pg = &vdp.vram[vdp.pg + ((line >> 2) & 7) + ((line & 0xC0) << 5)];
+    uint32_t column;
+    uint8_t *mcex;
+    uint8_t *lb = &linebuf[0];
+    uint8_t *pn = &vdp.vram[vdp.pn + ((line >> 3) << 5)];
+    uint8_t *pg = &vdp.vram[vdp.pg + ((line >> 2) & 7) + ((line & 0xC0) << 5)];
 
     for(column = 0; column < 32; column++)
     {
@@ -556,18 +558,18 @@ static void render_bg_m3x(int line)
 }
 
 /* Graphics II */
-static void render_bg_m2(int line)
+static void render_bg_m2(int32_t line)
 {
-    int v_row  = (line & 7);
-    int column;
-    int name;
+    uint32_t v_row  = (line & 7);
+    uint32_t column;
+    uint32_t name;
 
-    uint8 *clut;
-    uint8 *bpex;
-    uint8 *lb = &linebuf[0];
-    uint8 *pn = &vdp.vram[vdp.pn | ((line & 0xF8) << 2)];
-    uint8 *ct = &vdp.vram[(vdp.ct & 0x2000) | (v_row) | ((line & 0xC0) << 5)];
-    uint8 *pg = &vdp.vram[(vdp.pg & 0x2000) | (v_row) | ((line & 0xC0) << 5)];
+    uint8_t *clut;
+    uint8_t *bpex;
+    uint8_t *lb = &linebuf[0];
+    uint8_t *pn = &vdp.vram[vdp.pn | ((line & 0xF8) << 2)];
+    uint8_t *ct = &vdp.vram[(vdp.ct & 0x2000) | (v_row) | ((line & 0xC0) << 5)];
+    uint8_t *pg = &vdp.vram[(vdp.pg & 0x2000) | (v_row) | ((line & 0xC0) << 5)];
 
     for(column = 0; column < 32; column++)
     {

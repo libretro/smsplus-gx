@@ -1,6 +1,6 @@
 
-#ifndef __CONFIG_H__
-#define __CONFIG_H__
+#ifndef CONFIG_H__
+#define CONFIG_H__
 
 
 typedef struct {
@@ -17,7 +17,7 @@ typedef struct {
   int32_t fm;
   int32_t overscan;
   int32_t ntsc;
-  int32_t use_bios;
+  uint32_t use_bios;
   int32_t spritelimit;
   int32_t extra_gg;
   int32_t tms_pal;
@@ -25,6 +25,5 @@ typedef struct {
 
 
 extern t_config option;
-
 
 #endif

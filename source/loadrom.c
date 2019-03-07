@@ -22,7 +22,7 @@
 
 #include "shared.h"
 
-#define GAME_DATABASE_CNT 96
+#define GAME_DATABASE_CNT 97
 
 typedef struct
 {
@@ -33,10 +33,10 @@ typedef struct
   uint8_t display;
   uint8_t territory;
   uint8_t console;
-  int8_t *name;
+  const char *name;
 } rominfo_t;
 
-rominfo_t game_list[GAME_DATABASE_CNT] =
+static rominfo_t game_list[GAME_DATABASE_CNT] =
 {
   /* games requiring CODEMASTER mapper */
   {0x29822980, 0, DEVICE_PAD2B, MAPPER_CODIES, DISPLAY_PAL, TERRITORY_EXPORT, CONSOLE_SMS2,
@@ -125,6 +125,8 @@ rominfo_t game_list[GAME_DATABASE_CNT] =
    "Taito Chase H.Q."},  
   {0x38434560, 0, DEVICE_PAD2B, MAPPER_SEGA, DISPLAY_PAL, TERRITORY_EXPORT, CONSOLE_SMS2,
    "Bad Apple SMS"},  
+  {0xDA2A68C6, 0, DEVICE_PAD2B, MAPPER_SEGA, DISPLAY_PAL, TERRITORY_EXPORT, CONSOLE_SMS2,
+   "The Synchrobots"},  
    
   /* games requiring 315-5124 VDP (Mark-III, Sega Master System) */
   {0x32759751, 0, DEVICE_PAD2B, MAPPER_SEGA, DISPLAY_NTSC, TERRITORY_DOMESTIC, CONSOLE_SMS,
@@ -254,7 +256,7 @@ rominfo_t game_list[GAME_DATABASE_CNT] =
    "Turma da Monica em O Resgate"}
 };
 
-void set_config()
+static void set_config()
 {
 	uint32_t i;
 
@@ -370,9 +372,9 @@ void set_config()
 	}
 }
 
-int load_rom (char *filename)
+uint32_t load_rom(const char *filename)
 {
-	if(cart.rom)
+	if (cart.rom)
 	{
 		free(cart.rom);
 		cart.rom = NULL;
@@ -380,8 +382,8 @@ int load_rom (char *filename)
 
 	if(check_zip(filename))
 	{
-		int8_t name[PATH_MAX];
-		cart.rom = loadFromZipByName(filename, name, &cart.size);
+		char name[PATH_MAX];
+		cart.rom = loadFromZipByName((char*)filename, name, &cart.size);
 		if (!cart.rom)
 			return 0;
 		strcpy(option.game_name, name);
@@ -406,7 +408,6 @@ int load_rom (char *filename)
 			return 0;
 		}
 		fread(cart.rom, cart.size, 1, fd);
-
 		fclose(fd);
 	}
 

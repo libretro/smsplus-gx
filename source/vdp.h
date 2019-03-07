@@ -22,8 +22,8 @@
  *
  ******************************************************************************/
 
-#ifndef _VDP_H_
-#define _VDP_H_
+#ifndef VDP_H_
+#define VDP_H_
 
 /*
     vdp1
@@ -40,49 +40,49 @@
 /* VDP context */
 typedef struct
 {
-    uint8 vram[0x4000];
-    uint8 cram[0x40]; 
-    uint8 reg[0x10];
-    uint8 vscroll;
-    uint8 status;
-    uint8 latch;
-    uint8 pending;
-    uint16 addr;
-    uint8 code;
-    uint8 buffer;
-    int pn, ct, pg, sa, sg;
-    int ntab;
-    int satb;
-    int line;
-    int left;
-    uint16 lpf;
-    uint8 height;
-    uint8 extended;
-    uint8 mode;
-    uint8 irq;
-    uint8 vint_pending;
-    uint8 hint_pending;
-    uint16 cram_latch;
-    uint16 spr_col;
-    uint8 spr_ovr;
-    uint8 bd;
+    uint8_t vram[0x4000];
+    uint8_t cram[0x40]; 
+    uint8_t reg[0x10];
+    uint8_t vscroll;
+    uint8_t status;
+    uint8_t latch;
+    uint8_t pending;
+    uint16_t addr;
+    uint8_t code;
+    uint8_t buffer;
+    uint32_t pn, ct, pg, sa, sg;
+    uint32_t ntab;
+    uint32_t satb;
+    int32_t line;
+    int32_t left;
+    uint16_t lpf;
+    uint8_t height;
+    uint8_t extended;
+    uint32_t mode;
+    uint8_t irq;
+    uint8_t vint_pending;
+    uint8_t hint_pending;
+    uint16_t cram_latch;
+    uint16_t spr_col;
+    uint8_t spr_ovr;
+    uint8_t bd;
 } vdp_t;
 
 /* Global data */
 extern vdp_t vdp;
-extern uint8 hc_256[228];
+extern uint8_t hc_256[228];
 
 /* Function prototypes */
 extern void vdp_init(void);
 extern void vdp_shutdown(void);
 extern void vdp_reset(void);
 extern void viewport_check(void);
-extern uint8 vdp_counter_r(int offset);
-extern uint8 vdp_read(int offset);
-extern void vdp_write(int offset, uint8 data);
-extern void gg_vdp_write(int offset, uint8 data);
-extern void md_vdp_write(int offset, uint8 data);
-extern void tms_write(int offset, int data);
+extern uint8_t vdp_counter_r(uint32_t offset);
+extern uint8_t vdp_read(uint32_t offset);
+extern void vdp_write(uint32_t offset, uint8_t data);
+extern void gg_vdp_write(uint32_t offset, uint8_t data);
+extern void md_vdp_write(uint32_t offset, uint8_t data);
+extern void tms_write(uint32_t offset, uint8_t data);
 
-#endif /* _VDP_H_ */
+#endif /* VDP_H_ */
 
