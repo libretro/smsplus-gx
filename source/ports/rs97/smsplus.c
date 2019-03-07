@@ -195,7 +195,7 @@ static void bios_init()
 	
 	snprintf(bios_path, sizeof(bios_path), "%s%s", gdata.biosdir, "BIOS.sms");
 
-	fd = fopen("bios.sms", "rb");
+	fd = fopen(bios_path, "rb");
 	if(fd)
 	{
 		/* Seek to end of file, and get size */
@@ -211,7 +211,7 @@ static void bios_init()
 
 	snprintf(bios_path, sizeof(bios_path), "%s%s", gdata.biosdir, "BIOS.col");
 	
-	fd = fopen("bios.col", "rb");
+	fd = fopen(bios_path, "rb");
 	if(fd)
 	{
 		/* Seek to end of file, and get size */
@@ -468,8 +468,11 @@ int main (int argc, char *argv[])
 	
 	smsp_gamedata_set(argv[1]);
 	
-	// Check the type of ROM
-	sms.console = strcmp(strrchr(argv[1], '.'), ".gg") ? CONSOLE_SMS : CONSOLE_GG;
+	// Force Colecovision mode
+	if (strcmp(strrchr(argv[1], '.'), ".col") == NULL)
+	{
+		option.console = 6;
+	}
 	
 	SDL_Init(SDL_INIT_VIDEO);
 	sdl_screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE
