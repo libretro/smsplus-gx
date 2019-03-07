@@ -100,7 +100,7 @@ to do:
 /* table is 3dB/octave, DV converts this into 6dB/octave */
 /* 0.1875 is bit 0 weight of the envelope counter (volume) expressed in the 'decibel' scale */
 #define DV (0.1875/1.0)
-static const double ksl_tab[8*16] =
+static const float ksl_tab[8*16] =
 {
 	/* OCT 0 */
 		0.000/DV, 0.000/DV, 0.000/DV, 0.000/DV,
@@ -146,13 +146,12 @@ static const double ksl_tab[8*16] =
 #undef DV
 
 /* 0 / 1.5 / 3.0 / 6.0 dB/OCT, confirmed on a real YM2413 (the application manual is incorrect) */
-static const uint32_t ksl_shift[4] = { 31, 2, 1, 0 };
-
+static const int32_t ksl_shift[4] = { 31, 2, 1, 0 };
 
 /* sustain level table (3dB per step) */
 /* 0 - 15: 0, 3, 6, 9,12,15,18,21,24,27,30,33,36,39,42,45 (dB)*/
-#define SC(db) (uint32_t) ( db * (1.0/ENV_STEP) )
-static const uint32_t sl_tab[16] = {
+#define SC(db) (int32_t) ( db * (1.0/ENV_STEP) )
+static const int32_t sl_tab[16] = {
 	SC( 0),SC( 1),SC( 2),SC(3 ),SC(4 ),SC(5 ),SC(6 ),SC( 7),
 	SC( 8),SC( 9),SC(10),SC(11),SC(12),SC(13),SC(14),SC(15)
 };
@@ -423,7 +422,7 @@ static const uint8_t table[19][8] = {
 #define SLOT8_1 (&fm->P_CH[8].SLOT[SLOT1])
 #define SLOT8_2 (&fm->P_CH[8].SLOT[SLOT2])
 
-INLINE int32_t limit( int32_t val, int32_t max, int32_t min )
+INLINE int16_t limit( int16_t val, int16_t max, int16_t min )
 {
 	if ( val > max )
 		val = max;
@@ -453,7 +452,7 @@ static void advance(YM2413 *fm)
 {
 	struct OPLL_CH *CH;
 	struct OPLL_SLOT *op;
-	uint32_t i;
+	int32_t i;
 
 	/* Envelope Generator */
 	fm->eg_timer += fm->eg_timer_add;
@@ -619,8 +618,8 @@ static void advance(YM2413 *fm)
 		{
 			uint8_t block;
 
-			uint32_t fnum_lfo   = 8*((CH->block_fnum&0x01c0) >> 6);
-			uint32_t block_fnum = CH->block_fnum * 2;
+			int32_t fnum_lfo   = 8*((CH->block_fnum&0x01c0) >> 6);
+			int32_t block_fnum = CH->block_fnum * 2;
 			int32_t lfo_fn_table_index_offset = lfo_pm_table[fm->LFO_PM + fnum_lfo ];
 
 			if (lfo_fn_table_index_offset)  /* LFO phase modulation active */
@@ -678,21 +677,21 @@ static void advance(YM2413 *fm)
 }
 
 
-static int32_t op_calc(YM2413 *fm, uint32_t phase, uint32_t env, int32_t pm, uint32_t wave_tab)
+static int32_t op_calc(YM2413 *fm, int32_t phase, int32_t env, int32_t pm, int32_t wave_tab)
 {
-	uint32_t p;
+	int32_t p;
 
-	p = (env<<5) + fm->sin_tab[wave_tab + ((((signed int)((phase & ~FREQ_MASK) + (pm<<17))) >> FREQ_SH ) & SIN_MASK) ];
+	p = (env<<5) + fm->sin_tab[wave_tab + ((((int32_t)((phase & ~FREQ_MASK) + (pm<<17))) >> FREQ_SH ) & SIN_MASK) ];
 
 	if (p >= TL_TAB_LEN)
 		return 0;
 	return fm->tl_tab[p];
 }
 
-static int32_t op_calc1(YM2413 *fm, uint32_t phase, uint32_t env, int32_t pm, uint32_t wave_tab)
+static int32_t op_calc1(YM2413 *fm, int32_t phase, int32_t env, int32_t pm, int32_t wave_tab)
 {
-	uint32_t p;
-	int32_t  i;
+	int32_t p;
+	int32_t i;
 
 	i = (phase & ~FREQ_MASK) + pm;
 
@@ -707,17 +706,15 @@ static int32_t op_calc1(YM2413 *fm, uint32_t phase, uint32_t env, int32_t pm, ui
 	return fm->tl_tab[p];
 }
 
-
-#define volume_calc(fm, OP) ((OP)->TLL + ((uint32_t)(OP)->volume) + (fm->LFO_AM & (OP)->AMmask))
+#define volume_calc(fm, OP) ((OP)->TLL + ((int32_t)(OP)->volume) + (fm->LFO_AM & (OP)->AMmask))
 
 /* calculate output */
 static void chan_calc(YM2413 *fm, struct OPLL_CH *CH)
 {
 	struct OPLL_SLOT *SLOT;
-	uint32_t env;
+	int32_t env;
 	int32_t out;
 	int32_t phase_modulation;    /* phase modulation input (SLOT 2) */
-
 
 	/* SLOT 1 */
 	SLOT = &CH->SLOT[SLOT1];
@@ -782,11 +779,11 @@ number   number    BLK/FNUM2 FNUM    Drum  Hat   Drum  Tom  Cymbal
 
 /* calculate rhythm */
 
-static void rhythm_calc(YM2413 *fm, struct OPLL_CH *CH, uint32_t noise)
+static void rhythm_calc(YM2413 *fm, struct OPLL_CH *CH, int32_t noise)
 {
 	struct OPLL_SLOT *SLOT;
 	int32_t out;
-	uint32_t env;
+	int32_t env;
 	int32_t phase_modulation;    /* phase modulation input (SLOT 2) */
 
 
@@ -857,7 +854,7 @@ static void rhythm_calc(YM2413 *fm, struct OPLL_CH *CH, uint32_t noise)
 
 		/* when res1 = 0 phase = 0x000 | 0xd0; */
 		/* when res1 = 1 phase = 0x200 | (0xd0>>2); */
-		uint32_t phase = res1 ? (0x200|(0xd0>>2)) : 0xd0;
+		int32_t phase = res1 ? (0x200|(0xd0>>2)) : 0xd0;
 
 		/* enable gate based on frequency of operator 2 in channel 8 */
 		uint8_t bit5e= ((SLOT8_2->phase>>FREQ_SH)>>5)&1;
@@ -898,7 +895,7 @@ static void rhythm_calc(YM2413 *fm, struct OPLL_CH *CH, uint32_t noise)
 
 		/* when bit8 = 0 phase = 0x100; */
 		/* when bit8 = 1 phase = 0x200; */
-		uint32_t phase = bit8 ? 0x200 : 0x100;
+		int32_t phase = bit8 ? 0x200 : 0x100;
 
 		/* Noise bit XOR'es phase by 0x100 */
 		/* when noisebit = 0 pass the phase from calculation above */
@@ -928,7 +925,7 @@ static void rhythm_calc(YM2413 *fm, struct OPLL_CH *CH, uint32_t noise)
 
 		/* when res1 = 0 phase = 0x000 | 0x100; */
 		/* when res1 = 1 phase = 0x200 | 0x100; */
-		uint32_t phase = res1 ? 0x300 : 0x100;
+		int32_t phase = res1 ? 0x300 : 0x100;
 
 		/* enable gate based on frequency of operator 2 in channel 8 */
 		uint8_t bit5e= ((SLOT8_2->phase>>FREQ_SH)>>5)&1;
@@ -945,7 +942,7 @@ static void rhythm_calc(YM2413 *fm, struct OPLL_CH *CH, uint32_t noise)
 
 }
 
-static void key_on(struct OPLL_SLOT *SLOT, uint32_t key_set)
+static void key_on(struct OPLL_SLOT *SLOT, int32_t key_set)
 {
 	if( !SLOT->key )
 	{
@@ -956,7 +953,7 @@ static void key_on(struct OPLL_SLOT *SLOT, uint32_t key_set)
 	SLOT->key |= key_set;
 }
 
-static void key_off(struct OPLL_SLOT *SLOT, uint32_t key_clr)
+static void key_off(struct OPLL_SLOT *SLOT, int32_t key_clr)
 {
 	if( SLOT->key )
 	{
@@ -975,8 +972,8 @@ static void key_off(struct OPLL_SLOT *SLOT, uint32_t key_clr)
 static void calc_fcslot(struct OPLL_CH *CH, struct OPLL_SLOT *SLOT)
 {
 	int32_t ksr;
-	uint32_t SLOT_rs;
-	uint32_t SLOT_dp;
+	int32_t SLOT_rs;
+	int32_t SLOT_dp;
 
 	/* (frequency) phase increment counter */
 	SLOT->freq = CH->fc * SLOT->mul;
@@ -1027,7 +1024,7 @@ static void set_mul(YM2413 *fm, int32_t slot,int32_t v)
 	SLOT->KSR     = (v&0x10) ? 0 : 2;
 	SLOT->eg_type = (v&0x20);
 	SLOT->vib     = (v&0x40);
-	SLOT->AMmask  = (v&0x80) ? ~0 : 0;
+	SLOT->AMmask  = (v&0x80) ? 0 : 0;
 	calc_fcslot(CH,SLOT);
 }
 
@@ -1098,7 +1095,7 @@ static void set_sl_rr(YM2413 *fm, int32_t slot,int32_t v)
 	SLOT->eg_sel_rr = eg_rate_select[SLOT->rr + SLOT->ksr ];
 }
 
-static void load_instrument(YM2413 *fm, uint32_t chan, uint32_t slot, uint8_t* inst )
+static void load_instrument(YM2413 *fm, int32_t chan, int32_t slot, uint8_t* inst )
 {
 	set_mul         (fm, slot,   inst[0]);
 	set_mul         (fm, slot+1, inst[1]);
@@ -1113,8 +1110,8 @@ static void load_instrument(YM2413 *fm, uint32_t chan, uint32_t slot, uint8_t* i
 static void update_instrument_zero( YM2413 *fm, uint8_t r )
 {
 	uint8_t* inst = &fm->inst_tab[0][0]; /* point to user instrument */
-	uint32_t chan;
-	uint32_t chan_max;
+	int32_t chan;
+	int32_t chan_max;
 
 	chan_max = 9;
 	if (fm->rhythm & 0x20)
@@ -1198,7 +1195,7 @@ static void update_instrument_zero( YM2413 *fm, uint8_t r )
 }
 
 /* write a value v to register r on chip chip */
-static void write_reg(YM2413 *fm, int32_t r, int32_t v)
+static void write_reg(YM2413 *fm, int32_t r, uint8_t v)
 {
 	struct OPLL_CH *CH;
 	struct OPLL_SLOT *SLOT;
@@ -1371,7 +1368,9 @@ static void write_reg(YM2413 *fm, int32_t r, int32_t v)
 
 
 			if (CH->sus!=(v&0x20))
+			{
 				logerror("chan=%i sus=%2x\n",chan,v&0x20);
+			}
 
 			CH->sus = v & 0x20;
 		}
@@ -1385,7 +1384,7 @@ static void write_reg(YM2413 *fm, int32_t r, int32_t v)
 			/* BLK 2,1,0 bits -> bits 3,2,1 of kcode, FNUM MSB -> kcode LSB */
 			CH->kcode    = (block_fnum&0x0f00)>>8;
 
-			CH->ksl_base = (uint32_t)(ksl_tab[block_fnum>>5]);
+			CH->ksl_base = (int32_t)(ksl_tab[block_fnum>>5]);
 
 			block_fnum   = block_fnum * 2;
 			block        = (block_fnum&0x1c00) >> 10;
@@ -1404,8 +1403,8 @@ static void write_reg(YM2413 *fm, int32_t r, int32_t v)
 
 	case 0x30:  /* inst 4 MSBs, VOL 4 LSBs */
 	{
-		uint8_t old_instvol;
-
+		int32_t old_instvol;
+		
 		chan = r&0x0f;
 
 		if (chan >= 9)
@@ -1418,7 +1417,6 @@ static void write_reg(YM2413 *fm, int32_t r, int32_t v)
 		SLOT = &CH->SLOT[SLOT2]; /* carrier */
 		SLOT->TL  = ((v&0x0f)<<2)<<(ENV_BITS-2-7); /* 7 bits TL (bit 6 = always 0) */
 		SLOT->TLL = SLOT->TL + (CH->ksl_base>>SLOT->ksl);
-
 
 		/*check whether we are in rhythm mode and handle instrument/volume register accordingly*/
 		if ((chan>=6) && (fm->rhythm&0x20))
@@ -1495,29 +1493,30 @@ static void sound_stream_update(YM2413 *fm, int16_t **buf, int32_t samples)
 
 static void device_start(YM2413 *fm, int32_t clock, int32_t rate)
 {
-    double fb = (clock / 72.0) / rate;
+    float fb = (clock / 72.0f) / rate;
 
 	//m_stream = machine().sound().stream_alloc(*this,0,2,rate);
 
 	for (int32_t x=0; x<TL_RES_LEN; x++)
 	{
-		double m = (1<<16) / pow(2, (x+1) * (ENV_STEP/4.0) / 8.0);
-		m = floor(m);
+		float m = (1<<16) / powf(2, (x+1) * ((float)ENV_STEP/4.0f) / 8.0f);
+		m = floorf(m);
 
 		/* we never reach (1<<16) here due to the (x+1) */
 		/* result fits within 16 bits at maximum */
 
-		int n = (int32_t)m; /* 16 bits here */
+		int32_t n = (int32_t)m; /* 16 bits here */
 		n >>= 4;        /* 12 bits here */
 		if (n&1)        /* round to nearest */
 			n = (n>>1)+1;
 		else
 			n = n>>1;
-						/* 11 bits here (rounded) */
+
+		/* 11 bits here (rounded) */
 		fm->tl_tab[ x*2 + 0 ] = n;
 		fm->tl_tab[ x*2 + 1 ] = -fm->tl_tab[ x*2 + 0 ];
 
-		for (int i=1; i<11; i++)
+		for (int32_t i=1; i<11; i++)
 		{
 			fm->tl_tab[ x*2+0 + i*2*TL_RES_LEN ] =  fm->tl_tab[ x*2+0 ]>>i;
 			fm->tl_tab[ x*2+1 + i*2*TL_RES_LEN ] = -fm->tl_tab[ x*2+0 + i*2*TL_RES_LEN ];
@@ -1527,22 +1526,22 @@ static void device_start(YM2413 *fm, int32_t clock, int32_t rate)
 	for (int32_t i=0; i<SIN_LEN; i++)
 	{
 		/* non-standard sinus */
-		double m = sin( ((i*2)+1) * M_PI / SIN_LEN ); /* checked against the real chip */
+		float m = sinf( ((i*2)+1) * (float)M_PI / SIN_LEN ); /* checked against the real chip */
 
 		/* we never reach zero here due to ((i*2)+1) */
 
-		double o = 8*log(1.0/fabs(m))/log(2.0);  /* convert to 'decibels' */
+		float o = 8*logf(1.0f/fabsf(m))/logf(2.0f);  /* convert to 'decibels' */
 
-		o = o / (ENV_STEP/4);
+		o = o / ((float)ENV_STEP/4);
 
-		int32_t n = (int32_t)(2.0*o);
+		int32_t n = (int32_t)(2.0f*o);
 		if (n&1)                        /* round to nearest */
 			n = (n>>1)+1;
 		else
 			n = n>>1;
 
 		/* waveform 0: standard sinus  */
-		fm->sin_tab[ i ] = n*2 + (m>=0.0? 0: 1 );
+		fm->sin_tab[ i ] = n*2 + (m>=0.0f? 0: 1 );
 
 		/* waveform 1:  __      __     */
 		/*             /  \____/  \____*/
@@ -1637,7 +1636,7 @@ void ym2413_reset(YM2413 *fm) {
     device_reset(fm);
 }
 
-void ym2413_write(YM2413 *fm, int32_t a, int32_t v) {
+void ym2413_write(YM2413 *fm, int32_t a, uint8_t v) {
     if(!(a & 1))
         fm->address = v & 0xFF;
     else
