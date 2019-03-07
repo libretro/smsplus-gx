@@ -20,7 +20,12 @@ void Sound_Init()
 	
 	option.sndrate = SOUND_FREQUENCY;
 	
-	oss_audio_fd = open("/dev/dsp", O_WRONLY);
+	oss_audio_fd = open("/dev/dsp", O_WRONLY
+	/* Use non-blocking mode instead when V-sync is properly supported. */
+#if VSYNC_SUPPORTED
+	| O_NONBLOCK
+#endif
+	);
 	if (oss_audio_fd < 0)
 	{
 		printf("Couldn't open /dev/dsp.\n");
@@ -52,7 +57,7 @@ void Sound_Init()
 void Sound_Update()
 {
 	uint32_t i;
-	const float volumeMultiplier = 3.0f;
+	const uint32_t volumeMultiplier = 3;
 
 	for (i = 0; i < (4 * (SOUND_FREQUENCY / snd.fps)); i++) 
 	{

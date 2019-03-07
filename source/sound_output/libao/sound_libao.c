@@ -29,7 +29,7 @@ void Sound_Init()
 void Sound_Update()
 {
 	uint32_t i;
-	const float volumeMultiplier = 3.0f;
+	const int32_t volumeMultiplier = 3;
 
 	for (i = 0; i < (4 * (SOUND_FREQUENCY / snd.fps)); i++) 
 	{

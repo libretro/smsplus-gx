@@ -8,10 +8,8 @@
 static snd_pcm_t *handle;
 static int16_t buffer_snd[SOUND_FREQUENCY * 2];
 
-void Sound_Init()
+void Sound_Init(void)
 {
-	int32_t loops;
-	uint32_t size;
 	snd_pcm_hw_params_t *params;
 	uint32_t val;
 	int32_t dir = -1;
@@ -20,7 +18,7 @@ void Sound_Init()
 	option.sndrate = SOUND_FREQUENCY;
 	
 	/* Open PCM device for playback. */
-	int rc = snd_pcm_open(&handle, "default", SND_PCM_STREAM_PLAYBACK, 0);
+	int32_t rc = snd_pcm_open(&handle, "default", SND_PCM_STREAM_PLAYBACK, 0);
 
 	if (rc < 0)
 		rc = snd_pcm_open(&handle, "plughw:0,0,0", SND_PCM_STREAM_PLAYBACK, 0);
@@ -109,13 +107,19 @@ void Sound_Init()
 		return;
 	}
 	
+#ifdef VSYNC_SUPPORTED
+	snd_pcm_nonblock(handle, 1);
+#endif
+	
 	return;
 }
 
-void Sound_Update()
+void Sound_Update(void)
 {
 	uint32_t i;
-	const float volumeMultiplier = 3.0f;
+	const int32_t volumeMultiplier = 3;
+	
+	if (!handle || !snd.output[1] || !snd.output[0]) return;
 
 	for (i = 0; i < (4 * (SOUND_FREQUENCY / snd.fps)); i++) 
 	{
@@ -123,7 +127,7 @@ void Sound_Update()
 		buffer_snd[i * 2 + 1] = snd.output[0][i] * volumeMultiplier;
 	}
 	
-	int rc = snd_pcm_writei(handle, buffer_snd, (SOUND_FREQUENCY / snd.fps));
+	long rc = snd_pcm_writei(handle, buffer_snd, (SOUND_FREQUENCY / snd.fps));
 	if (rc == -EPIPE)
 	{
 		/* EPIPE means underrun */
@@ -133,8 +137,11 @@ void Sound_Update()
 	}
 }
 
-void Sound_Close()
+void Sound_Close(void)
 {
-	snd_pcm_drain(handle);
-	snd_pcm_close(handle);
+	if (handle)
+	{
+		snd_pcm_drain(handle);
+		snd_pcm_close(handle);
+	}
 }

@@ -41,7 +41,7 @@ static int32_t sdl_write_buffer_m(uint8_t* data, int32_t len)
 	return len;
 }
 
-static int32_t sdl_write_buffer(uint8_t* data, int32_t len)
+static void sdl_write_buffer(uint8_t* data, int32_t len)
 {
 	for(uint32_t i = 0; i < len; i += 4) 
 	{
@@ -52,8 +52,7 @@ static int32_t sdl_write_buffer(uint8_t* data, int32_t len)
 		buf_write_pos = (buf_write_pos + 4) % BUFFSIZE;
 		buffered_bytes += 4;
 	}
-
-	return len;
+	/*return len;*/
 }
 
 static int32_t sdl_read_buffer(uint8_t* data, int32_t len)
@@ -94,7 +93,6 @@ void sdl_callback(void *unused, uint8_t *stream, int32_t len)
 
 void Sound_Init()
 {
-	int32_t result;
 	SDL_AudioSpec aspec, obtained;
 	option.sndrate = SOUND_FREQUENCY;
 
@@ -141,9 +139,8 @@ void Sound_Init()
 
 void Sound_Update()
 {
-	int32_t result;
 	uint32_t i;
-	const float volumeMultiplier = 3.0f;
+	const int32_t volumeMultiplier = 3;
 
 	for (i = 0; i < (4 * (SOUND_FREQUENCY / snd.fps)); i++) 
 	{
@@ -152,7 +149,7 @@ void Sound_Update()
 	}
 	
 	SDL_LockAudio();
-	result = sdl_write_buffer(buffer_snd, (SOUND_FREQUENCY / snd.fps));
+	sdl_write_buffer(buffer_snd, (SOUND_FREQUENCY / snd.fps));
 	SDL_UnlockAudio();
 }
 
