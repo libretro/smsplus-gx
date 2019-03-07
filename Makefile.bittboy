@@ -1,25 +1,32 @@
 PRGNAME     = sms_sdl
 
 # define regarding OS, which compiler to use
-CC			= /opt/rs97-toolchain/bin/mipsel-linux-gcc
+CC			= /opt/bittboy-toolchain/bin/arm-miyoo-linux-musleabi-gcc
 
 # add SDL dependencies
-PORT		= amini
-SOUND_OUTPUT = oss
+PORT		= bittboy
+SOUND_OUTPUT = portaudio
 SOUND_ENGINE = maxim_sn76489
-Z80_CORE = z80
-PROFILE		= 0
+Z80_CORE = eighty
+PROFILE	= 0
 
-CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-check-zero-division -funsafe-math-optimizations -fsingle-precision-constant -fno-common -mips32 -fno-PIC -mno-abicalls
-CFLAGS		+= -std=gnu99 -DLSB_FIRST -DMAXIM_PSG
+CFLAGS		= -O2 -fdata-sections -ffunction-sections -fno-common -std=gnu99 -DLSB_FIRST -DPERFORMANCE_HACK -DALIGN_DWORD -Wall -Wextra
 CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/generic -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
 ifeq ($(PROFILE), 1)
-CFLAGS 		+= -fprofile-generate=/mnt/int_sd/profile
+CFLAGS 		+= -fprofile-generate=/mnt/profile
 else
 CFLAGS		+= -fprofile-use
 endif
 
-LDFLAGS     = -lSDL -lm -lz -lc -no-pie -Wl,--as-needed -Wl,--gc-sections -s -flto
+ifeq ($(SOUND_ENGINE), maxim_sn76489)
+CFLAGS 		+= -DMAXIM_PSG
+endif
+
+LDFLAGS     = -Wl,--start-group -lSDL -lasound -lm -lz -lc -no-pie -Wl,--as-needed -Wl,--gc-sections -s -flto
+ifeq ($(SOUND_OUTPUT), portaudio)
+LDFLAGS		+= -lportaudio
+endif
+LDFLAGS		+= -Wl,--end-group
 
 # Files to be r
 SRCDIR    = ./source ./source/unzip ./source/cpu_cores/$(Z80_CORE) ./source/sound ./source/sound_output/$(SOUND_OUTPUT) ./source/generic ./source/ports/$(PORT) ./source/sound/$(SOUND_ENGINE)

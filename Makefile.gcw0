@@ -1,28 +1,36 @@
 PRGNAME     = sms_sdl
 
 # define regarding OS, which compiler to use
-CC			= /opt/rs97-toolchain/bin/mipsel-linux-gcc
+CC			= /opt/gcw0-toolchain/usr/bin/mipsel-linux-gcc
 
 # add SDL dependencies
-PORT		= amini
-SOUND_OUTPUT = oss
+PORT		= rs97
+SOUND_OUTPUT = alsa
 SOUND_ENGINE = maxim_sn76489
 Z80_CORE = z80
 PROFILE		= 0
 
-CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-check-zero-division -funsafe-math-optimizations -fsingle-precision-constant -fno-common -mips32 -fno-PIC -mno-abicalls
+CFLAGS		= -O3 -fdata-sections -ffunction-sections -mno-check-zero-division -funsafe-math-optimizations -fsingle-precision-constant -fno-common -mips32r2
 CFLAGS		+= -std=gnu99 -DLSB_FIRST -DMAXIM_PSG
 CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/generic -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
 ifeq ($(PROFILE), 1)
-CFLAGS 		+= -fprofile-generate=/mnt/int_sd/profile
+CFLAGS 		+= -fprofile-generate=/usr/local/home/profile
 else
 CFLAGS		+= -fprofile-use
 endif
 
-LDFLAGS     = -lSDL -lm -lz -lc -no-pie -Wl,--as-needed -Wl,--gc-sections -s -flto
+ifeq ($(SOUND_ENGINE), maxim_sn76489)
+CFLAGS 		+= -DMAXIM_PSG
+endif
+
+LDFLAGS     = -lSDL -lm -lz -lc -Wl,--as-needed -Wl,--gc-sections -s -flto
+ifeq ($(SOUND_OUTPUT), alsa)
+LDFLAGS		+= -lasound
+endif
 
 # Files to be r
-SRCDIR    = ./source ./source/unzip ./source/cpu_cores/$(Z80_CORE) ./source/sound ./source/sound_output/$(SOUND_OUTPUT) ./source/generic ./source/ports/$(PORT) ./source/sound/$(SOUND_ENGINE)
+SRCDIR		= ./source ./source/unzip ./source/cpu_cores/$(Z80_CORE) ./source/sound
+SRCDIR		+= ./source/generic ./source/ports/$(PORT) ./source/sound/$(SOUND_ENGINE) ./source/sound_output/$(SOUND_OUTPUT)
 VPATH     = $(SRCDIR)
 SRC_C   = $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.c))
 OBJ_C   = $(notdir $(patsubst %.c, %.o, $(SRC_C)))

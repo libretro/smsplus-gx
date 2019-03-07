@@ -4,11 +4,9 @@ PRGNAME     = sms.elf
 EXESUFFIX = 
 TOOLCHAIN = 
 CC          = gcc
-CXX         = g++
-LD          = gcc
 
 # Possible choices : rs97, k3s (PAP K3S), sdl, bittboy, amini
-PORT = rs97
+PORT = sdl
 # Possible choices : alsa, pulse (pulseaudio), oss, sdl12 (SDL 1.2 sound output), portaudio, libao
 SOUND_OUTPUT = alsa
 # Possible choices : crabemu_sn76489 (less accurate, GPLv2), maxim_sn76489 (somewhat problematic license but good accuracy)
@@ -19,7 +17,7 @@ PROFILE = 0
 
 # add SDL dependencies
 
-CFLAGS		= -O0 -g -std=gnu99 -DINLINE=inline -DLSB_FIRST
+CFLAGS		= -O0 -g -Wall -Wextra -std=gnu99 -DLSB_FIRST
 CFLAGS 		+= -I/usr/include/SDL
 CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/generic -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
 
@@ -54,13 +52,10 @@ OBJS		= $(OBJ_C) $(OBJ_CP)
 
 # Rules to make executable
 $(PRGNAME): $(OBJS)  
-	$(LD) $(CFLAGS) -o $(PRGNAME) $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $(PRGNAME) $^ $(LDFLAGS)
 
 $(OBJ_C) : %.o : %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
-
-$(OBJ_CP) : %.o : %.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 clean:
 	rm -f $(PRGNAME) *.o

@@ -10,8 +10,8 @@ SOUND_ENGINE = maxim_sn76489
 Z80_CORE = z80
 PROFILE		= 0
 
-CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-check-zero-division -funsafe-math-optimizations -fsingle-precision-constant -fno-common -mips32 -fno-PIC -mno-abicalls
-CFLAGS		+= -std=gnu99 -DLSB_FIRST -DMAXIM_PSG
+CFLAGS		= -O3 -fdata-sections -ffunction-sections -fsingle-precision-constant -fno-common -mips32 -fno-PIC -mno-abicalls
+CFLAGS		+= -std=gnu99 -DLSB_FIRST -DMAXIM_PSG -DRS97
 CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/generic -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
 ifeq ($(PROFILE), 1)
 CFLAGS 		+= -fprofile-generate=/home/retrofw/profile
