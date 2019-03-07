@@ -1,6 +1,6 @@
 
-#ifndef _SCALER_H
-#define _SCALER_H
+#ifndef SCALER_H
+#define SCALER_H
 
 #include <stdint.h>
 
@@ -18,6 +18,8 @@ void upscale_160x144_to_320x272_for_800x480(uint32_t *dst, uint32_t *src);
 
 void bitmap_scale(uint32_t startx, uint32_t starty, uint32_t viswidth, uint32_t visheight, uint32_t newwidth, uint32_t newheight,uint32_t pitchsrc,uint32_t pitchdest, uint16_t *src, uint16_t *dst);
 
+void upscale_256xXXX_to_480x272(uint32_t *dst, uint32_t *src, uint32_t height);
+void upscale_256xXXX_to_384x272_for_480x272(uint32_t *dst, uint32_t *src, uint32_t height);
 
 
 #endif

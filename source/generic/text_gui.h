@@ -1,5 +1,5 @@
-#ifndef _TEXTGUI_H_
-#define _TEXTGUI_H_
+#ifndef TEXTGUI_H_
+#define TEXTGUI_H_
 
 extern SDL_Surface* font;
 

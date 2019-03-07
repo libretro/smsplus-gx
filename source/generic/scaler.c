@@ -47,11 +47,11 @@ void bitmap_scale(uint32_t startx, uint32_t starty, uint32_t viswidth, uint32_t 
 */
 void upscale_160x144_to_320x240(uint32_t *dst, uint32_t *src)
 {
-    int midh = 240 / 2;
-    int Eh = 0;
-    int source = 0;
-    int dh = 0;
-    int i, j;
+    uint32_t midh = 240 / 2;
+    uint32_t Eh = 0;
+    uint32_t source = 0;
+    uint32_t dh = 0;
+    uint32_t i, j;
 
     for (i = 0; i < 240; i++)
     {
@@ -114,11 +114,11 @@ void upscale_160x144_to_320x240(uint32_t *dst, uint32_t *src)
 
 void upscale_SMS_to_320x240(uint32_t *dst, uint32_t *src, uint32_t height_scale)
 {
-    int midh = 240 / 2;
-    int Eh = 0;
-    int source = 0;
-    int dh = 0;
-    int y, x;
+    uint32_t midh = 240 / 2;
+    uint32_t Eh = 0;
+    uint32_t source = 0;
+    uint32_t dh = 0;
+    uint32_t y, x;
 
     for (y = 0; y < 240; y++)
     {
@@ -163,11 +163,10 @@ void upscale_SMS_to_320x240(uint32_t *dst, uint32_t *src, uint32_t height_scale)
 
 void upscale_160x144_to_320x272_for_480x272(uint32_t *dst, uint32_t *src)
 {
-    int midh = 272 / 2;
-    int Eh = 0;
-    int source = 0;
-    int dh = 0;
-    int i, j;
+    uint32_t Eh = 0;
+    uint32_t source = 0;
+    uint32_t dh = 0;
+    uint32_t i, j;
 
     dst += (480-320)/4; // center correction for 480x272 mode
 
@@ -211,11 +210,10 @@ void upscale_160x144_to_320x272_for_480x272(uint32_t *dst, uint32_t *src)
 
 void upscale_160x144_to_480x272(uint32_t *dst, uint32_t *src)
 {
-    int midh = 272 / 2;
-    int Eh = 0;
-    int source = 0;
-    int dh = 0;
-    int i, j;
+    uint32_t Eh = 0;
+    uint32_t source = 0;
+    uint32_t dh = 0;
+    uint32_t i, j;
 
     for (i = 0; i < 272; i++)
     {
@@ -257,13 +255,12 @@ void upscale_160x144_to_480x272(uint32_t *dst, uint32_t *src)
     }
 }
 
-void upscale_256x192_to_384x272_for_480x272(uint32_t *dst, uint32_t *src)
+void upscale_256xXXX_to_384x272_for_480x272(uint32_t *dst, uint32_t *src, uint32_t height)
 {
-    int midh = 272 / 2;
-    int Eh = 0;
-    int source = 0;
-    int dh = 0;
-    int y, x;
+    uint32_t Eh = 0;
+    uint32_t source = 0;
+    uint32_t dh = 0;
+    uint32_t y, x;
 
     dst += (480 - 384) / 4;
 
@@ -294,17 +291,16 @@ void upscale_256x192_to_384x272_for_480x272(uint32_t *dst, uint32_t *src)
 
         }
         dst += (480 - 384) / 2; 
-        Eh += 192; if(Eh >= 272) { Eh -= 272; dh++; }
+        Eh += height; if(Eh >= 272) { Eh -= 272; dh++; }
     }
 }
 
-void upscale_256x192_to_480x272(uint32_t *dst, uint32_t *src)
+void upscale_256xXXX_to_480x272(uint32_t *dst, uint32_t *src, uint32_t height)
 {
-    int midh = 272 / 2;
-    int Eh = 0;
-    int source = 0;
-    int dh = 0;
-    int y, x;
+    uint32_t Eh = 0;
+    uint32_t source = 0;
+    uint32_t dh = 0;
+    uint32_t y, x;
 
     for (y = 0; y < 272; y++)
     {
@@ -355,6 +351,6 @@ void upscale_256x192_to_480x272(uint32_t *dst, uint32_t *src)
 
             source += 8;
         }
-        Eh += 192; if(Eh >= 272) { Eh -= 272; dh++; }
+        Eh += height; if(Eh >= 272) { Eh -= 272; dh++; }
     }
 }
