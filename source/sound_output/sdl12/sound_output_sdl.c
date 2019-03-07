@@ -45,14 +45,12 @@ static void sdl_write_buffer(uint8_t* data, int32_t len)
 {
 	for(uint32_t i = 0; i < len; i += 4) 
 	{
-		if(buffered_bytes == BUFFSIZE) return len; // just drop samples
-
+		if(buffered_bytes == BUFFSIZE) return; // just drop samples
 		*(int32_t*)((char*)(buffer + buf_write_pos)) = *(int32_t*)((char*)(data + i));
 		//memcpy(buffer + buf_write_pos, data + i, 4);
 		buf_write_pos = (buf_write_pos + 4) % BUFFSIZE;
 		buffered_bytes += 4;
 	}
-	/*return len;*/
 }
 
 static int32_t sdl_read_buffer(uint8_t* data, int32_t len)
