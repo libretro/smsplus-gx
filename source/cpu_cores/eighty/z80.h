@@ -57,17 +57,17 @@ typedef struct
   uint8_t r7; /* The high bit of the R register */
   z80_regpair_t sp, pc;
   uint8_t iff1, iff2, im;
-  int halted;
+  uint32_t halted;
 }
 z80_t;
 
 void z80_init(z80_t* z80);
 void z80_reset(z80_t* z80);
 
-int z80_interrupt(z80_t* z80, int ts);
-int z80_nmi(z80_t* z80, int ts);
+uint32_t z80_interrupt(z80_t* z80, uint32_t ts);
+uint32_t z80_nmi(z80_t* z80, uint32_t ts);
 
-int z80_do_opcode(z80_t* z80);
+uint32_t z80_do_opcode(z80_t* z80);
 
 #ifdef __cplusplus
 }

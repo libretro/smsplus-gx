@@ -27,10 +27,8 @@
 #include "z80_macros.h"
 #include "z80cfg.h"
 
-
 uint8_t *cpu_readmap[64];
 uint8_t *cpu_writemap[64];
-
 
 /* Whether a half carry occured or not can be determined by looking at
    the 3rd bit of the two arguments and the result; these are hashed
@@ -54,103 +52,102 @@ uint8_t sz53p_table[0x100]; /* OR the above two tables together */
 /* Initalise the tables used to set flags */
 static void z80_init_tables(z80_t* z80)
 {
-  int i, j, k;
-  uint8_t parity;
-
-  (void)z80;
+	uint32_t i, j, k;
+	uint8_t parity;
+	(void)z80;
   
-  for (i = 0; i < 0x100; i++)
-  {
-    sz53_table[i] = i & (FLAG_3 | FLAG_5 | FLAG_S);
-    j = i;
-    parity = 0;
+	for (i = 0; i < 0x100; i++)
+	{
+		sz53_table[i] = i & (FLAG_3 | FLAG_5 | FLAG_S);
+		j = i;
+		parity = 0;
     
-    for (k = 0; k < 8; k++)
-    {
-      parity ^= j & 1;
-      j >>= 1;
-    }
+		for (k = 0; k < 8; k++)
+		{
+			parity ^= j & 1;
+			j >>= 1;
+		}
 
-    parity_table[i] = (parity ? 0 : FLAG_P);
-    sz53p_table[i] = sz53_table[i] | parity_table[i];
-  }
-
-  sz53_table[0]  |= FLAG_Z;
-  sz53p_table[0] |= FLAG_Z;
+		parity_table[i] = (parity ? 0 : FLAG_P);
+		sz53p_table[i] = sz53_table[i] | parity_table[i];
+	}
+	
+	sz53_table[0]  |= FLAG_Z;
+	sz53p_table[0] |= FLAG_Z;
 }
 
 /* Set up the z80 emulation */
 void z80_init(z80_t* z80)
 {
-  z80_init_tables(z80);
+	z80_init_tables(z80);
 }
 
 /* Reset the z80 */
 void z80_reset(z80_t* z80)
 {
-  AF = BC = DE = HL =0;
-  AF_ = BC_ = DE_ = HL_=0;
-  IX = IY = 0;
-  I = R = R7 = 0;
-  SP = PC = 0;
-  IFF1 = IFF2 = IM = 0;
-  z80->halted=0;
+	AF = BC = DE = HL =0;
+	AF_ = BC_ = DE_ = HL_=0;
+	IX = IY = 0;
+	I = R = R7 = 0;
+	SP = PC = 0;
+	IFF1 = IFF2 = IM = 0;
+	z80->halted=0;
 }
 
 /* Process a z80 maskable interrupt */
-int z80_interrupt(z80_t* z80, int ts)
+uint32_t z80_interrupt(z80_t* z80, uint32_t ts)
 {
-  /* Process if IFF1 set */
-  if (IFF1)
-  {
-    if (z80->halted)
-    {
-      PC++;
-      z80->halted = 0;
-    }
-
-    writebyte(--SP, PCH);
-    writebyte(--SP, PCL);
-    IFF1 = IFF2 = 0;
-    R++;
-
-    switch (IM)
-    {
-    case 0: PC = 0x0038; return 13;
-    case 1: PC = 0x0038; return 13;
-    case 2:
-    {
-      uint16_t inttemp = (0x100 * I) + 0xff;
-      PCL = readbyte(inttemp++);
-      PCH = readbyte(inttemp);
-      return 19;
-    }
-    
-    default: return 12;
-    }
-  }
+	/* Process if IFF1 set */
+	if (IFF1)
+	{
+		if (z80->halted)
+		{
+			PC++;
+			z80->halted = 0;
+		}
+		writebyte(--SP, PCH);
+		writebyte(--SP, PCL);
+		IFF1 = IFF2 = 0;
+		R++;
+		switch (IM)
+		{
+			case 0: 
+			case 1:
+				PC = 0x0038;
+			return 13;
+			case 2:
+			{
+				uint16_t inttemp = (0x100 * I) + 0xff;
+				PCL = readbyte(inttemp++);
+				PCH = readbyte(inttemp);
+				return 19;
+			}
+			default:
+				return 12;
+		}
+	}
   
   return 0;
 }
 
 /* Process a z80 non-maskable interrupt */
-int z80_nmi(z80_t* z80, int ts)
+uint32_t z80_nmi(z80_t* z80, uint32_t ts)
 {
-  int waitstates = 0;
+	uint32_t waitstates = 0;
 
-  IFF1 = 0;
+	IFF1 = 0;
 
-  if (z80->halted)
-  {
-    z80->halted = 0;
-    PC++;
-	waitstates = 0;
-  }
+	if (z80->halted)
+	{
+		z80->halted = 0;
+		PC++;
+		waitstates = 0;
+	}
 
-  writebyte(--SP, PCH);
-  writebyte(--SP, PCL);
-  R++;
-  PC = 0x0066;
+	writebyte(--SP, PCH);
+	writebyte(--SP, PCL);
+	R++;
+	PC = 0x0066;
 
-  return 4 + waitstates;
+	return 4 + waitstates;
 }

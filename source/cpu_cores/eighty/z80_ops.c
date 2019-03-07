@@ -30,11 +30,11 @@
 #include <z80cfg.h>
 
 /* Execute Z80 opcodes until the next event */
-int z80_do_opcode(z80_t* z80)
+uint32_t z80_do_opcode(z80_t* z80)
 {
     uint8_t opcode;
 
-    int tstates=0;
+    uint32_t tstates=0;
 
     /* Do the instruction fetch; readbyte_internal used here to avoid
        triggering read breakpoints */
