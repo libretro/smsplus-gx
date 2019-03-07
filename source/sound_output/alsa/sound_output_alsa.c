@@ -107,7 +107,7 @@ void Sound_Init(void)
 		return;
 	}
 	
-#ifdef VSYNC_SUPPORTED
+#ifndef VSYNC_SUPPORTED
 	snd_pcm_nonblock(handle, 1);
 #endif
 	
