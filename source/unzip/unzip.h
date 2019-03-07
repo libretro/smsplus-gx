@@ -40,18 +40,18 @@
       ftp://ftp.pkware.com/probdesc.zip
 */
 
-#ifndef _unz_H
-#define _unz_H
+#ifndef unz_H
+#define unz_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifndef _ZLIB_H
+#ifndef ZLIB_H
 #include "zlib.h"
 #endif
 
-#ifndef _ZLIBIOAPI_H
+#ifndef ZLIBIOAPI_H
 #include "ioapi.h"
 #endif
 
@@ -89,30 +89,30 @@ typedef struct tm_unz_s
    These data comes from the end of central dir */
 typedef struct unz_global_info_s
 {
-    uLong number_entry;         /* total number of entries in
+    uint32_t number_entry;         /* total number of entries in
                        the central dir on this disk */
-    uLong size_comment;         /* size of the global comment of the zipfile */
+    uint32_t size_comment;         /* size of the global comment of the zipfile */
 } unz_global_info;
 
 
 /* unz_file_info contain information about a file in the zipfile */
 typedef struct unz_file_info_s
 {
-    uLong version;              /* version made by                 2 bytes */
-    uLong version_needed;       /* version needed to extract       2 bytes */
-    uLong flag;                 /* general purpose bit flag        2 bytes */
-    uLong compression_method;   /* compression method              2 bytes */
-    uLong dosDate;              /* last mod file date in Dos fmt   4 bytes */
-    uLong crc;                  /* crc-32                          4 bytes */
-    uLong compressed_size;      /* compressed size                 4 bytes */
-    uLong uncompressed_size;    /* uncompressed size               4 bytes */
-    uLong size_filename;        /* filename length                 2 bytes */
-    uLong size_file_extra;      /* extra field length              2 bytes */
-    uLong size_file_comment;    /* file comment length             2 bytes */
+    uint32_t version;              /* version made by                 2 bytes */
+    uint32_t version_needed;       /* version needed to extract       2 bytes */
+    uint32_t flag;                 /* general purpose bit flag        2 bytes */
+    uint32_t compression_method;   /* compression method              2 bytes */
+    uint32_t dosDate;              /* last mod file date in Dos fmt   4 bytes */
+    uint32_t crc;                  /* crc-32                          4 bytes */
+    uint32_t compressed_size;      /* compressed size                 4 bytes */
+    uint32_t uncompressed_size;    /* uncompressed size               4 bytes */
+    uint32_t size_filename;        /* filename length                 2 bytes */
+    uint32_t size_file_extra;      /* extra field length              2 bytes */
+    uint32_t size_file_comment;    /* file comment length             2 bytes */
 
-    uLong disk_num_start;       /* disk number start               2 bytes */
-    uLong internal_fa;          /* internal file attributes        2 bytes */
-    uLong external_fa;          /* external file attributes        4 bytes */
+    uint32_t disk_num_start;       /* disk number start               2 bytes */
+    uint32_t internal_fa;          /* internal file attributes        2 bytes */
+    uint32_t external_fa;          /* external file attributes        4 bytes */
 
     tm_unz tmu_date;
 } unz_file_info;
@@ -165,7 +165,7 @@ extern int ZEXPORT unzGetGlobalInfo OF((unzFile file,
 
 extern int ZEXPORT unzGetGlobalComment OF((unzFile file,
                                            char *szComment,
-                                           uLong uSizeBuf));
+                                           uint32_t uSizeBuf));
 /*
   Get the global comment string of the ZipFile, in the szComment buffer.
   uSizeBuf is the size of the szComment buffer.
@@ -207,8 +207,8 @@ extern int ZEXPORT unzLocateFile OF((unzFile file,
 /* unz_file_info contain information about a file in the zipfile */
 typedef struct unz_file_pos_s
 {
-    uLong pos_in_zip_directory;   /* offset in zip file directory */
-    uLong num_of_file;            /* # of file */
+    uint32_t pos_in_zip_directory;   /* offset in zip file directory */
+    uint32_t num_of_file;            /* # of file */
 } unz_file_pos;
 
 extern int ZEXPORT unzGetFilePos(
@@ -224,11 +224,11 @@ extern int ZEXPORT unzGoToFilePos(
 extern int ZEXPORT unzGetCurrentFileInfo OF((unzFile file,
                          unz_file_info *pfile_info,
                          char *szFileName,
-                         uLong fileNameBufferSize,
+                         uint32_t fileNameBufferSize,
                          void *extraField,
-                         uLong extraFieldBufferSize,
+                         uint32_t extraFieldBufferSize,
                          char *szComment,
-                         uLong commentBufferSize));
+                         uint32_t commentBufferSize));
 /*
   Get Info about the current file
   if pfile_info!=NULL, the *pfile_info structure will contain somes info about

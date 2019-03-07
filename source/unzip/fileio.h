@@ -1,10 +1,10 @@
 
-#ifndef _FILEIO_H_
-#define _FILEIO_H_
+#ifndef FILEIO_H_
+#define FILEIO_H_
 
 /* Function prototypes */
-uint8 *loadFromZipByName(char *archive, char *filename, int *filesize);
-int check_zip(char *filename);
+uint8_t *loadFromZipByName(char *archive, char *filename, uint32_t *filesize);
+int32_t check_zip(const char *filename);
 //int gzsize(gzFile *gd);
 
-#endif /* _FILEIO_H_ */
+#endif /* FILEIO_H_ */

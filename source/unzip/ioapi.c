@@ -31,17 +31,17 @@ voidpf ZCALLBACK fopen_file_func OF((
    const char* filename,
    int mode));
 
-uLong ZCALLBACK fread_file_func OF((
+uint32_t ZCALLBACK fread_file_func OF((
    voidpf opaque,
    voidpf stream,
    void* buf,
-   uLong size));
+   uint32_t size));
 
-uLong ZCALLBACK fwrite_file_func OF((
+uint32_t ZCALLBACK fwrite_file_func OF((
    voidpf opaque,
    voidpf stream,
    const void* buf,
-   uLong size));
+   uint32_t size));
 
 long ZCALLBACK ftell_file_func OF((
    voidpf opaque,
@@ -50,7 +50,7 @@ long ZCALLBACK ftell_file_func OF((
 long ZCALLBACK fseek_file_func OF((
    voidpf opaque,
    voidpf stream,
-   uLong offset,
+   uint32_t offset,
    int origin));
 
 int ZCALLBACK fclose_file_func OF((
@@ -84,26 +84,26 @@ voidpf ZCALLBACK fopen_file_func (opaque, filename, mode)
 }
 
 
-uLong ZCALLBACK fread_file_func (opaque, stream, buf, size)
+uint32_t ZCALLBACK fread_file_func (opaque, stream, buf, size)
    voidpf opaque;
    voidpf stream;
    void* buf;
-   uLong size;
+   uint32_t size;
 {
-    uLong ret;
-    ret = (uLong)fread(buf, 1, (size_t)size, (FILE *)stream);
+    uint32_t ret;
+    ret = (uint32_t)fread(buf, 1, (size_t)size, (FILE *)stream);
     return ret;
 }
 
 
-uLong ZCALLBACK fwrite_file_func (opaque, stream, buf, size)
+uint32_t ZCALLBACK fwrite_file_func (opaque, stream, buf, size)
    voidpf opaque;
    voidpf stream;
    const void* buf;
-   uLong size;
+   uint32_t size;
 {
-    uLong ret;
-    ret = (uLong)fwrite(buf, 1, (size_t)size, (FILE *)stream);
+    uint32_t ret;
+    ret = (uint32_t)fwrite(buf, 1, (size_t)size, (FILE *)stream);
     return ret;
 }
 
@@ -111,7 +111,7 @@ long ZCALLBACK ftell_file_func (opaque, stream)
    voidpf opaque;
    voidpf stream;
 {
-    long ret;
+    int32_t ret;
     ret = ftell((FILE *)stream);
     return ret;
 }
@@ -119,7 +119,7 @@ long ZCALLBACK ftell_file_func (opaque, stream)
 long ZCALLBACK fseek_file_func (opaque, stream, offset, origin)
    voidpf opaque;
    voidpf stream;
-   uLong offset;
+   uint32_t offset;
    int origin;
 {
     int fseek_origin=0;
