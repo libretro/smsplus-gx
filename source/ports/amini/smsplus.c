@@ -125,51 +125,140 @@ void system_manage_sram(uint8_t *sram, uint8_t slot, uint8_t mode)
 	}
 }
 
+static void Controls()
+{
+	if (sms.console == CONSOLE_COLECO)
+    {
+		coleco.keypad[0] = 0xff;
+		coleco.keypad[1] = 0xff;
+	}
+	
+	keystate = SDL_GetKeyState(NULL);
+	
+	for(uint8_t i=0;i<2;i++)
+	{
+		if (joystick[i] == NULL) joystick[i] = SDL_JoystickOpen(i);
+				
+		x_move = SDL_JoystickGetAxis(joystick[i], 0);
+		y_move = SDL_JoystickGetAxis(joystick[i], 1);
+
+		if (x_move > 500 || (i == 0 && keystate[SDLK_RIGHT]))
+			input.pad[i] |= INPUT_RIGHT;
+		else
+			input.pad[i] &= ~INPUT_RIGHT;
+	
+		if (x_move < -500 || (i == 0 && keystate[SDLK_LEFT]))
+			input.pad[i] |= INPUT_LEFT;
+		else
+			input.pad[i] &= ~INPUT_LEFT;
+
+		if (y_move > 500 || (i == 0 && keystate[SDLK_DOWN]))
+			input.pad[i] |= INPUT_DOWN;
+		else
+			input.pad[i] &= ~INPUT_DOWN;
+
+		if(y_move < -500 || (i == 0 && keystate[SDLK_UP]))
+			input.pad[i] |= INPUT_UP;
+		else
+			input.pad[i] &= ~INPUT_UP;
+
+		if(SDL_JoystickGetButton(joystick[i], 2) == SDL_PRESSED || (i == 0 && keystate[SDLK_LCTRL]))
+			input.pad[i] |= INPUT_BUTTON1;
+		else
+			input.pad[i] &= ~INPUT_BUTTON1;
+				
+		if(SDL_JoystickGetButton(joystick[i], 1) == SDL_PRESSED || (i == 0 && keystate[SDLK_LALT]))
+			input.pad[i] |= INPUT_BUTTON2;
+		else
+			input.pad[i] &= ~INPUT_BUTTON2;
+
+		if(i == 0 && SDL_JoystickGetButton(joystick[i], 9) == SDL_PRESSED || keystate[SDLK_RETURN])
+			input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
+		else
+			input.system &= ~(sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
+					
+		if(SDL_JoystickGetButton(joystick[i], 8) == SDL_PRESSED)
+			selectpressed = 1;
+	}
+	
+	if (keystate[SDLK_0])
+	if (keystate[SDLK_1])
+	if (keystate[SDLK_2])
+	if (keystate[SDLK_3])
+	if (keystate[SDLK_4])
+	if (keystate[SDLK_UP])
+	
+	SDL_JoystickUpdate();	
+}
+
 static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 {
 	if (sms.console == CONSOLE_COLECO)
     {
-		input.system = 0;
 		coleco.keypad[0] = 0xff;
 		coleco.keypad[1] = 0xff;
 	}
 	
 	switch(k)
 	{
+		/* A USB keyboard can be plugged to the Arcade Mini so map it to*/
+		case SDLK_0:
+		case SDLK_KP0:
+			coleco.keypad[0] = 0;
+		break;
+		case SDLK_1:
+		case SDLK_KP1:
+		case SDLK_TAB:
+			coleco.keypad[0] = 1;
+		break;
+		case SDLK_2:
+		case SDLK_KP2:
+		case SDLK_BACKSPACE:
+			coleco.keypad[0] = 2;
+		break;
+		case SDLK_3:
+		case SDLK_KP3:
+			coleco.keypad[0] = 3;
+		break;
+		case SDLK_4:
+		case SDLK_KP4:
+			coleco.keypad[0] = 4;
+		break;
+		case SDLK_5:
+		case SDLK_KP5:
+			coleco.keypad[0] = 5;
+		break;
+		case SDLK_6:
+		case SDLK_KP6:
+			coleco.keypad[0] = 6;
+		break;
+		case SDLK_7:
+		case SDLK_KP7:
+			coleco.keypad[0] = 7;
+		break;
+		case SDLK_8:
+		case SDLK_KP8:
+			coleco.keypad[0] = 8;
+		break;
+		case SDLK_9:
+		case SDLK_KP9:
+			coleco.keypad[0] = 9;
+		break;
+		case SDLK_DOLLAR:
+		case SDLK_KP_MULTIPLY:
+			coleco.keypad[0] = 10;
+		break;
+		case SDLK_ASTERISK:
+		case SDLK_KP_MINUS:
+			coleco.keypad[0] = 11;
+		break;
 		case SDLK_ESCAPE:
 			if(p)
 				selectpressed = 1;
-
-		break;
-		case SDLK_RETURN:
-			if(p)
-				input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
-		break;
-		case SDLK_UP:
-			if(p)
-				input.pad[0] |= INPUT_UP;
-		break;	
-		case SDLK_DOWN:
-			if(p)
-				input.pad[0] |= INPUT_DOWN;
-		break;
-		case SDLK_LEFT:
-			if(p)
-				input.pad[0] |= INPUT_LEFT;
-		break;	
-		case SDLK_RIGHT:
-			if(p)
-				input.pad[0] |= INPUT_RIGHT;
-		break;
-		case SDLK_LCTRL:
-			if(p)
-				input.pad[0] |= INPUT_BUTTON1;
-		break;	
-		case SDLK_LALT:
-			if(p)
-				input.pad[0] |= INPUT_BUTTON2;
 		break;
 	}
+	
+	if (sms.console == CONSOLE_COLECO) input.system = 0;
 	
 	return 1;
 }
@@ -542,7 +631,7 @@ int main (int argc, char *argv[])
 	smsp_gamedata_set(argv[1]);
 	
 	// Force Colecovision mode
-	if (strcmp(strrchr(argv[1], '.'), ".col") == NULL)
+	if (strcmp(strrchr(argv[1], '.'), ".col") == 0)
 	{
 		option.console = 6;
 	}
@@ -641,63 +730,21 @@ int main (int argc, char *argv[])
             selectpressed = 0;
 		}
 
-		keystate = SDL_GetKeyState(NULL);
-	
-		for(uint8_t i=0;i<2;i++)
-		{
-				if (joystick[i] == NULL) joystick[i] = SDL_JoystickOpen(i);
-				
-				x_move = SDL_JoystickGetAxis(joystick[i], 0);
-				y_move = SDL_JoystickGetAxis(joystick[i], 1);
+		Controls();
 
-				if (x_move > 500 || (i == 0 && keystate[SDLK_RIGHT]))
-					input.pad[i] |= INPUT_RIGHT;
-				else
-					input.pad[i] &= ~INPUT_RIGHT;
-					
-				if (x_move < -500 || (i == 0 && keystate[SDLK_LEFT]))
-					input.pad[i] |= INPUT_LEFT;
-				else
-					input.pad[i] &= ~INPUT_LEFT;
-
-				if (y_move > 500 || (i == 0 && keystate[SDLK_DOWN]))
-					input.pad[i] |= INPUT_DOWN;
-				else
-					input.pad[i] &= ~INPUT_DOWN;
-
-				if(y_move < -500 || (i == 0 && keystate[SDLK_UP]))
-					input.pad[i] |= INPUT_UP;
-				else
-					input.pad[i] &= ~INPUT_UP;
-
-				if(SDL_JoystickGetButton(joystick[i], 2) == SDL_PRESSED || (i == 0 && keystate[SDLK_LCTRL]))
-					input.pad[i] |= INPUT_BUTTON1;
-				else
-					input.pad[i] &= ~INPUT_BUTTON1;
-				
-				if(SDL_JoystickGetButton(joystick[i], 1) == SDL_PRESSED || (i == 0 && keystate[SDLK_LALT]))
-					input.pad[i] |= INPUT_BUTTON2;
-				else
-					input.pad[i] &= ~INPUT_BUTTON2;
-
-				if(i == 0 && SDL_JoystickGetButton(joystick[i], 9) == SDL_PRESSED || keystate[SDLK_RETURN])
-					input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
-				else
-					input.system &= ~(sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
-					
-				if(SDL_JoystickGetButton(joystick[i], 8) == SDL_PRESSED || keystate[SDLK_ESCAPE])
-					selectpressed = 1;
-		}
-
-		SDL_JoystickUpdate();
-
-		if(SDL_PollEvent(&event)) 
+		if (SDL_PollEvent(&event)) 
 		{
 			switch(event.type) 
 			{
+				case SDL_KEYUP:
+					sdl_controls_update_input(event.key.keysym.sym, 0);
+				break;
+				case SDL_KEYDOWN:
+					sdl_controls_update_input(event.key.keysym.sym, 1);
+				break;
 				case SDL_QUIT:
 					quit = 1;
-				return;
+				break;
 			}
 		}
 	}

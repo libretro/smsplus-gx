@@ -62,7 +62,7 @@ static void video_update()
 void smsp_state(uint8_t slot, uint8_t mode)
 {
 	// Save and Load States
-	int8_t stpath[PATH_MAX];
+	char stpath[PATH_MAX];
 	snprintf(stpath, sizeof(stpath), "%s%s.st%d", gdata.stdir, gdata.gamename, slot);
 	FILE *fd;
 	
@@ -121,13 +121,20 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 {
 	if (sms.console == CONSOLE_COLECO)
     {
-		input.system = 0;
 		coleco.keypad[0] = 0xff;
 		coleco.keypad[1] = 0xff;
 	}
 	
 	switch(k)
 	{
+		/* At least allow them to play on the lowest difficulties,
+		 * Maybe this needs a better implementation ? */
+		case SDLK_TAB:
+			coleco.keypad[0] = 1;
+		break;
+		case SDLK_BACKSPACE:
+			coleco.keypad[0] = 2;
+		break;
 		case SDLK_END:
 		case SDLK_3:
 		case SDLK_ESCAPE:
@@ -181,6 +188,9 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 				input.pad[0] &= ~INPUT_BUTTON2;
 		break;	
 	}
+	
+	if (sms.console == CONSOLE_COLECO) input.system = 0;
+	
 	return 1;
 }
 
@@ -188,7 +198,7 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 static void bios_init()
 {
 	FILE *fd;
-	int8_t bios_path[256];
+	char bios_path[256];
 	
 	bios.rom = malloc(0x100000);
 	bios.enabled = 0;
@@ -469,7 +479,7 @@ int main (int argc, char *argv[])
 	smsp_gamedata_set(argv[1]);
 	
 	// Force Colecovision mode
-	if (strcmp(strrchr(argv[1], '.'), ".col") == NULL)
+	if (strcmp(strrchr(argv[1], '.'), ".col") == 0)
 	{
 		option.console = 6;
 	}

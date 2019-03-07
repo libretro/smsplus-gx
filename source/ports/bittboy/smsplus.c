@@ -121,13 +121,20 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 {
 	if (sms.console == CONSOLE_COLECO)
     {
-		input.system = 0;
 		coleco.keypad[0] = 0xff;
 		coleco.keypad[1] = 0xff;
 	}
 	
 	switch(k)
 	{
+		/* At least allow them to play on the lowest difficulties,
+		 * Maybe this needs a better implementation ? */
+		case SDLK_TAB:
+			coleco.keypad[0] = 1;
+		break;
+		case SDLK_BACKSPACE:
+			coleco.keypad[0] = 2;
+		break;	
 		case SDLK_END:
 		case SDLK_RCTRL:
 			if(p)
@@ -181,6 +188,9 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 		default:
 		break;
 	}
+	
+	if (sms.console == CONSOLE_COLECO) input.system = 0;
+	
 	return 1;
 }
 
@@ -471,7 +481,7 @@ int main (int argc, char *argv[])
 	smsp_gamedata_set(argv[1]);
 	
 	// Force Colecovision mode
-	if (strcmp(strrchr(argv[1], '.'), ".col") == NULL)
+	if (strcmp(strrchr(argv[1], '.'), ".col") == 0)
 	{
 		option.console = 6;
 	}

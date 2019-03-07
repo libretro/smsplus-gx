@@ -121,13 +121,60 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 {
 	if (sms.console == CONSOLE_COLECO)
     {
-		input.system = 0;
 		coleco.keypad[0] = 0xff;
 		coleco.keypad[1] = 0xff;
 	}
 	
 	switch(k)
 	{
+		case SDLK_0:
+		case SDLK_KP0:
+			coleco.keypad[0] = 0;
+		break;
+		case SDLK_1:
+		case SDLK_KP1:
+			coleco.keypad[0] = 1;
+		break;
+		case SDLK_2:
+		case SDLK_KP2:
+			coleco.keypad[0] = 2;
+		break;
+		case SDLK_3:
+		case SDLK_KP3:
+			coleco.keypad[0] = 3;
+		break;
+		case SDLK_4:
+		case SDLK_KP4:
+			coleco.keypad[0] = 4;
+		break;
+		case SDLK_5:
+		case SDLK_KP5:
+			coleco.keypad[0] = 5;
+		break;
+		case SDLK_6:
+		case SDLK_KP6:
+			coleco.keypad[0] = 6;
+		break;
+		case SDLK_7:
+		case SDLK_KP7:
+			coleco.keypad[0] = 7;
+		break;
+		case SDLK_8:
+		case SDLK_KP8:
+			coleco.keypad[0] = 8;
+		break;
+		case SDLK_9:
+		case SDLK_KP9:
+			coleco.keypad[0] = 9;
+		break;
+		case SDLK_DOLLAR:
+		case SDLK_KP_MULTIPLY:
+			coleco.keypad[0] = 10;
+		break;
+		case SDLK_ASTERISK:
+		case SDLK_KP_MINUS:
+			coleco.keypad[0] = 11;
+		break;
 		case SDLK_ESCAPE:
 			if(p)
 				selectpressed = 1;
@@ -179,19 +226,22 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 		default:
 		break;
 	}
+	
+	if (sms.console == CONSOLE_COLECO) input.system = 0;
+	
 	return 1;
 }
 
 
-static void bios_init(void)
+static void bios_init()
 {
 	FILE *fd;
-	char bios_path[512];
+	char bios_path[256];
 	
 	bios.rom = malloc(0x100000);
 	bios.enabled = 0;
 	
-	snprintf(bios_path, sizeof(bios_path), "%s%s", gdata.biosdir, "bios.sms");
+	snprintf(bios_path, sizeof(bios_path), "%s%s", gdata.biosdir, "BIOS.sms");
 
 	fd = fopen(bios_path, "rb");
 	if(fd)
@@ -207,7 +257,7 @@ static void bios_init(void)
 		fclose(fd);
 	}
 
-	snprintf(bios_path, sizeof(bios_path), "%s%s", gdata.biosdir, "bios.col");
+	snprintf(bios_path, sizeof(bios_path), "%s%s", gdata.biosdir, "BIOS.col");
 	
 	fd = fopen(bios_path, "rb");
 	if(fd)
@@ -482,7 +532,7 @@ int main (int argc, char *argv[])
 	smsp_gamedata_set(argv[1]);
 
 	// Force Colecovision mode
-	if (strcmp(strrchr(argv[1], '.'), ".col") == NULL)
+	if (strcmp(strrchr(argv[1], '.'), ".col") == 0)
 	{
 		option.console = 6;
 	}
