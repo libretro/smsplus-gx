@@ -278,8 +278,8 @@ void Menu()
     uint16_t miniscreenwidth = 140;
     uint16_t miniscreenheight = 135;
     SDL_Rect dstRect;
-    int8_t *cmd = NULL;
     SDL_Event Event;
+    
     SDL_Surface* menu_surf = SDL_CreateRGBSurface(SDL_SWSURFACE, miniscreenwidth, miniscreenheight, 16, sdl_screen->format->Rmask, sdl_screen->format->Gmask, sdl_screen->format->Bmask, sdl_screen->format->Amask);
 
     SDL_LockSurface(menu_surf);
@@ -292,62 +292,63 @@ void Menu()
     char text[50];
 
     SDL_PollEvent(&Event);
+    
     while (((currentselection != 1) && (currentselection != 5)) || (!pressed))
     {
         pressed = 0;
-        SDL_FillRect( menu_surf, NULL, 0 );
+        SDL_FillRect( sdl_screen, NULL, 0 );
 
-        dstRect.x = menu_surf->w-5-miniscreenwidth;
+        dstRect.x = sdl_screen->w-5-miniscreenwidth;
         dstRect.y = 30;
-        SDL_BlitSurface(menu_surf,NULL,menu_surf,&dstRect);
+        SDL_BlitSurface(menu_surf,NULL,sdl_screen,&dstRect);
 
-        gfx_font_print_center(menu_surf,5,bigfontwhite,"SMS Plus GX");
+        gfx_font_print_center(sdl_screen,5,bigfontwhite,"SMS Plus GX");
 
         if (currentselection == 1)
-            gfx_font_print(menu_surf,5,25,bigfontred,"Continue");
+            gfx_font_print(sdl_screen,5,25,bigfontred,"Continue");
         else
-            gfx_font_print(menu_surf,5,25,bigfontwhite,"Continue");
+            gfx_font_print(sdl_screen,5,25,bigfontwhite,"Continue");
 
         sprintf(text,"Load State %d",save_slot);
 
         if (currentselection == 2)
-            gfx_font_print(menu_surf,5,65,bigfontred,text);
+            gfx_font_print(sdl_screen,5,65,bigfontred,text);
         else
-            gfx_font_print(menu_surf,5,65,bigfontwhite,text);
+            gfx_font_print(sdl_screen,5,65,bigfontwhite,text);
 
         sprintf(text,"Save State %d",save_slot);
 
         if (currentselection == 3)
-            gfx_font_print(menu_surf,5,85,bigfontred,text);
+            gfx_font_print(sdl_screen,5,85,bigfontred,text);
         else
-            gfx_font_print(menu_surf,5,85,bigfontwhite,text);
+            gfx_font_print(sdl_screen,5,85,bigfontwhite,text);
 
         if (currentselection == 4)
         {
             if (fullscreen == 1)
-                gfx_font_print(menu_surf,5,105,bigfontred,"Stretched");
+                gfx_font_print(sdl_screen,5,105,bigfontred,"Stretched");
             else
-				gfx_font_print(menu_surf,5,105,bigfontred,"Native");
+				gfx_font_print(sdl_screen,5,105,bigfontred,"Native");
         }
         else
         {
             if (fullscreen == 1)
-                gfx_font_print(menu_surf,5,105,bigfontwhite,"Stretched");
+                gfx_font_print(sdl_screen,5,105,bigfontwhite,"Stretched");
             else
-				gfx_font_print(menu_surf,5,105,bigfontwhite,"Native");
+				gfx_font_print(sdl_screen,5,105,bigfontwhite,"Native");
         }
 
         sprintf(text,"%s",showfps ? "Show fps on" : "Show fps off");
 
         if (currentselection == 5)
-            gfx_font_print(menu_surf,5,125,bigfontred,"Quit");
+            gfx_font_print(sdl_screen,5,125,bigfontred,"Quit");
         else
-            gfx_font_print(menu_surf,5,125,bigfontwhite,"Quit");
+            gfx_font_print(sdl_screen,5,125,bigfontwhite,"Quit");
 
-        gfx_font_print_center(menu_surf,menu_surf->h-40-gfx_font_height(font),font,"SMS_SDL for the RS-97");
-        gfx_font_print_center(menu_surf,menu_surf->h-30-gfx_font_height(font),font,"RS-97 port by gameblabla");
-        gfx_font_print_center(menu_surf,menu_surf->h-20-gfx_font_height(font),font,"Initial port: exmortis@yandex.ru,joyrider");
-        gfx_font_print_center(menu_surf,menu_surf->h-10-gfx_font_height(font),font,"Scaler code: Alekmaul, Harteex: TGA,bin2h");
+        gfx_font_print_center(sdl_screen,sdl_screen->h-40-gfx_font_height(font),font,"SMS_SDL for the RS-97");
+        gfx_font_print_center(sdl_screen,sdl_screen->h-30-gfx_font_height(font),font,"RS-97 port by gameblabla");
+        gfx_font_print_center(sdl_screen,sdl_screen->h-20-gfx_font_height(font),font,"Initial port: exmortis@yandex.ru,joyrider");
+        gfx_font_print_center(sdl_screen,sdl_screen->h-10-gfx_font_height(font),font,"Scaler code: Alekmaul, Harteex: TGA,bin2h");
 
         while (SDL_PollEvent(&Event))
         {
@@ -426,7 +427,6 @@ void Menu()
             }
         }
 
-		SDL_BlitSurface(menu_surf, NULL, sdl_screen, NULL);
 		SDL_Flip(sdl_screen);
     }
     
@@ -437,7 +437,7 @@ void Menu()
     SDL_Flip(sdl_screen);
     #endif
     
-    if (menu_surf) SDL_FreeSurface(menu_surf);
+    if (sdl_screen) SDL_FreeSurface(sdl_screen);
     
     if (currentselection == 5)
         quit = 1;
