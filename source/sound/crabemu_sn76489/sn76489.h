@@ -80,8 +80,8 @@ typedef struct sn76489_struct {
 #define SN76489_NOISE_TAPPED_SG1000 SN76489_NOISE_TAPPED_NORMAL
 #define SN76489_NOISE_BITS_SG1000   SN76489_NOISE_BITS_NORMAL
 
-int sn76489_init(sn76489_t *psg, float clock, float sample_rate, uint16_t noise_bits, uint16_t tapped);
-int sn76489_reset(sn76489_t *psg, float clock, float sample_rate, uint16_t noise_bits, uint16_t tapped);
+uint32_t sn76489_init(sn76489_t *psg, float clock, float sample_rate, uint16_t noise_bits, uint16_t tapped);
+uint32_t sn76489_reset(sn76489_t *psg, float clock, float sample_rate, uint16_t noise_bits, uint16_t tapped);
 void sn76489_write(sn76489_t *psg, uint8_t byte);
 
 void sn76489_execute_samples(sn76489_t *psg, int16_t *bufl, int16_t *bufr, uint32_t samples) ;

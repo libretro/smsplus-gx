@@ -39,13 +39,13 @@ void SN76489_SetContext(uint8_t* data)
     memcpy(&psg_sn, data, sizeof(sn76489_t));
 }
 
-int sn76489_init(sn76489_t *psg, float clock, float sample_rate, uint16_t noise_bits, uint16_t tapped) 
+uint32_t sn76489_init(sn76489_t *psg, float clock, float sample_rate, uint16_t noise_bits, uint16_t tapped) 
 {
 	psg->enabled_channels = 0x0F;
 	return sn76489_reset(psg, clock, sample_rate, noise_bits, tapped);
 }
 
-int sn76489_reset(sn76489_t *psg, float clock, float sample_rate, uint16_t noise_bits, uint16_t tapped) 
+uint32_t sn76489_reset(sn76489_t *psg, float clock, float sample_rate, uint16_t noise_bits, uint16_t tapped) 
 {
     psg->volume[0] = 0xF;
     psg->volume[1] = 0xF;
