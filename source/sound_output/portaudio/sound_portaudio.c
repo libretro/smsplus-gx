@@ -31,7 +31,7 @@ void Sound_Init()
 	outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
 	outputParameters.hostApiSpecificStreamInfo = NULL;
 	
-	err = Pa_OpenStream( &apu_stream, NULL, &outputParameters, SOUND_FREQUENCY, 0, paNoFlag, NULL, NULL);
+	err = Pa_OpenStream( &apu_stream, NULL, &outputParameters, SOUND_FREQUENCY, SOUND_SAMPLES_SIZE, paNoFlag, NULL, NULL);
 	err = Pa_StartStream( apu_stream );
 }
 
