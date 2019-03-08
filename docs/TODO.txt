@@ -1,9 +1,4 @@
 SMSPlus-GX RS97
 
--  The GPLv2 EightyOne's Z80 CPU Core is very inaccurate. While it's much improved compared to last version,
-it's still much inferior to the original z80.c core. For example, Fantastic Dizzy is completely bugged with it.
-According to Flubba's VDP test, it's also not perfectly in sync with the display. 
-It could be an issue with timing too rather than accuracy... Unfortunely, that's way over my head :c
-
-I also tried to add support for CrabEmu's own z80 core but i couldn't manage to make it work.
-Perhaps i could try it again with CZ80 instead ?
+- There's a lot of un-necesarry convertion between integers and all according to Clang.
+It might not be possible to fix all of that in one go though but perhaps we could fix most of them ?

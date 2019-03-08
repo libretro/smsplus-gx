@@ -5,8 +5,6 @@ Released his SMS emulator since 0.9 under the GPLv2+.
 It stayed like so until after version 1.5 (source code to version 1.5 got lost unfortunately but we still have SmSPlus-GX thankfully).
 After version 1.5, he decided to switch it to a non-commercial license, turning it proprietary again.
 (The reason being he got legal threats from some companies using his emulator)
-Another newer upstream fork also uses this license.
-Therefore, i need to be very careful about this and make sure we're not using any code from that version to the full extent of the jam. (i mean law)
 
 He also contributed modifications to sn76489.c, i contacted him and he told me it fell under the same license as Maxim's.
 
@@ -16,10 +14,10 @@ He worked on SMSPlus-GX, with several improvements such as improved accuracy, fi
 It was originally designed for the Gamecube/Wii.
 https://github.com/ekeeke/smsplus-gx
 
-This fork also has code for Colecovision. Although it does claim to support Colecovision games,
-in my testings, it doesn't, even if i force it to Colecovision mode. It wouldn't boot any games for me.
+This fork also has code for Colecovision but Colecovision support seems to be a bit spotty
+and requires a BIOS.
 
-The overscan code got removed because it was not useful and little to no SMS make use of it.
+The overscan code got removed because it was not useful and little to no SMS games make use of it.
 
 Alekmaul
 =========
@@ -31,6 +29,7 @@ Came up with the TGA font loading code and he converted the fonts to a c array w
 
 dmitrysmagin
 =============
+
 - Menu code based on his fork sms_sdl-rzx50 available here :
 https://github.com/dmitrysmagin/sms_sdl-rzx50
 
@@ -60,6 +59,7 @@ Most of my issues with it were related to irq & cpureadmap (which turns out, req
 
 EightyOne ZX81
 ==============
+
 https://github.com/PocketSprite/8bkc-gamegear/commit/cd3510d12feb8f922c0505a2a47e4a58b5fef9f0
 (Based on that)
 https://github.com/libretro/81-libretro/tree/master/81/z80
@@ -67,12 +67,13 @@ https://github.com/libretro/81-libretro/tree/master/81/z80
 See PocketSprite's patches. This CPU core is much less accurate and is unable to run games like Dizzy and some SG-1000 games.
 Juergen's z80 cpu core on the other hand, does not suffer from these issues.
 
+I am planning on removing this core in the future due to how crap it is but i will leave it for now.
+
 Juergen Buchmueller
 ====================
 
-He made the z80 core for SMS Plus. He declined to relicense the old code to the GPLv2 (despite the license granting him the right to revoke it).
-Maybe someday someone will take MAME's code (which is under the GPLv2) and port it back to C.
-When that happens, i can remove EightyOne's z80 core.
+He made the z80 core for SMS Plus and later released an updated one for MAME under the BSD-3 license.
+He declined releasing the old z80's core so i had to reconvert the MAME core for our use in SMS Plus GX.
 
 CrabEmu
 ========
@@ -95,6 +96,7 @@ Disabled collision check for 9th sprite : doing so passes Flubba's test.
 Fixed support for 256 pages. This fixes Bad Apple SMS. (also added it to the ROM database list as it requires PAL timings)
 
 I made specific changes for each devices, like the RS-97. They can be found under their own subfolders in src/ports.
+I'm also responsible for making MAME's z80 core work with SMS Plus GX. (it was similar but with some improvements)
 Another thing i did was to port it to several sound APIs such as ALSA, OSS, Portaudio, libao and pulseaudio.
 I am releasing the changes under the GPLv2+, just to make things clear.
 
