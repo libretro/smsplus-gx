@@ -106,8 +106,8 @@ void Sound_Init(void)
 		fprintf(stderr, "Unable to set hw parameters: %s\n", snd_strerror(rc));
 		return;
 	}
-	
-#ifndef VSYNC_SUPPORTED
+
+#ifdef VSYNC_SUPPORTED
 	snd_pcm_nonblock(handle, 1);
 #endif
 	

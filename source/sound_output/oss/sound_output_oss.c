@@ -16,13 +16,13 @@ void Sound_Init()
 	uint32_t channels = 2;
 	uint32_t format = AFMT_S16_LE;
 	uint32_t tmp = SOUND_FREQUENCY;
-	uint32_t err_ret;
+	int32_t err_ret;
 	
 	option.sndrate = SOUND_FREQUENCY;
 	
 	oss_audio_fd = open("/dev/dsp", O_WRONLY
 	/* Use non-blocking mode instead when V-sync is properly supported. */
-#if VSYNC_SUPPORTED
+#ifdef VSYNC_SUPPORTED
 	| O_NONBLOCK
 #endif
 	);
