@@ -10,8 +10,8 @@ SOUND_ENGINE = maxim_sn76489
 Z80_CORE = z80
 PROFILE		= 0
 
-CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-check-zero-division -mno-fp-exceptions -mframe-header-opt -fsingle-precision-constant -fno-common -mips32 -fno-PIC -mno-abicalls
-CFLAGS		+= -std=gnu99 -DLSB_FIRST -DALIGN_DWORD -DRS97
+CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-fp-exceptions -mno-check-zero-division -mframe-header-opt -fno-common -mips32 -fno-PIC -mno-abicalls -flto
+CFLAGS		+= -std=gnu99 -DLSB_FIRST -DALIGN_DWORD -DRS97 -DPERFORMANCE_HACK
 CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/generic -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
 ifeq ($(PROFILE), 1)
 CFLAGS 		+= -fprofile-generate=/home/retrofw/profile
@@ -24,6 +24,9 @@ CFLAGS 		+= -DMAXIM_PSG
 endif
 
 LDFLAGS     = -lSDL -lm -lz -lc -no-pie -Wl,--as-needed -Wl,--gc-sections -s -flto
+ifeq ($(SOUND_OUTPUT), portaudio)
+LDFLAGS 		+= -lportaudio
+endif
 
 # Files to be r
 SRCDIR    = ./source ./source/unzip ./source/cpu_cores/$(Z80_CORE) ./source/sound ./source/sound_output/$(SOUND_OUTPUT) ./source/generic ./source/ports/$(PORT) ./source/sound/$(SOUND_ENGINE)
