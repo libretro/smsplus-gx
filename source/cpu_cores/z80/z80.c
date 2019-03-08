@@ -576,11 +576,9 @@ INLINE uint8_t rm(uint32_t addr)
 /***************************************************************
  * Read a word from given memory location
  ***************************************************************/
-INLINE void rm16(uint32_t addr, PAIR* r)
-{
-	r->b.l = rm(addr);
-	r->b.h = rm((addr+1));
-}
+#define rm16(addr, r) \
+	r.b.l = rm(addr); \
+	r.b.h = rm((addr+1));
 
 /***************************************************************
  * Write a byte to given memory location
@@ -594,11 +592,9 @@ INLINE void wm(uint32_t addr, uint8_t value)
 /***************************************************************
  * Write a word to given memory location
  ***************************************************************/
-INLINE void wm16(uint32_t addr, PAIR* r)
-{
-	wm(addr, r->b.l);
-	wm((addr+1), r->b.h);
-}
+#define wm16(addr, r) \
+	wm(addr, r.b.l); \
+	wm((addr+1), r.b.h);
 
 /***************************************************************
  * rop() is identical to rm() except it is used for
@@ -652,20 +648,16 @@ INLINE void eay()
 /***************************************************************
  * POP
  ***************************************************************/
-INLINE void pop(PAIR *r)
-{
-	rm16(SPD, r);
+#define pop(r) \
+	rm16(SPD, r); \
 	SP += 2;
-}
 	
 /***************************************************************
  * PUSH
  ***************************************************************/
-INLINE void push(PAIR *r)
-{
-	SP -= 2;
+#define push(r) \
+	SP -= 2; \
 	wm16(SPD, r);
-}
 
 /***************************************************************
  * JP
@@ -723,7 +715,7 @@ INLINE void call()
 {
 	Z80.ea = arg16();
 	WZ = Z80.ea;
-	push(&Z80.pc);
+	push(Z80.pc);
 	PCD = Z80.ea;
 }
 
@@ -736,7 +728,7 @@ INLINE void call_cond(uint32_t cond, uint8_t opcode)
 	{
 		Z80.ea = arg16();
 		WZ = Z80.ea;
-		push(&Z80.pc);
+		push(Z80.pc);
 		PCD = Z80.ea;
 		CC(ex, opcode);
 	}
@@ -753,7 +745,7 @@ INLINE void ret_cond(uint32_t cond, uint8_t opcode)
 {
 	if (cond)
 	{
-		pop(&Z80.pc);
+		pop(Z80.pc);
 		WZ = PC;
 		CC(ex, opcode);
 	}
@@ -764,7 +756,7 @@ INLINE void ret_cond(uint32_t cond, uint8_t opcode)
  ***************************************************************/
 INLINE void retn()
 {
-	pop(&Z80.pc);
+	pop(Z80.pc);
 	WZ = PC;
 	Z80.iff1 = Z80.iff2;
 }
@@ -774,7 +766,7 @@ INLINE void retn()
  ***************************************************************/
 INLINE void reti()
 {
-	pop(&Z80.pc);
+	pop(Z80.pc);
 	WZ = PC;
 	Z80.iff1 = Z80.iff2;
 }
@@ -821,7 +813,7 @@ INLINE void ld_a_i()
  ***************************************************************/
 INLINE void rst(uint16_t addr)
 {
-	push(&Z80.pc);
+	push(Z80.pc);
 	PCD = addr;
 	WZ = PC;
 }
@@ -1055,57 +1047,50 @@ INLINE void exx()
 /***************************************************************
  * EX   (SP),r16
  ***************************************************************/
-INLINE void ex_sp(PAIR* r)
-{
-	PAIR tmp = { { 0, 0, 0, 0 } };
-	rm16(SPD, &tmp);
-	wm16(SPD, r);
-	*r = tmp;
-	WZ = r->d;
-}
+
+#define ex_sp(r) \
+	PAIR tmp = { { 0, 0, 0, 0 } }; \
+	rm16(SPD, tmp); \
+	wm16(SPD, r); \
+	r = tmp; \
+	WZ = r.d; \
 
 /***************************************************************
  * ADD16
  ***************************************************************/
-INLINE void add16(PAIR* dr, PAIR* sr)
-{
-	uint32_t res = dr->d + sr->d;
-	WZ = dr->d + 1;
-	F = (F & (SF | ZF | VF)) |
-		(((dr->d ^ res ^ sr->d) >> 8) & HF) |
-		((res >> 16) & CF) | ((res >> 8) & (YF | XF));
-	dr->w.l = (uint16_t)res;
-}
+#define add16(dr,sr) \
+	uint32_t res = dr.d + sr.d; \
+	WZ = dr.d + 1; \
+	F = (F & (SF | ZF | VF)) | \
+	(((dr.d ^ res ^ sr.d) >> 8) & HF) | \
+	((res >> 16) & CF) | ((res >> 8) & (YF | XF)); \
+	dr.w.l = (uint16_t)res; \
 
 /***************************************************************
  * ADC  HL,r16
  ***************************************************************/
-INLINE void adc_hl(PAIR r)
-{
-	uint32_t res = HLD + r.d + (F & CF);
-	WZ = HL + 1;
-	F = (((HLD ^ res ^ r.d) >> 8) & HF) |
-		((res >> 16) & CF) |
-		((res >> 8) & (SF | YF | XF)) |
-		((res & 0xffff) ? 0 : ZF) |
-		(((r.d ^ HLD ^ 0x8000) & (r.d ^ res) & 0x8000) >> 13);
-	HL = (uint16_t)res;
-}
+#define adc_hl(r) \
+	uint32_t res = HLD + r.d + (F & CF); \
+	WZ = HL + 1; \
+	F = (((HLD ^ res ^ r.d) >> 8) & HF) | \
+		((res >> 16) & CF) | \
+		((res >> 8) & (SF | YF | XF)) | \
+		((res & 0xffff) ? 0 : ZF) | \
+		(((r.d ^ HLD ^ 0x8000) & (r.d ^ res) & 0x8000) >> 13); \
+	HL = (uint16_t)res; 
 
 /***************************************************************
  * SBC  HL,r16
  ***************************************************************/
-INLINE void sbc_hl(PAIR r)
-{
-	uint32_t res = HLD - r.d - (F & CF);
-	WZ = HL + 1;
-	F = (((HLD ^ res ^ r.d) >> 8) & HF) | NF |
-		((res >> 16) & CF) |
-		((res >> 8) & (SF | YF | XF)) |
-		((res & 0xffff) ? 0 : ZF) |
-		(((r.d ^ HLD) & (HLD ^ res) &0x8000) >> 13);
+#define sbc_hl(r) \
+	uint32_t res = HLD - r.d - (F & CF); \
+	WZ = HL + 1; \
+	F = (((HLD ^ res ^ r.d) >> 8) & HF) | NF | \
+		((res >> 16) & CF) | \
+		((res >> 8) & (SF | YF | XF)) | \
+		((res & 0xffff) ? 0 : ZF) | \
+		(((r.d ^ HLD) & (HLD ^ res) &0x8000) >> 13); \
 	HL = (uint16_t)res;
-}
 
 /***************************************************************
  * RLC  r8
@@ -2093,7 +2078,7 @@ OP(dd,06) { illegal_1(); op_06();                            } /* DB   DD       
 OP(dd,07) { illegal_1(); op_07();                            } /* DB   DD          */
 
 OP(dd,08) { illegal_1(); op_08();                            } /* DB   DD          */
-OP(dd,09) { add16(&Z80.ix, &Z80.bc);                               } /* ADD  IX,BC       */
+OP(dd,09) { add16(Z80.ix, Z80.bc);                               } /* ADD  IX,BC       */
 OP(dd,0a) { illegal_1(); op_0a();                            } /* DB   DD          */
 OP(dd,0b) { illegal_1(); op_0b();                            } /* DB   DD          */
 OP(dd,0c) { illegal_1(); op_0c();                            } /* DB   DD          */
@@ -2111,7 +2096,7 @@ OP(dd,16) { illegal_1(); op_16();                            } /* DB   DD       
 OP(dd,17) { illegal_1(); op_17();                            } /* DB   DD          */
 
 OP(dd,18) { illegal_1(); op_18();                            } /* DB   DD          */
-OP(dd,19) { add16(&Z80.ix, &Z80.de);                               } /* ADD  IX,DE       */
+OP(dd,19) { add16(Z80.ix, Z80.de);                               } /* ADD  IX,DE       */
 OP(dd,1a) { illegal_1(); op_1a();                            } /* DB   DD          */
 OP(dd,1b) { illegal_1(); op_1b();                            } /* DB   DD          */
 OP(dd,1c) { illegal_1(); op_1c();                            } /* DB   DD          */
@@ -2121,7 +2106,7 @@ OP(dd,1f) { illegal_1(); op_1f();                            } /* DB   DD       
 
 OP(dd,20) { illegal_1(); op_20();                            } /* DB   DD          */
 OP(dd,21) { IX = arg16();                                    } /* LD   IX,w        */
-OP(dd,22) { Z80.ea = arg16(); wm16(Z80.ea, &Z80.ix); WZ = Z80.ea + 1; } /* LD   (w),IX      */
+OP(dd,22) { Z80.ea = arg16(); wm16(Z80.ea, Z80.ix); WZ = Z80.ea + 1; } /* LD   (w),IX      */
 OP(dd,23) { IX++;                                            } /* INC  IX          */
 OP(dd,24) { HX = inc(HX);                                    } /* INC  HX          */
 OP(dd,25) { HX = dec(HX);                                    } /* DEC  HX          */
@@ -2129,8 +2114,8 @@ OP(dd,26) { HX = arg();                                      } /* LD   HX,n     
 OP(dd,27) { illegal_1(); op_27();                            } /* DB   DD          */
 
 OP(dd,28) { illegal_1(); op_28();                            } /* DB   DD          */
-OP(dd,29) { add16(&Z80.ix, &Z80.ix);                               } /* ADD  IX,IX       */
-OP(dd,2a) { Z80.ea = arg16(); rm16(Z80.ea, &Z80.ix); WZ = Z80.ea + 1; } /* LD   IX,(w)      */
+OP(dd,29) { add16(Z80.ix, Z80.ix);                               } /* ADD  IX,IX       */
+OP(dd,2a) { Z80.ea = arg16(); rm16(Z80.ea, Z80.ix); WZ = Z80.ea + 1; } /* LD   IX,(w)      */
 OP(dd,2b) { IX--;                                            } /* DEC  IX          */
 OP(dd,2c) { LX = inc(LX);                                    } /* INC  LX          */
 OP(dd,2d) { LX = dec(LX);                                    } /* DEC  LX          */
@@ -2147,7 +2132,7 @@ OP(dd,36) { eax(); wm(Z80.ea, arg());                          } /* LD   (IX+o),
 OP(dd,37) { illegal_1(); op_37();                            } /* DB   DD          */
 
 OP(dd,38) { illegal_1(); op_38();                            } /* DB   DD          */
-OP(dd,39) { add16(&Z80.ix, &Z80.sp);                               } /* ADD  IX,SP       */
+OP(dd,39) { add16(Z80.ix, Z80.sp);                               } /* ADD  IX,SP       */
 OP(dd,3a) { illegal_1(); op_3a();                            } /* DB   DD          */
 OP(dd,3b) { illegal_1(); op_3b();                            } /* DB   DD          */
 OP(dd,3c) { illegal_1(); op_3c();                            } /* DB   DD          */
@@ -2336,11 +2321,11 @@ OP(dd,de) { illegal_1(); op_de();                            } /* DB   DD       
 OP(dd,df) { illegal_1(); op_df();                            } /* DB   DD          */
 
 OP(dd,e0) { illegal_1(); op_e0();                            } /* DB   DD          */
-OP(dd,e1) { pop(&Z80.ix);                                       } /* POP  IX          */
+OP(dd,e1) { pop(Z80.ix);                                       } /* POP  IX          */
 OP(dd,e2) { illegal_1(); op_e2();                            } /* DB   DD          */
-OP(dd,e3) { ex_sp(&Z80.ix);                                     } /* EX   (SP),IX     */
+OP(dd,e3) { ex_sp(Z80.ix);                                     } /* EX   (SP),IX     */
 OP(dd,e4) { illegal_1(); op_e4();                            } /* DB   DD          */
-OP(dd,e5) { push(&Z80.ix);                                      } /* PUSH IX          */
+OP(dd,e5) { push(Z80.ix);                                      } /* PUSH IX          */
 OP(dd,e6) { illegal_1(); op_e6();                            } /* DB   DD          */
 OP(dd,e7) { illegal_1(); op_e7();                            } /* DB   DD          */
 
@@ -2384,7 +2369,7 @@ OP(fd,06) { illegal_1(); op_06();                            } /* DB   FD       
 OP(fd,07) { illegal_1(); op_07();                            } /* DB   FD          */
 
 OP(fd,08) { illegal_1(); op_08();                            } /* DB   FD          */
-OP(fd,09) { add16(&Z80.iy, &Z80.bc);                               } /* ADD  IY,BC       */
+OP(fd,09) { add16(Z80.iy, Z80.bc);                               } /* ADD  IY,BC       */
 OP(fd,0a) { illegal_1(); op_0a();                            } /* DB   FD          */
 OP(fd,0b) { illegal_1(); op_0b();                            } /* DB   FD          */
 OP(fd,0c) { illegal_1(); op_0c();                            } /* DB   FD          */
@@ -2402,7 +2387,7 @@ OP(fd,16) { illegal_1(); op_16();                            } /* DB   FD       
 OP(fd,17) { illegal_1(); op_17();                            } /* DB   FD          */
 
 OP(fd,18) { illegal_1(); op_18();                            } /* DB   FD          */
-OP(fd,19) { add16(&Z80.iy, &Z80.de);                               } /* ADD  IY,DE       */
+OP(fd,19) { add16(Z80.iy, Z80.de);                               } /* ADD  IY,DE       */
 OP(fd,1a) { illegal_1(); op_1a();                            } /* DB   FD          */
 OP(fd,1b) { illegal_1(); op_1b();                            } /* DB   FD          */
 OP(fd,1c) { illegal_1(); op_1c();                            } /* DB   FD          */
@@ -2412,7 +2397,7 @@ OP(fd,1f) { illegal_1(); op_1f();                            } /* DB   FD       
 
 OP(fd,20) { illegal_1(); op_20();                            } /* DB   FD          */
 OP(fd,21) { IY = arg16();                                    } /* LD   IY,w        */
-OP(fd,22) { Z80.ea = arg16(); wm16(Z80.ea, &Z80.iy); WZ = Z80.ea + 1; } /* LD   (w),IY      */
+OP(fd,22) { Z80.ea = arg16(); wm16(Z80.ea, Z80.iy); WZ = Z80.ea + 1; } /* LD   (w),IY      */
 OP(fd,23) { IY++;                                            } /* INC  IY          */
 OP(fd,24) { HY = inc(HY);                                    } /* INC  HY          */
 OP(fd,25) { HY = dec(HY);                                    } /* DEC  HY          */
@@ -2420,8 +2405,8 @@ OP(fd,26) { HY = arg();                                      } /* LD   HY,n     
 OP(fd,27) { illegal_1(); op_27();                            } /* DB   FD          */
 
 OP(fd,28) { illegal_1(); op_28();                            } /* DB   FD          */
-OP(fd,29) { add16(&Z80.iy, &Z80.iy);                               } /* ADD  IY,IY       */
-OP(fd,2a) { Z80.ea = arg16(); rm16(Z80.ea, &Z80.iy); WZ = Z80.ea + 1; } /* LD   IY,(w)      */
+OP(fd,29) { add16(Z80.iy, Z80.iy);                               } /* ADD  IY,IY       */
+OP(fd,2a) { Z80.ea = arg16(); rm16(Z80.ea, Z80.iy); WZ = Z80.ea + 1; } /* LD   IY,(w)      */
 OP(fd,2b) { IY--;                                            } /* DEC  IY          */
 OP(fd,2c) { LY = inc(LY);                                    } /* INC  LY          */
 OP(fd,2d) { LY = dec(LY);                                    } /* DEC  LY          */
@@ -2438,7 +2423,7 @@ OP(fd,36) { eay(); wm(Z80.ea, arg());                          } /* LD   (IY+o),
 OP(fd,37) { illegal_1(); op_37();                            } /* DB   FD          */
 
 OP(fd,38) { illegal_1(); op_38();                            } /* DB   FD          */
-OP(fd,39) { add16(&Z80.iy, &Z80.sp);                               } /* ADD  IY,SP       */
+OP(fd,39) { add16(Z80.iy, Z80.sp);                               } /* ADD  IY,SP       */
 OP(fd,3a) { illegal_1(); op_3a();                            } /* DB   FD          */
 OP(fd,3b) { illegal_1(); op_3b();                            } /* DB   FD          */
 OP(fd,3c) { illegal_1(); op_3c();                            } /* DB   FD          */
@@ -2627,11 +2612,11 @@ OP(fd,de) { illegal_1(); op_de();                            } /* DB   FD       
 OP(fd,df) { illegal_1(); op_df();                            } /* DB   FD          */
 
 OP(fd,e0) { illegal_1(); op_e0();                            } /* DB   FD          */
-OP(fd,e1) { pop(&Z80.iy);                                       } /* POP  IY          */
+OP(fd,e1) { pop(Z80.iy);                                       } /* POP  IY          */
 OP(fd,e2) { illegal_1(); op_e2();                            } /* DB   FD          */
-OP(fd,e3) { ex_sp(&Z80.iy);                                     } /* EX   (SP),IY     */
+OP(fd,e3) { ex_sp(Z80.iy);                                     } /* EX   (SP),IY     */
 OP(fd,e4) { illegal_1(); op_e4();                            } /* DB   FD          */
-OP(fd,e5) { push(&Z80.iy);                                      } /* PUSH IY          */
+OP(fd,e5) { push(Z80.iy);                                      } /* PUSH IY          */
 OP(fd,e6) { illegal_1(); op_e6();                            } /* DB   FD          */
 OP(fd,e7) { illegal_1(); op_e7();                            } /* DB   FD          */
 
@@ -2744,7 +2729,7 @@ OP(ed,3f) { illegal_2();                                     } /* DB   ED       
 OP(ed,40) { B = in(BC); F = (F & CF) | SZP[B];               } /* IN   B,(C)       */
 OP(ed,41) { out(BC, B);                                      } /* OUT  (C),B       */
 OP(ed,42) { sbc_hl(Z80.bc);                                    } /* SBC  HL,BC       */
-OP(ed,43) { Z80.ea = arg16(); wm16(Z80.ea, &Z80.bc); WZ = Z80.ea + 1; } /* LD   (w),BC      */
+OP(ed,43) { Z80.ea = arg16(); wm16(Z80.ea, Z80.bc); WZ = Z80.ea + 1; } /* LD   (w),BC      */
 OP(ed,44) { neg();                                           } /* NEG              */
 OP(ed,45) { retn();                                          } /* RETN             */
 OP(ed,46) { Z80.im = 0;                                        } /* IM   0           */
@@ -2753,7 +2738,7 @@ OP(ed,47) { ld_i_a();                                        } /* LD   i,A      
 OP(ed,48) { C = in(BC); F = (F & CF) | SZP[C];               } /* IN   C,(C)       */
 OP(ed,49) { out(BC, C);                                      } /* OUT  (C),C       */
 OP(ed,4a) { adc_hl(Z80.bc);                                    } /* ADC  HL,BC       */
-OP(ed,4b) { Z80.ea = arg16(); rm16(Z80.ea, &Z80.bc); WZ = Z80.ea + 1; } /* LD   BC,(w)      */
+OP(ed,4b) { Z80.ea = arg16(); rm16(Z80.ea, Z80.bc); WZ = Z80.ea + 1; } /* LD   BC,(w)      */
 OP(ed,4c) { neg();                                           } /* NEG              */
 OP(ed,4d) { reti();                                          } /* RETI             */
 OP(ed,4e) { Z80.im = 0;                                        } /* IM   0           */
@@ -2762,7 +2747,7 @@ OP(ed,4f) { ld_r_a();                                        } /* LD   r,A      
 OP(ed,50) { D = in(BC); F = (F & CF) | SZP[D];               } /* IN   D,(C)       */
 OP(ed,51) { out(BC, D);                                      } /* OUT  (C),D       */
 OP(ed,52) { sbc_hl(Z80.de);                                    } /* SBC  HL,DE       */
-OP(ed,53) { Z80.ea = arg16(); wm16(Z80.ea, &Z80.de); WZ = Z80.ea + 1; } /* LD   (w),DE      */
+OP(ed,53) { Z80.ea = arg16(); wm16(Z80.ea, Z80.de); WZ = Z80.ea + 1; } /* LD   (w),DE      */
 OP(ed,54) { neg();                                           } /* NEG              */
 OP(ed,55) { retn();                                          } /* RETN             */
 OP(ed,56) { Z80.im = 1;                                        } /* IM   1           */
@@ -2771,7 +2756,7 @@ OP(ed,57) { ld_a_i();                                        } /* LD   A,i      
 OP(ed,58) { E = in(BC); F = (F & CF) | SZP[E];               } /* IN   E,(C)       */
 OP(ed,59) { out(BC, E);                                      } /* OUT  (C),E       */
 OP(ed,5a) { adc_hl(Z80.de);                                    } /* ADC  HL,DE       */
-OP(ed,5b) { Z80.ea = arg16(); rm16(Z80.ea, &Z80.de); WZ = Z80.ea + 1; } /* LD   DE,(w)      */
+OP(ed,5b) { Z80.ea = arg16(); rm16(Z80.ea, Z80.de); WZ = Z80.ea + 1; } /* LD   DE,(w)      */
 OP(ed,5c) { neg();                                           } /* NEG              */
 OP(ed,5d) { reti();                                          } /* RETI             */
 OP(ed,5e) { Z80.im = 2;                                        } /* IM   2           */
@@ -2780,7 +2765,7 @@ OP(ed,5f) { ld_a_r();                                        } /* LD   A,r      
 OP(ed,60) { H = in(BC); F = (F & CF) | SZP[H];               } /* IN   H,(C)       */
 OP(ed,61) { out(BC, H);                                      } /* OUT  (C),H       */
 OP(ed,62) { sbc_hl(Z80.hl);                                    } /* SBC  HL,HL       */
-OP(ed,63) { Z80.ea = arg16(); wm16(Z80.ea, &Z80.hl); WZ = Z80.ea + 1; } /* LD   (w),HL      */
+OP(ed,63) { Z80.ea = arg16(); wm16(Z80.ea, Z80.hl); WZ = Z80.ea + 1; } /* LD   (w),HL      */
 OP(ed,64) { neg();                                           } /* NEG              */
 OP(ed,65) { retn();                                          } /* RETN             */
 OP(ed,66) { Z80.im = 0;                                        } /* IM   0           */
@@ -2789,7 +2774,7 @@ OP(ed,67) { rrd();                                           } /* RRD  (HL)     
 OP(ed,68) { L = in(BC); F = (F & CF) | SZP[L];               } /* IN   L,(C)       */
 OP(ed,69) { out(BC, L);                                      } /* OUT  (C),L       */
 OP(ed,6a) { adc_hl(Z80.hl);                                    } /* ADC  HL,HL       */
-OP(ed,6b) { Z80.ea = arg16(); rm16(Z80.ea, &Z80.hl); WZ = Z80.ea + 1; } /* LD   HL,(w)      */
+OP(ed,6b) { Z80.ea = arg16(); rm16(Z80.ea, Z80.hl); WZ = Z80.ea + 1; } /* LD   HL,(w)      */
 OP(ed,6c) { neg();                                           } /* NEG              */
 OP(ed,6d) { reti();                                          } /* RETI             */
 OP(ed,6e) { Z80.im = 0;                                        } /* IM   0           */
@@ -2798,7 +2783,7 @@ OP(ed,6f) { rld();                                           } /* RLD  (HL)     
 OP(ed,70) { uint8_t res = in(BC); F = (F & CF) | SZP[res];     } /* IN   0,(C)       */
 OP(ed,71) { out(BC, 0);                                      } /* OUT  (C),0       */
 OP(ed,72) { sbc_hl(Z80.sp);                                    } /* SBC  HL,SP       */
-OP(ed,73) { Z80.ea = arg16(); wm16(Z80.ea, &Z80.sp); WZ = Z80.ea + 1; } /* LD   (w),SP      */
+OP(ed,73) { Z80.ea = arg16(); wm16(Z80.ea, Z80.sp); WZ = Z80.ea + 1; } /* LD   (w),SP      */
 OP(ed,74) { neg();                                           } /* NEG              */
 OP(ed,75) { retn();                                          } /* RETN             */
 OP(ed,76) { Z80.im = 1;                                        } /* IM   1           */
@@ -2807,7 +2792,7 @@ OP(ed,77) { illegal_2();                                     } /* DB   ED,77    
 OP(ed,78) { A = in(BC); F = (F & CF) | SZP[A]; WZ = BC + 1;  } /* IN   A,(C)       */
 OP(ed,79) { out(BC, A);  WZ = BC + 1;                        } /* OUT  (C),A       */
 OP(ed,7a) { adc_hl(Z80.sp);                                    } /* ADC  HL,SP       */
-OP(ed,7b) { Z80.ea = arg16(); rm16(Z80.ea, &Z80.sp); WZ = Z80.ea + 1; } /* LD   SP,(w)      */
+OP(ed,7b) { Z80.ea = arg16(); rm16(Z80.ea, Z80.sp); WZ = Z80.ea + 1; } /* LD   SP,(w)      */
 OP(ed,7c) { neg();                                           } /* NEG              */
 OP(ed,7d) { reti();                                          } /* RETI             */
 OP(ed,7e) { Z80.im = 2;                                        } /* IM   2           */
@@ -2971,7 +2956,7 @@ OP(op,06) { B = arg();                                                          
 OP(op,07) { rlca();                                                               } /* RLCA             */
 
 OP(op,08) { ex_af();                                                              } /* EX   AF,AF'      */
-OP(op,09) { add16(&Z80.hl, &Z80.bc);                                                    } /* ADD  HL,BC       */
+OP(op,09) { add16(Z80.hl, Z80.bc);                                                    } /* ADD  HL,BC       */
 OP(op,0a) { A = rm(BC);  WZ=BC+1;                                                 } /* LD   A,(BC)      */
 OP(op,0b) { BC--;                                                                 } /* DEC  BC          */
 OP(op,0c) { C = inc(C);                                                           } /* INC  C           */
@@ -2989,7 +2974,7 @@ OP(op,16) { D = arg();                                                          
 OP(op,17) { rla();                                                                } /* RLA              */
 
 OP(op,18) { jr();                                                                 } /* JR   o           */
-OP(op,19) { add16(&Z80.hl, &Z80.de);                                                    } /* ADD  HL,DE       */
+OP(op,19) { add16(Z80.hl, Z80.de);                                                    } /* ADD  HL,DE       */
 OP(op,1a) { A = rm(DE); WZ = DE + 1;                                              } /* LD   A,(DE)      */
 OP(op,1b) { DE--;                                                                 } /* DEC  DE          */
 OP(op,1c) { E = inc(E);                                                           } /* INC  E           */
@@ -2999,7 +2984,7 @@ OP(op,1f) { rra();                                                              
 
 OP(op,20) { jr_cond(!(F & ZF), 0x20);                                             } /* JR   NZ,o        */
 OP(op,21) { HL = arg16();                                                         } /* LD   HL,w        */
-OP(op,22) { Z80.ea = arg16(); wm16(Z80.ea, &Z80.hl); WZ = Z80.ea + 1;                      } /* LD   (w),HL      */
+OP(op,22) { Z80.ea = arg16(); wm16(Z80.ea, Z80.hl); WZ = Z80.ea + 1;                      } /* LD   (w),HL      */
 OP(op,23) { HL++;                                                                 } /* INC  HL          */
 OP(op,24) { H = inc(H);                                                           } /* INC  H           */
 OP(op,25) { H = dec(H);                                                           } /* DEC  H           */
@@ -3007,8 +2992,8 @@ OP(op,26) { H = arg();                                                          
 OP(op,27) { daa();                                                                } /* DAA              */
 
 OP(op,28) { jr_cond(F & ZF, 0x28);                                                } /* JR   Z,o         */
-OP(op,29) { add16(&Z80.hl, &Z80.hl);                                                    } /* ADD  HL,HL       */
-OP(op,2a) { Z80.ea = arg16(); rm16(Z80.ea, &Z80.hl); WZ = Z80.ea+1;                        } /* LD   HL,(w)      */
+OP(op,29) { add16(Z80.hl, Z80.hl);                                                    } /* ADD  HL,HL       */
+OP(op,2a) { Z80.ea = arg16(); rm16(Z80.ea, Z80.hl); WZ = Z80.ea+1;                        } /* LD   HL,(w)      */
 OP(op,2b) { HL--;                                                                 } /* DEC  HL          */
 OP(op,2c) { L = inc(L);                                                           } /* INC  L           */
 OP(op,2d) { L = dec(L);                                                           } /* DEC  L           */
@@ -3025,7 +3010,7 @@ OP(op,36) { wm(HL, arg());                                                      
 OP(op,37) { F = (F & (SF | ZF | YF | XF | PF)) | CF | (A & (YF | XF));            } /* SCF              */
 
 OP(op,38) { jr_cond(F & CF, 0x38);                                                } /* JR   C,o         */
-OP(op,39) { add16(&Z80.hl, &Z80.sp);                                                    } /* ADD  HL,SP       */
+OP(op,39) { add16(Z80.hl, Z80.sp);                                                    } /* ADD  HL,SP       */
 OP(op,3a) { Z80.ea = arg16(); A = rm(Z80.ea); WZ = Z80.ea + 1;                          } /* LD   A,(w)       */
 OP(op,3b) { SP--;                                                                 } /* DEC  SP          */
 OP(op,3c) { A = inc(A);                                                           } /* INC  A           */
@@ -3178,16 +3163,16 @@ OP(op,be) { cp(rm(HL));                                                         
 OP(op,bf) { cp(A);                                                                } /* CP   A           */
 
 OP(op,c0) { ret_cond(!(F & ZF), 0xc0);                                            } /* RET  NZ          */
-OP(op,c1) { pop(&Z80.bc);                                                            } /* POP  BC          */
+OP(op,c1) { pop(Z80.bc);                                                            } /* POP  BC          */
 OP(op,c2) { jp_cond(!(F & ZF));                                                   } /* JP   NZ,a        */
 OP(op,c3) { jp();                                                                 } /* JP   a           */
 OP(op,c4) { call_cond(!(F & ZF), 0xc4);                                           } /* CALL NZ,a        */
-OP(op,c5) { push(&Z80.bc);                                                           } /* PUSH BC          */
+OP(op,c5) { push(Z80.bc);                                                           } /* PUSH BC          */
 OP(op,c6) { add_a(arg());                                                         } /* ADD  A,n         */
 OP(op,c7) { rst(0x00);                                                            } /* RST  0           */
 
 OP(op,c8) { ret_cond(F & ZF, 0xc8);                                               } /* RET  Z           */
-OP(op,c9) { pop(&Z80.pc); WZ = PCD;                                                  } /* RET              */
+OP(op,c9) { pop(Z80.pc); WZ = PCD;                                                  } /* RET              */
 OP(op,ca) { jp_cond(F & ZF);                                                      } /* JP   Z,a         */
 OP(op,cb) { Z80.r++; EXEC(cb,rop());                                                } /* **** CB xx       */
 OP(op,cc) { call_cond(F & ZF, 0xcc);                                              } /* CALL Z,a         */
@@ -3196,11 +3181,11 @@ OP(op,ce) { adc_a(arg());                                                       
 OP(op,cf) { rst(0x08);                                                            } /* RST  1           */
 
 OP(op,d0) { ret_cond(!(F & CF), 0xd0);                                            } /* RET  NC          */
-OP(op,d1) { pop(&Z80.de);                                                            } /* POP  DE          */
+OP(op,d1) { pop(Z80.de);                                                            } /* POP  DE          */
 OP(op,d2) { jp_cond(!(F & CF));                                                   } /* JP   NC,a        */
 OP(op,d3) { unsigned n = arg() | (A << 8); out(n, A); WZ_L = ((n & 0xff) + 1) & 0xff;  WZ_H = A;   } /* OUT  (n),A       */
 OP(op,d4) { call_cond(!(F & CF), 0xd4);                                           } /* CALL NC,a        */
-OP(op,d5) { push(&Z80.de);                                                           } /* PUSH DE          */
+OP(op,d5) { push(Z80.de);                                                           } /* PUSH DE          */
 OP(op,d6) { sub(arg());                                                           } /* SUB  n           */
 OP(op,d7) { rst(0x10);                                                            } /* RST  2           */
 
@@ -3214,11 +3199,11 @@ OP(op,de) { sbc_a(arg());                                                       
 OP(op,df) { rst(0x18);                                                            } /* RST  3           */
 
 OP(op,e0) { ret_cond(!(F & PF), 0xe0);                                            } /* RET  PO          */
-OP(op,e1) { pop(&Z80.hl);                                                            } /* POP  HL          */
+OP(op,e1) { pop(Z80.hl);                                                            } /* POP  HL          */
 OP(op,e2) { jp_cond(!(F & PF));                                                   } /* JP   PO,a        */
-OP(op,e3) { ex_sp(&Z80.hl);                                                          } /* EX   HL,(SP)     */
+OP(op,e3) { ex_sp(Z80.hl);                                                          } /* EX   HL,(SP)     */
 OP(op,e4) { call_cond(!(F & PF), 0xe4);                                           } /* CALL PO,a        */
-OP(op,e5) { push(&Z80.hl);                                                           } /* PUSH HL          */
+OP(op,e5) { push(Z80.hl);                                                           } /* PUSH HL          */
 OP(op,e6) { and_a(arg());                                                         } /* AND  n           */
 OP(op,e7) { rst(0x20);                                                            } /* RST  4           */
 
@@ -3232,11 +3217,11 @@ OP(op,ee) { xor_a(arg());                                                       
 OP(op,ef) { rst(0x28);                                                            } /* RST  5           */
 
 OP(op,f0) { ret_cond(!(F & SF), 0xf0);                                            } /* RET  P           */
-OP(op,f1) { pop(&Z80.af);                                                            } /* POP  AF          */
+OP(op,f1) { pop(Z80.af);                                                            } /* POP  AF          */
 OP(op,f2) { jp_cond(!(F & SF));                                                   } /* JP   P,a         */
 OP(op,f3) { Z80.iff1 = Z80.iff2 = 0;                                                  } /* DI               */
 OP(op,f4) { call_cond(!(F & SF), 0xf4);                                           } /* CALL P,a         */
-OP(op,f5) { push(&Z80.af);                                                           } /* PUSH AF          */
+OP(op,f5) { push(Z80.af);                                                           } /* PUSH AF          */
 OP(op,f6) { or_a(arg());                                                          } /* OR   n           */
 OP(op,f7) { rst(0x30);                                                            } /* RST  6           */
 
@@ -3270,8 +3255,8 @@ void take_interrupt()
 	if( Z80.im == 2 )
 	{
 		irq_vector = (irq_vector & 0xff) | (Z80.i << 8);
-		push(&Z80.pc);
-		rm16(irq_vector, &Z80.pc);
+		push(Z80.pc);
+		rm16(irq_vector, Z80.pc);
 		/* CALL opcode timing + 'interrupt latency' cycles */
 		Z80.icount -= cc[Z80_TABLE_op][0xcd] + cc[Z80_TABLE_ex][0xff];
 	}
@@ -3279,7 +3264,7 @@ void take_interrupt()
 	/* Interrupt mode 1. RST 38h */
 	if( Z80.im == 1 )
 	{
-		push(&Z80.pc);
+		push(Z80.pc);
 		PCD = 0x0038;
 		/* RST $38 + 'interrupt latency' cycles */
 		Z80.icount -= cc[Z80_TABLE_op][0xff] + cc[Z80_TABLE_ex][0xff];
@@ -3296,7 +3281,7 @@ void take_interrupt()
 			switch (irq_vector & 0xff0000)
 			{
 				case 0xcd0000:  /* call */
-					push(&Z80.pc);
+					push(Z80.pc);
 					PCD = irq_vector & 0xffff;
 						/* CALL $xxxx cycles */
 					Z80.icount -= cc[Z80_TABLE_op][0xcd];
@@ -3307,7 +3292,7 @@ void take_interrupt()
 					Z80.icount -= cc[Z80_TABLE_op][0xc3];
 					break;
 				default:        /* rst (or other opcodes?) */
-					push(&Z80.pc);
+					push(Z80.pc);
 					PCD = irq_vector & 0x0038;
 					/* RST $xx cycles */
 					Z80.icount -= cc[Z80_TABLE_op][0xff];
@@ -3468,7 +3453,7 @@ int32_t z80_execute(int32_t cycles)
 		Z80.after_ldair = 0;
 
 		Z80.iff1 = 0;
-		push(&Z80.pc);
+		push(Z80.pc);
 		PCD = 0x0066;
 		WZ=PCD;
 		Z80.icount -= 11;
