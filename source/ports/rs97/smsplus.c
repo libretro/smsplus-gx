@@ -485,13 +485,7 @@ int main (int argc, char *argv[])
 	}
 	
 	SDL_Init(SDL_INIT_VIDEO);
-	sdl_screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE
-#ifdef SDL_TRIPLEBUF
-	| SDL_TRIPLEBUF
-#else
-	| SDL_DOUBLEBUF
-#endif
-	);
+	sdl_screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
 	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 240, 16, 0, 0, 0, 0);
 	SDL_ShowCursor(0);
 	

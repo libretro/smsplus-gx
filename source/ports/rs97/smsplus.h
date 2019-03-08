@@ -6,8 +6,8 @@
 #define VIDEO_WIDTH_GG 160
 #define VIDEO_HEIGHT_GG 144
 
-/* RetroFW 1.0+ supports V-sync & Triple buffering in the kernel. Let's enable that. */
-#define VSYNC_SUPPORTED 1
+/* Right now it doesn't set VSYNC so disable for now */
+//#define VSYNC_SUPPORTED 1
 
 typedef struct {
 	char gamename[256];
@@ -21,6 +21,6 @@ typedef struct {
 void smsp_state(uint8_t slot, uint8_t mode);
 
 #define SOUND_FREQUENCY 44100
-#define SOUND_SAMPLES_SIZE 2048
+#define SOUND_SAMPLES_SIZE 1024
 
 #endif
