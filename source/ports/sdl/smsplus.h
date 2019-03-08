@@ -6,6 +6,8 @@
 #define VIDEO_WIDTH_GG 160
 #define VIDEO_HEIGHT_GG 144
 
+#define VSYNC_SUPPORTED 1
+
 typedef struct {
 	char gamename[256];
 	char sramdir[256];
@@ -17,7 +19,7 @@ typedef struct {
 
 void smsp_state(uint8_t slot, uint8_t mode);
 
-#define SOUND_FREQUENCY 48000
-#define SOUND_SAMPLES_SIZE 2048
+#define SOUND_FREQUENCY 44100
+#define SOUND_SAMPLES_SIZE 1024
 
 #endif
