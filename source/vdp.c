@@ -81,7 +81,7 @@ void vdp_reset(void)
 	if (IS_SMS && (bios.enabled != 3))
 	{
 		vdp.reg[0]  = 0x36; 
-		vdp.reg[1]  = 0x80; 
+		vdp.reg[1]  = sms.vdp_register1_default_value;
 		vdp.reg[2]  = 0xFF;
 		vdp.reg[3]  = 0xFF;
 		vdp.reg[4]  = 0xFF;

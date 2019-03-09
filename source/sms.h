@@ -117,6 +117,7 @@ typedef struct
 	} sio;
 	uint8_t device[2];
 	uint8_t gun_offset;
+	uint8_t vdp_register1_default_value;
 } sms_t;
 
 /* BIOS ROM */
