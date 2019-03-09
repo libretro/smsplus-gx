@@ -51,7 +51,6 @@ uint32_t system_save_state(FILE* fd)
     #ifdef MAXIM_PSG
     fwrite(SN76489_GetContextPtr(0), SN76489_GetContextSize(), sizeof(int8_t), fd);
     #else
-    extern sn76489_t psg_sn;
     fwrite(&psg_sn, sizeof(sn76489_t), sizeof(int8_t), fd);
     #endif
 	
@@ -98,7 +97,6 @@ void system_load_state(FILE* fd)
     SN76489_SetContext(0, buf);
     free(buf);
     #else
-    extern sn76489_t psg_sn;
     buf = malloc(sizeof(sn76489_t));
     if (!buf) return;
     fread(buf, sizeof(sn76489_t), sizeof(int8_t), fd);
