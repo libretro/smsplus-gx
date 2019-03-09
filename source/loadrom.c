@@ -22,7 +22,7 @@
 
 #include "shared.h"
 
-#define GAME_DATABASE_CNT 98
+#define GAME_DATABASE_CNT 97
 
 typedef struct
 {
@@ -253,12 +253,7 @@ static rominfo_t game_list[GAME_DATABASE_CNT] =
   {0x679E1676, 0, DEVICE_PAD2B, MAPPER_SEGA, DISPLAY_NTSC, TERRITORY_DOMESTIC, CONSOLE_SMS2,
    "Wonder Boy III - The dragon's Trap"},
   {0x22CCA9BB, 0, DEVICE_PAD2B, MAPPER_SEGA, DISPLAY_NTSC, TERRITORY_DOMESTIC, CONSOLE_SMS2,
-   "Turma da Monica em O Resgate"},
-   
-   /* These games break because they expect the vertical interruption bit to be set by default on the VDP, and wait for an interruption before writing any registers to the VDP.
-    * Only seems to affect Sonic's Edusoft so far. (Other emulators require a SMS BIOS for that game or a hacked binary) */
-  {0xD9096263, 0, DEVICE_PAD2B, MAPPER_SEGA, DISPLAY_NTSC, TERRITORY_DOMESTIC, CONSOLE_SMS2,
-	"Sonic's Edusoft"}
+   "Turma da Monica em O Resgate"}
 };
 
 static void set_config()
@@ -274,7 +269,6 @@ static void set_config()
 	sms.device[0] = DEVICE_PAD2B;
 	sms.device[1] = DEVICE_PAD2B;
 	sms.use_fm = option.fm;
-	sms.vdp_register1_default_value = 0x80;
 
 	/* console type detection */
 	/* SMS Header is located at 0x7ff0 */
@@ -329,10 +323,6 @@ static void set_config()
 			{
 				/* these games seem to use different gun position calculation method */
 				sms.gun_offset = 16;
-			}
-			if (strcmp(game_list[i].name, "Sonic's Edusoft") == 0)
-			{
-				sms.vdp_register1_default_value = 0xA0;
 			}
 			i = GAME_DATABASE_CNT;
 		}
