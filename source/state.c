@@ -23,7 +23,7 @@
 #include "shared.h"
 
 #ifndef MAXIM_PSG
-//extern sn76489_t psg_sn;
+extern sn76489_t psg_sn;
 #endif
 
 uint32_t system_save_state(FILE* fd)
@@ -51,8 +51,8 @@ uint32_t system_save_state(FILE* fd)
     #ifdef MAXIM_PSG
     fwrite(SN76489_GetContextPtr(0), SN76489_GetContextSize(), sizeof(int8_t), fd);
     #else
-    /*extern sn76489_t psg_sn;
-    fwrite(&psg_sn, sizeof(sn76489_t), sizeof(int8_t), fd);*/
+    extern sn76489_t psg_sn;
+    fwrite(&psg_sn, sizeof(sn76489_t), sizeof(int8_t), fd);
     #endif
 	
 	return 0;
@@ -98,12 +98,12 @@ void system_load_state(FILE* fd)
     SN76489_SetContext(0, buf);
     free(buf);
     #else
-    /*extern sn76489_t psg_sn;
+    extern sn76489_t psg_sn;
     buf = malloc(sizeof(sn76489_t));
     if (!buf) return;
     fread(buf, sizeof(sn76489_t), sizeof(int8_t), fd);
     memcpy(&psg_sn, buf, sizeof(sn76489_t));
-    free(buf);*/
+    free(buf);
     #endif
 
 	if ((sms.console != CONSOLE_COLECO) && (sms.console != CONSOLE_SG1000))
