@@ -466,7 +466,9 @@ void render_bg_sms(int32_t line)
 	int32_t hscroll = ((vdp.reg[0] & 0x40) && (line < 0x10) && (sms.console != CONSOLE_GG)) ? 0 : (0x100 - vdp.reg[8]);
 	int32_t column = 0;
 	uint16_t attr;
-	uint16_t nt_addr = (vdp.ntab + ((v_line >> 3) << 6)) & (((sms.console == CONSOLE_SMS) && !(vdp.reg[2] & 1)) ? ~0x400 :0xFFFF);
+	uint16_t SMS_VDP_BUG = (((sms.console == CONSOLE_SMS) && !(vdp.reg[2] & 1)) ? ~0x400 :0xFFFF);
+	uint16_t nt_addr = (vdp.ntab + ((v_line >> 3) << 6)) & SMS_VDP_BUG;
+	uint16_t nt_addr_stop_verticalscroll = (vdp.ntab + ((line >> 3) << 6)) & SMS_VDP_BUG;
 	uint16_t *nt = (uint16_t *)&vdp.vram[nt_addr];
 	int32_t nt_scroll = (hscroll >> 3);
 	int32_t shift = (hscroll & 7);
@@ -491,7 +493,7 @@ void render_bg_sms(int32_t line)
 		{
 			locked = 1;
 			v_row = (line & 7) << 3;
-			nt = (uint16_t *)&vdp.vram[nt_addr];
+			nt = (uint16_t *)&vdp.vram[nt_addr_stop_verticalscroll];
 		}
 
 		/* Get name table attribute word */
@@ -721,11 +723,11 @@ static void parse_satb(int32_t line)
 	int32_t i = 0;
 
 	/* Line counter value */
-	int32_t vc = vc_table[sms.display][vdp.extended][line];
+	uint8_t vc = vc_table[sms.display][vdp.extended][line];
 
 	/* Sprite height (8x8 by default) */
-	int32_t yp;
-	int32_t height = 8;
+	uint8_t yp;
+	uint8_t height = 8;
   
 	/* Adjust height for 8x16 sprites */
 	if(vdp.reg[1] & 0x02) 
@@ -754,7 +756,7 @@ static void parse_satb(int32_t line)
 		yp = vc - yp;
 
 		/* Sprite is within vertical range? */
-		if((yp >= 0) && (yp < height))
+		if(yp < height)
 		{
 			/* Sprite limit reached? */
 			if (object_index_count == 8)
