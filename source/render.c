@@ -66,7 +66,7 @@ static uint8_t object_index_count;
 static uint8_t active_border[2][3] =
 {
 	{24, 8,  0},  /* NTSC VDP */
-	{48, 32, 24}  /*  PAL VDP */
+	{24, 8,  0}  /*  PAL VDP */
 };
 
 /* Active Scan Area height */
