@@ -53,10 +53,6 @@ uint32_t system_save_state(FILE* fd)
     #ifdef MAXIM_PSG
     fwrite(SN76489_GetContextPtr(0), SN76489_GetContextSize(), sizeof(int8_t), fd);
     #else
-<<<<<<< HEAD
-=======
-    extern sn76489_t psg_sn;
->>>>>>> parent of b9f02b1... Removing CrabZ80's core. (it was never working and i doubt it would be
     fwrite(&psg_sn, sizeof(sn76489_t), sizeof(int8_t), fd);
     #endif
 	
@@ -101,10 +97,6 @@ void system_load_state(FILE* fd)
     SN76489_SetContext(0, buf);
     free(buf);
     #else
-<<<<<<< HEAD
-=======
-    extern sn76489_t psg_sn;
->>>>>>> parent of b9f02b1... Removing CrabZ80's core. (it was never working and i doubt it would be
     buf = malloc(sizeof(sn76489_t));
     fread(buf, sizeof(sn76489_t), sizeof(int8_t), fd);
     memcpy(&psg_sn, buf, sizeof(sn76489_t));
