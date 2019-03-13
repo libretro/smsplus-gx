@@ -16,13 +16,12 @@
 #include "font.h"
 #include "sound_output.h"
 
-uint32_t frames_rendered = 0;
-gamedata_t gdata;
+static gamedata_t gdata;
 
 t_config option;
 
-SDL_Surface* sdl_screen, *sms_bitmap;
-static SDL_Surface* img_background;
+SDL_Surface* sdl_screen;
+static SDL_Surface* img_background, *sms_bitmap;
 uint32_t countedFrames = 0;
 uint32_t start;
 
@@ -32,11 +31,10 @@ extern SDL_Surface *font;
 extern SDL_Surface *bigfontred;
 extern SDL_Surface *bigfontwhite;
 
-uint8_t fullscreen = 1;
-uint8_t selectpressed = 0;
-uint8_t save_slot = 0;
-uint8_t showfps = 0;
-uint8_t quit = 0;
+static uint8_t fullscreen = 1;
+static uint8_t selectpressed = 0;
+static uint8_t save_slot = 0;
+static uint8_t quit = 0;
 
 static void video_update()
 {
@@ -45,33 +43,32 @@ static void video_update()
 	{
         case 0: // native res
 		if(sms.console == CONSOLE_GG) 
-			bitmap_scale(48,0,160,144,160,144,256,sdl_screen->w-160,(uint16_t*)sms_bitmap->pixels,(uint16_t*)sdl_screen->pixels+(sdl_screen->w-160)/2+(sdl_screen->h-144)/2*sdl_screen->w);
+			bitmap_scale(48,0,160,144,160,144,256,sdl_screen->w-160,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(sdl_screen->w-160)/2+(sdl_screen->h-144)/2*sdl_screen->w);
 		else 
-			bitmap_scale(0,0,256,vdp.height,256,vdp.height,256,sdl_screen->w-256,(uint16_t*)sms_bitmap->pixels,(uint16_t*)sdl_screen->pixels+(sdl_screen->w-256)/2+(sdl_screen->h-vdp.height)/2*sdl_screen->w);
+			bitmap_scale(0,0,256,vdp.height,256,vdp.height,256,sdl_screen->w-256,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(sdl_screen->w-256)/2+(sdl_screen->h-vdp.height)/2*sdl_screen->w);
 		break;
 		case 1: // Fullscreen
 		if(sms.console == CONSOLE_GG) 
-			upscale_160x144_to_480x272((uint32_t*)sdl_screen->pixels, (uint32_t*)sms_bitmap->pixels+24);
+			upscale_160x144_to_480x272((uint32_t* restrict)sdl_screen->pixels, (uint32_t* restrict)sms_bitmap->pixels+24);
 		else 
-			upscale_256xXXX_to_480x272((uint32_t*)sdl_screen->pixels, (uint32_t*)sms_bitmap->pixels, vdp.height);
+			upscale_256xXXX_to_480x272((uint32_t* restrict)sdl_screen->pixels, (uint32_t* restrict)sms_bitmap->pixels, vdp.height);
 		break;
         case 2: // aspect ratio
 		if(sms.console == CONSOLE_GG) 
-			upscale_160x144_to_320x272_for_480x272((uint32_t*)sdl_screen->pixels, (uint32_t*)sms_bitmap->pixels+24);
+			upscale_160x144_to_320x272_for_480x272((uint32_t* restrict)sdl_screen->pixels, (uint32_t* restrict)sms_bitmap->pixels+24);
 		else 
-			upscale_256xXXX_to_384x272_for_480x272((uint32_t*)sdl_screen->pixels, (uint32_t*)sms_bitmap->pixels, vdp.height);
+			upscale_256xXXX_to_384x272_for_480x272((uint32_t* restrict)sdl_screen->pixels, (uint32_t* restrict)sms_bitmap->pixels, vdp.height);
 		break;
 	}
 	SDL_UnlockSurface(sdl_screen);	
 	
 }
 
-void smsp_state(uint8_t slot, uint8_t mode)
+void smsp_state(uint8_t slot_number, uint8_t mode)
 {
 	// Save and Load States
-	int8_t stpath[PATH_MAX];
-	snprintf(stpath, sizeof(stpath), "%s%s.st%d", gdata.stdir, gdata.gamename, slot);
-	printf("Path state %s\n", stpath);
+	char stpath[PATH_MAX];
+	snprintf(stpath, sizeof(stpath), "%s%s.st%d", gdata.stdir, gdata.gamename, slot_number);
 	FILE *fd;
 	
 	switch(mode) {
@@ -93,7 +90,7 @@ void smsp_state(uint8_t slot, uint8_t mode)
 	}
 }
 
-void system_manage_sram(uint8_t *sram, uint8_t slot, uint8_t mode) 
+void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode) 
 {
 	// Set up save file name
 	FILE *fd;
@@ -127,6 +124,9 @@ void system_manage_sram(uint8_t *sram, uint8_t slot, uint8_t mode)
 
 static void Controls()
 {
+	int16_t x_move = 0, y_move = 0;
+	uint8_t *keystate;
+	
 	if (sms.console == CONSOLE_COLECO)
     {
 		coleco.keypad[0] = 0xff;
@@ -267,7 +267,7 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 static void bios_init()
 {
 	FILE *fd;
-	int8_t bios_path[256];
+	char bios_path[256];
 	
 	bios.rom = malloc(0x100000);
 	bios.enabled = 0;
@@ -300,7 +300,7 @@ static void bios_init()
 }
 
 
-static void smsp_gamedata_set(int8_t *filename) 
+static void smsp_gamedata_set(char *filename) 
 {
 	// Set paths, create directories
 	int8_t home_path[256];
@@ -314,7 +314,7 @@ static void smsp_gamedata_set(int8_t *filename)
 	snprintf(gdata.gamename, sizeof(gdata.gamename), "%s", basename(filename));
 	
 	// Strip the file extension off
-	for (uint32_t i = strlen(gdata.gamename) - 1; i > 0; i--) {
+	for (unsigned long i = strlen(gdata.gamename) - 1; i > 0; i--) {
 		if (gdata.gamename[i] == '.') {
 			gdata.gamename[i] = '\0';
 			break;
@@ -328,7 +328,7 @@ static void smsp_gamedata_set(int8_t *filename)
 	}
 	
 	// Set up the sram file
-	snprintf(gdata.sramfile, sizeof(gdata.sramfile), "%s%s%s.sav", home_path, gdata.sramdir, gdata.gamename);
+	snprintf(gdata.sramfile, sizeof(gdata.sramfile), "%s%s.sav", gdata.sramdir, gdata.gamename);
 	
 	// Set up the state directory
 	snprintf(gdata.stdir, sizeof(gdata.stdir), "%sstate/", home_path);
@@ -357,7 +357,6 @@ void Menu()
     uint16_t miniscreenwidth = 140;
     uint16_t miniscreenheight = 135;
     SDL_Rect dstRect;
-    int8_t *cmd = NULL;
     SDL_Event Event;
     /* Seriously, we need that mess due to crappy framebuffer drivers on the RS-07... */
     SDL_Surface* miniscreen = SDL_CreateRGBSurface(SDL_SWSURFACE, miniscreenwidth, miniscreenheight, 16, sdl_screen->format->Rmask, sdl_screen->format->Gmask, sdl_screen->format->Bmask, sdl_screen->format->Amask);
@@ -367,9 +366,9 @@ void Menu()
 
     SDL_LockSurface(miniscreen);
     if(IS_GG)
-        bitmap_scale(48,0,160,144,miniscreenwidth,miniscreenheight,256,0,(uint16_t*)sms_bitmap->pixels,(uint16_t*)miniscreen->pixels);
+        bitmap_scale(48,0,160,144,miniscreenwidth,miniscreenheight,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)miniscreen->pixels);
     else
-        bitmap_scale(0,0,256,192,miniscreenwidth,miniscreenheight,256,0,(uint16_t*)sms_bitmap->pixels,(uint16_t*)miniscreen->pixels);
+        bitmap_scale(0,0,256,192,miniscreenwidth,miniscreenheight,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)miniscreen->pixels);
         
     SDL_UnlockSurface(miniscreen);
     char text[50];
@@ -590,7 +589,6 @@ void Menu()
 
 		SDL_BlitSurface(final_screen, NULL, sdl_screen, NULL);
 		SDL_Flip(sdl_screen);
-		//++sdl_video.frames_rendered;
     }
     
     if (currentselection == 5)
@@ -603,10 +601,33 @@ void Menu()
 	if (final_screen) SDL_FreeSurface(final_screen);
 }
 
+static void Cleanup(void)
+{
+	if (sdl_screen) SDL_FreeSurface(sdl_screen);
+	if (sms_bitmap) SDL_FreeSurface(sms_bitmap);
+	if (font) SDL_FreeSurface(font);
+	if (bigfontwhite) SDL_FreeSurface(bigfontwhite);
+	if (bigfontred) SDL_FreeSurface(bigfontred);
+	
+	for(uint8_t i=0;i<2;i++)
+	{
+		if (joystick[i]) SDL_JoystickClose(joystick[i]);
+	}
+	
+	if (bios.rom) free(bios.rom);
+	
+	// Deinitialize audio and video output
+	Sound_Close();
+	
+	SDL_Quit();
+
+	// Shut down
+	system_poweroff();
+	system_shutdown();
+}
+
 int main (int argc, char *argv[]) 
 {
-	int16_t x_move = 0, y_move = 0;
-	Uint8 *keystate;
 	SDL_Event event;
 	// Print Header
 	fprintf(stdout, "%s %s\n", APP_NAME, APP_VERSION);
@@ -614,7 +635,8 @@ int main (int argc, char *argv[])
 	if(argc < 2) 
 	{
 		fprintf(stderr, "Usage: ./smsplus [FILE]\n");
-		exit(1);
+		Cleanup();
+		return 0;
 	}
 	
 	memset(&option, 0, sizeof(option));
@@ -648,6 +670,7 @@ int main (int argc, char *argv[])
 	// Load ROM
 	if(!load_rom(argv[1])) {
 		fprintf(stderr, "Error: Failed to load %s.\n", argv[1]);
+		Cleanup();
 		return 0;
 	}
 	
@@ -696,9 +719,7 @@ int main (int argc, char *argv[])
 	
 	// Initialize all systems and power on
 	system_poweron();
-	
-	frames_rendered = 0;
-	
+
 	// Loop until the user closes the window
 	while (!quit) 
 	{
@@ -714,13 +735,6 @@ int main (int argc, char *argv[])
 		++frames_rendered;
 		
 		SDL_Flip(sdl_screen);
-		
-		if (sms.console == CONSOLE_COLECO)
-		{
-			input.system = 0;
-			coleco.keypad[0] = 0xff;
-			coleco.keypad[1] = 0xff;
-		}
 
 		if (selectpressed == 1)
 		{
@@ -749,24 +763,7 @@ int main (int argc, char *argv[])
 		}
 	}
 	
-	if (sdl_screen) SDL_FreeSurface(sdl_screen);
-	if (sms_bitmap) SDL_FreeSurface(sms_bitmap);
-	if (font) SDL_FreeSurface(font);
-	if (bigfontwhite) SDL_FreeSurface(bigfontwhite);
-	if (bigfontred) SDL_FreeSurface(bigfontred);
+	Cleanup();
 	
-	for(uint8_t i=0;i<2;i++)
-	{
-			if (joystick[i]) SDL_JoystickClose(joystick[i]);
-	}
-	
-	// Deinitialize audio and video output
-	Sound_Close();
-	
-	SDL_Quit();
-
-	// Shut down
-	system_poweroff();
-	system_shutdown();
 	return 0;
 }

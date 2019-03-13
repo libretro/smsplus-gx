@@ -1,6 +1,9 @@
 #ifndef SMSPLUS_H
 #define SMSPLUS_H
 
+#define HOST_WIDTH_RESOLUTION 320
+#define HOST_HEIGHT_RESOLUTION 240
+
 #define VIDEO_WIDTH_SMS 256
 #define VIDEO_HEIGHT_SMS 192
 #define VIDEO_WIDTH_GG 160
@@ -18,7 +21,7 @@ typedef struct {
 	char biosdir[256];
 } gamedata_t;
 
-void smsp_state(uint8_t slot, uint8_t mode);
+void smsp_state(uint8_t slot_number, uint8_t mode);
 
 #define SOUND_FREQUENCY 44100
 #define SOUND_SAMPLES_SIZE 1024

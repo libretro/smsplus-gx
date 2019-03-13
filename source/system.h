@@ -101,7 +101,7 @@ extern void system_frame(uint32_t skip_render);
 extern void system_init(void);
 extern void system_shutdown(void);
 extern void system_reset(void);
-extern void system_manage_sram(uint8_t *sram, uint8_t slot, uint8_t mode);
+extern void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode);
 extern void system_poweron(void);
 extern void system_poweroff(void);
 

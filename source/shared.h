@@ -52,5 +52,8 @@
 #include "fileio.h"
 #include "unzip.h"
 #include "sound_output.h"
+#ifdef SCALE2X_UPSCALER
+#include "scale2x.h"
+#endif
 
 #endif /* _SHARED_H_ */

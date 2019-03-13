@@ -21,11 +21,8 @@ gamedata_t gdata;
 
 t_config option;
 
-SDL_Surface* sdl_screen, *sms_bitmap;
-static int32_t frames_rendered = 0;
-uint32_t countedFrames = 0;
-uint32_t start;
-
+SDL_Surface* sdl_screen, *scale2x_buf;
+static SDL_Surface *sms_bitmap;
 extern SDL_Surface *font;
 extern SDL_Surface *bigfontred;
 extern SDL_Surface *bigfontwhite;
@@ -33,37 +30,68 @@ extern SDL_Surface *bigfontwhite;
 uint8_t fullscreen = 1;
 uint8_t selectpressed = 0;
 uint8_t save_slot = 0;
-uint8_t showfps = 0;
 uint8_t quit = 0;
+
+const uint32_t upscalers_available = 1
+#ifdef SCALE2X_UPSCALER
++1
+#endif
+;
 
 static void video_update()
 {
+#ifdef SCALE2X_UPSCALER
+	SDL_Rect dst;
+#endif
 	SDL_LockSurface(sdl_screen);
 	switch(fullscreen) 
 	{
-		case 1:
-        case 2: // aspect ratio
+		// Native
+        case 0: 
 		if(sms.console == CONSOLE_GG) 
-			upscale_160x144_to_320x240((uint32_t*)sdl_screen->pixels, (uint32_t*)sms_bitmap->pixels+24);
+			bitmap_scale(48,0,160,144,160,144,256,HOST_WIDTH_RESOLUTION-160,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-160)/2+(HOST_HEIGHT_RESOLUTION-144)/2*HOST_WIDTH_RESOLUTION);
 		else 
-			upscale_SMS_to_320x240((uint32_t*)sdl_screen->pixels, (uint32_t*)sms_bitmap->pixels, vdp.height);
+			bitmap_scale(0,0,256,vdp.height,256,(vdp.height),256,HOST_WIDTH_RESOLUTION-256,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-256)/2+(HOST_HEIGHT_RESOLUTION-(vdp.height))/2*HOST_WIDTH_RESOLUTION);
 		break;
-        default: // native res
+		// Fullscreen
+		case 1:
 		if(sms.console == CONSOLE_GG) 
-			bitmap_scale(48,0,160,144,160,144,256,sdl_screen->w-160,(uint16_t*)sms_bitmap->pixels,(uint16_t*)sdl_screen->pixels+(sdl_screen->w-160)/2+(sdl_screen->h-144)/2*sdl_screen->w);
+			upscale_160x144_to_320x240((uint32_t* restrict)sdl_screen->pixels, (uint32_t* restrict)sms_bitmap->pixels+24);
 		else 
-			bitmap_scale(0,0,256,vdp.height,256,(vdp.height),256,sdl_screen->w-256,(uint16_t*)sms_bitmap->pixels,(uint16_t*)sdl_screen->pixels+(sdl_screen->w-256)/2+(sdl_screen->h-(vdp.height))/2*sdl_screen->w);
-		break;;
+			upscale_SMS_to_320x240((uint32_t* restrict)sdl_screen->pixels, (uint32_t* restrict)sms_bitmap->pixels, vdp.height);
+		break;
+		// Hqx
+		case 2:
+#ifdef SCALE2X_UPSCALER
+		if(sms.console == CONSOLE_GG) 
+		{
+			dst.x = 96;
+			dst.y = 0;
+			dst.w = 320;
+			dst.h = 144*2;
+		}
+		else
+		{
+			uint32_t hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
+			dst.x = hide_left ? 16 : 0;
+			dst.y = 0;
+			dst.w = (hide_left ? 248 : 256)*2;
+			dst.h = vdp.height*2;
+		}
+		scale2x(sms_bitmap->pixels, scale2x_buf->pixels, 512, 1024, 256, 240);
+		bitmap_scale(dst.x,0,dst.w,dst.h,HOST_WIDTH_RESOLUTION,HOST_HEIGHT_RESOLUTION,512,0,scale2x_buf->pixels,sdl_screen->pixels);
+#endif
+		break;
 	}
 	SDL_UnlockSurface(sdl_screen);	
 	
 }
 
-void smsp_state(uint8_t slot, uint8_t mode)
+void smsp_state(uint8_t slot_number, uint8_t mode)
 {
 	// Save and Load States
 	char stpath[PATH_MAX];
-	snprintf(stpath, sizeof(stpath), "%s%s.st%d", gdata.stdir, gdata.gamename, slot);
+	snprintf(stpath, sizeof(stpath), "%s%s.st%d", gdata.stdir, gdata.gamename, slot_number);
 	FILE *fd;
 	
 	switch(mode) {
@@ -85,7 +113,7 @@ void smsp_state(uint8_t slot, uint8_t mode)
 	}
 }
 
-void system_manage_sram(uint8_t *sram, uint8_t slot, uint8_t mode) 
+void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode) 
 {
 	// Set up save file name
 	FILE *fd;
@@ -187,6 +215,8 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 			else
 				input.pad[0] &= ~INPUT_BUTTON2;
 		break;	
+		default:
+		break;
 	}
 	
 	if (sms.console == CONSOLE_COLECO) input.system = 0;
@@ -259,7 +289,7 @@ static void smsp_gamedata_set(int8_t *filename)
 	}
 	
 	// Set up the sram file
-	snprintf(gdata.sramfile, sizeof(gdata.sramfile), "%s%s%s.sav", home_path, gdata.sramdir, gdata.gamename);
+	snprintf(gdata.sramfile, sizeof(gdata.sramfile), "%s%s.sav", gdata.sramdir, gdata.gamename);
 	
 	// Set up the state directory
 	snprintf(gdata.stdir, sizeof(gdata.stdir), "%sstate/", home_path);
@@ -294,9 +324,9 @@ void Menu()
 
     SDL_LockSurface(menu_surf);
     if(IS_GG)
-        bitmap_scale(48,0,160,144,miniscreenwidth,miniscreenheight,256,0,(uint16_t*)sms_bitmap->pixels,(uint16_t*)menu_surf->pixels);
+        bitmap_scale(48,0,160,144,miniscreenwidth,miniscreenheight,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)menu_surf->pixels);
     else
-        bitmap_scale(0,0,256,192,miniscreenwidth,miniscreenheight,256,0,(uint16_t*)sms_bitmap->pixels,(uint16_t*)menu_surf->pixels);
+        bitmap_scale(0,0,256,192,miniscreenwidth,miniscreenheight,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)menu_surf->pixels);
         
     SDL_UnlockSurface(menu_surf);
     char text[50];
@@ -308,7 +338,7 @@ void Menu()
         pressed = 0;
         SDL_FillRect( sdl_screen, NULL, 0 );
 
-        dstRect.x = sdl_screen->w-5-miniscreenwidth;
+        dstRect.x = HOST_WIDTH_RESOLUTION-5-miniscreenwidth;
         dstRect.y = 30;
         SDL_BlitSurface(menu_surf,NULL,sdl_screen,&dstRect);
 
@@ -335,30 +365,44 @@ void Menu()
 
         if (currentselection == 4)
         {
-            if (fullscreen == 1)
-                gfx_font_print(sdl_screen,5,105,bigfontred,"Stretched");
-            else
-				gfx_font_print(sdl_screen,5,105,bigfontred,"Native");
+			switch(fullscreen)
+			{
+				case 0:
+					gfx_font_print(sdl_screen,5,105,bigfontred,"Native");
+				break;
+				case 1:
+					gfx_font_print(sdl_screen,5,105,bigfontred,"Stretched");
+				break;
+				case 2:
+					gfx_font_print(sdl_screen,5,105,bigfontred,"EPX/Scale2X");
+				break;
+			}
         }
         else
         {
-            if (fullscreen == 1)
-                gfx_font_print(sdl_screen,5,105,bigfontwhite,"Stretched");
-            else
-				gfx_font_print(sdl_screen,5,105,bigfontwhite,"Native");
+			switch(fullscreen)
+			{
+				case 0:
+					gfx_font_print(sdl_screen,5,105,bigfontwhite,"Native");
+				break;
+				case 1:
+					gfx_font_print(sdl_screen,5,105,bigfontwhite,"Stretched");
+				break;
+				case 2:
+					gfx_font_print(sdl_screen,5,105,bigfontwhite,"EPX/Scale2X");
+				break;
+			}
         }
-
-        sprintf(text,"%s",showfps ? "Show fps on" : "Show fps off");
 
         if (currentselection == 5)
             gfx_font_print(sdl_screen,5,125,bigfontred,"Quit");
         else
             gfx_font_print(sdl_screen,5,125,bigfontwhite,"Quit");
 
-        gfx_font_print_center(sdl_screen,sdl_screen->h-40-gfx_font_height(font),font,"SMS_SDL for the RS-97");
-        gfx_font_print_center(sdl_screen,sdl_screen->h-30-gfx_font_height(font),font,"RS-97 port by gameblabla");
-        gfx_font_print_center(sdl_screen,sdl_screen->h-20-gfx_font_height(font),font,"Initial port: exmortis@yandex.ru,joyrider");
-        gfx_font_print_center(sdl_screen,sdl_screen->h-10-gfx_font_height(font),font,"Scaler code: Alekmaul, Harteex: TGA,bin2h");
+        gfx_font_print_center(sdl_screen,HOST_HEIGHT_RESOLUTION-40-gfx_font_height(font),font,"SMS_SDL for the RS-97");
+        gfx_font_print_center(sdl_screen,HOST_HEIGHT_RESOLUTION-30-gfx_font_height(font),font,"RS-97 port by gameblabla");
+        gfx_font_print_center(sdl_screen,HOST_HEIGHT_RESOLUTION-20-gfx_font_height(font),font,"Initial port: exmortis@yandex.ru,joyrider");
+        gfx_font_print_center(sdl_screen,HOST_HEIGHT_RESOLUTION-10-gfx_font_height(font),font,"Scaler code: Alekmaul, Harteex: TGA,bin2h");
 
         while (SDL_PollEvent(&Event))
         {
@@ -391,7 +435,7 @@ void Menu()
                             case 4:
                                 fullscreen--;
                                     if (fullscreen < 0)
-                                        fullscreen = 1;
+                                        fullscreen = upscalers_available;
                                 break;
                         }
                         break;
@@ -406,13 +450,13 @@ void Menu()
                                 break;
                             case 4:
                                 fullscreen++;
-                                if (fullscreen > 1)
+                                if (fullscreen > upscalers_available)
                                     fullscreen = 0;
                                 break;
                         }
                         break;
-
-
+					default:
+					break;
                 }
             }
         }
@@ -423,7 +467,7 @@ void Menu()
             {
                 case 4 :
                     fullscreen++;
-                    if (fullscreen > 1)
+                    if (fullscreen > upscalers_available)
                         fullscreen = 0;
                     break;
                 case 2 :
@@ -433,6 +477,8 @@ void Menu()
                 case 3 :
 					smsp_state(save_slot, 0);
 					currentselection = 1;
+				break;
+				default:
 				break;
             }
         }
@@ -451,6 +497,29 @@ void Menu()
     
     if (currentselection == 5)
         quit = 1;
+}
+
+static void Cleanup(void)
+{
+#ifdef SCALE2X_UPSCALER
+	if (scale2x_buf) SDL_FreeSurface(scale2x_buf);
+#endif
+	if (sdl_screen) SDL_FreeSurface(sdl_screen);
+	if (sms_bitmap) SDL_FreeSurface(sms_bitmap);
+	if (font) SDL_FreeSurface(font);
+	if (bigfontwhite) SDL_FreeSurface(bigfontwhite);
+	if (bigfontred) SDL_FreeSurface(bigfontred);
+	
+	if (bios.rom) free(bios.rom);
+	
+	// Deinitialize audio and video output
+	Sound_Close();
+	
+	SDL_Quit();
+
+	// Shut down
+	system_poweroff();
+	system_shutdown();	
 }
 
 int main (int argc, char *argv[]) 
@@ -479,13 +548,23 @@ int main (int argc, char *argv[])
 	smsp_gamedata_set(argv[1]);
 	
 	// Force Colecovision mode
-	if (strcmp(strrchr(argv[1], '.'), ".col") == 0)
-	{
-		option.console = 6;
+	if (strcmp(strrchr(argv[1], '.'), ".col") == 0) option.console = 6;
+	
+	// Load ROM
+	if(!load_rom(argv[1])) {
+		fprintf(stderr, "Error: Failed to load %s.\n", argv[1]);
+		Cleanup();
+		return 0;
 	}
 	
 	SDL_Init(SDL_INIT_VIDEO);
-	sdl_screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+	sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_HWSURFACE
+	#ifdef SDL_TRIPLEBUF
+	| SDL_TRIPLEBUF
+	#else
+	| SDL_DOUBLEBUF
+	#endif
+	);
 	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 240, 16, 0, 0, 0, 0);
 	SDL_ShowCursor(0);
 	
@@ -495,11 +574,9 @@ int main (int argc, char *argv[])
     bigfontwhite = gfx_tex_load_tga_from_array(bigfontwhitearray);
     bigfontred = gfx_tex_load_tga_from_array(bigfontredarray);
 	
-	// Load ROM
-	if(!load_rom(argv[1])) {
-		fprintf(stderr, "Error: Failed to load %s.\n", argv[1]);
-		exit(1);
-	}
+#ifdef SCALE2X_UPSCALER
+	scale2x_buf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS*2, 480, 16, 0, 0, 0, 0);
+#endif
 	
 	fprintf(stdout, "CRC : %08X\n", cart.crc);
 	
@@ -563,20 +640,7 @@ int main (int argc, char *argv[])
 		}
 	}
 	
-	if (sdl_screen) SDL_FreeSurface(sdl_screen);
-	if (sms_bitmap) SDL_FreeSurface(sms_bitmap);
-	if (font) SDL_FreeSurface(font);
-	if (bigfontwhite) SDL_FreeSurface(bigfontwhite);
-	if (bigfontred) SDL_FreeSurface(bigfontred);
-	
-	// Deinitialize audio and video output
-	Sound_Close();
-	
-	SDL_Quit();
-
-	// Shut down
-	system_poweroff();
-	system_shutdown();
+	Cleanup();
 	
 	return 0;
 }

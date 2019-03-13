@@ -16,59 +16,96 @@
 #include "font.h"
 #include "sound_output.h"
 
-uint32_t frames_rendered = 0;
-gamedata_t gdata;
+static gamedata_t gdata;
 
 t_config option;
-
-SDL_Surface* sdl_screen, *sms_bitmap;
-static SDL_Surface* img_background;
-uint32_t countedFrames = 0;
-uint32_t start;
+SDL_Surface* sdl_screen;
+static SDL_Surface *img_background, *scale2x_buf, *sms_bitmap;
 
 static SDL_Joystick* joystick[2];
 
-extern SDL_Surface *font;
-extern SDL_Surface *bigfontred;
-extern SDL_Surface *bigfontwhite;
+extern SDL_Surface *font, *bigfontred, *bigfontwhite;
 
-int8_t fullscreen = 1;
-uint8_t selectpressed = 0;
-uint8_t save_slot = 0;
-uint8_t showfps = 0;
-uint8_t quit = 0;
+static int8_t fullscreen = 1;
+static uint8_t selectpressed = 0;
+static uint8_t save_slot = 0;
+static uint8_t quit = 0;
+static const int8_t upscalers_available = 2
+#ifdef SCALE2X_UPSCALER
++2
+#endif
+;
 
 static void video_update()
 {
+#ifdef SCALE2X_UPSCALER
 	SDL_Rect dst, dstT;
-	
+#endif
 	SDL_LockSurface(sdl_screen);
 	switch(fullscreen) 
 	{
-		case 3: // FullScreen (No cropping)
+#ifdef SCALE2X_UPSCALER
+		// Unscaled Scale2x
+		case 4:
 			if (sms.console == CONSOLE_GG) 
 			{
-				dst.x = 0;
-				dst.y = 0;
-				dst.w = sdl_screen->w;
-				dst.h = sdl_screen->h;
-				dstT.x = 0;
+				dst.w = 160*3;
+				dst.h = 144*3;
+				dstT.x = 96;
 				dstT.y = 0;
-				dstT.w = 160;
-				dstT.h = 144;
+				dstT.w = 320;
+				dstT.h = 288;
 			}
 			else
 			{
-				dst.x = 0;
+				dst.w = VIDEO_WIDTH_SMS * 2;
+				dst.h = vdp.height * 2;
+				dstT.x = (vdp.reg[0] & 0x20) ? 16 : 0;
+				dstT.y = 0;
+				dstT.w = dst.w - dstT.x;
+				dstT.h = dst.h;
+			}
+			scale2x(sms_bitmap->pixels, scale2x_buf->pixels, 512, 1024, 256, 240);
+			bitmap_scale(
+			dstT.x,dstT.y,
+			dstT.w,dstT.h,
+			dst.w,dst.h,
+			512,sdl_screen->w-dst.w,
+			(uint16_t* restrict)scale2x_buf->pixels,
+			(uint16_t* restrict)sdl_screen->pixels+(sdl_screen->w-dst.w)/2+(sdl_screen->h-dst.h)/2*sdl_screen->w);
+		break;
+		case 3: // Scale2x
+			if (sms.console == CONSOLE_GG) 
+			{
+				dst.x = 96;
 				dst.y = 0;
-				dst.w = sdl_screen->w;
-				dst.h = sdl_screen->h;
+				dst.w = 320;
+				dst.h = 288;
+				dstT.x = 48;
+				dstT.y = 0;
+				dstT.w = 320;
+				dstT.h = 288;
+			}
+			else
+			{
+				dst.x = (vdp.reg[0] & 0x20) ? 16 : 0;
+				dst.y = 0;
+				dst.w = (vdp.reg[0] & 0x20) ? 496 : 512;
+				dst.h = vdp.height*2;
 				dstT.x = 0;
 				dstT.y = 0;
-				dstT.w = VIDEO_WIDTH_SMS-dstT.x;
-				dstT.h = vdp.height;
+				dstT.w = (dst.w)-dstT.x;
+				dstT.h = vdp.height*2;
 			}
+			scale2x(sms_bitmap->pixels, scale2x_buf->pixels, 512, 1024, 256, 240);
+			bitmap_scale(
+			dst.x,dst.y,
+			dst.w,dst.h,
+			sdl_screen->w,sdl_screen->h,
+			512,0,
+			(uint16_t* restrict)scale2x_buf->pixels,(uint16_t* restrict)sdl_screen->pixels);
 		break;
+#endif
 		case 2: // Fullscreen (cropped)
 			if (sms.console == CONSOLE_GG) 
 			{
@@ -76,7 +113,7 @@ static void video_update()
 				dst.y = 0;
 				dst.w = sdl_screen->w;
 				dst.h = sdl_screen->h;
-				dstT.x = 0;
+				dstT.x = 48;
 				dstT.y = 0;
 				dstT.w = 160;
 				dstT.h = 144;
@@ -87,78 +124,83 @@ static void video_update()
 				dst.y = 0;
 				dst.w = sdl_screen->w;
 				dst.h = sdl_screen->h;
-				if ((bitmap.data[0] == bitmap.data[4]))
-				{
-					dstT.x = 8;
-				}
-				else
-				{
-					dstT.x = 0;
-				}
+				dstT.x = (vdp.reg[0] & 0x20) ? 8 : 0;
 				dstT.y = 0;
 				dstT.w = VIDEO_WIDTH_SMS-dstT.x;
 				dstT.h = vdp.height;
 			}
+			bitmap_scale(
+			dstT.x,dstT.y,
+			dstT.w,dstT.h,
+			dst.w,dst.h,
+			VIDEO_WIDTH_SMS,0,
+			(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
 		break;
 		case 1: // Stretch (keep aspect ratio)
 			if (sms.console == CONSOLE_GG) 
 			{
-				dst.x = 80;
-				dst.y = 0;
-				dst.w = 320;
-				dst.h = 144*2;
-				dstT.x = 0;
+				dst.w = 640;
+				dst.h = 480;
+				dstT.x = 48;
 				dstT.y = 0;
 				dstT.w = 160;
 				dstT.h = 144;
 			}
 			else
 			{
-				dst.x = 80;
-				dst.y = 0;
 				dst.w = 640;
-				dst.h = sdl_screen->h;
-				dstT.x = 0;
+				dst.h = 480;
+				dstT.x = (vdp.reg[0] & 0x20) ? 8 : 0;
 				dstT.y = 0;
-				dstT.w = VIDEO_WIDTH_SMS;
+				dstT.w = VIDEO_WIDTH_SMS - dstT.x;
 				dstT.h = vdp.height;
 			}
+			bitmap_scale(
+			dstT.x,dstT.y,
+			dstT.w,dstT.h,
+			dst.w,dst.h,
+			256,sdl_screen->w-dst.w,
+			(uint16_t* restrict)sms_bitmap->pixels,
+			(uint16_t* restrict)sdl_screen->pixels+(sdl_screen->w-dst.w)/2+(sdl_screen->h-dst.h)/2*sdl_screen->w);
 		break;
         case 0: // native res
 			if (sms.console == CONSOLE_GG) 
 			{
-				dst.x = 0;
-				dst.y = 0;
 				dst.w = 160*3;
 				dst.h = 144*3;
-				dstT.x = 0;
+				dstT.x = 48;
 				dstT.y = 0;
 				dstT.w = 160;
 				dstT.h = 144;
 			}
 			else
 			{
-				dst.x = 148;
-				dst.y = (480-(vdp.height*2))/2;
-				dst.w = 512;
-				dst.h = vdp.height*2;
-				dstT.x = 0;
+				dst.w = VIDEO_WIDTH_SMS * 2;
+				dst.h = vdp.height * 2;
+				dstT.x = (vdp.reg[0] & 0x20) ? 8 : 0;
 				dstT.y = 0;
-				dstT.w = VIDEO_WIDTH_SMS;
+				dstT.w = VIDEO_WIDTH_SMS - dstT.x;
 				dstT.h = vdp.height;
 			}
+			bitmap_scale(
+			dstT.x,dstT.y,
+			dstT.w,dstT.h,
+			dst.w,dst.h,
+			256,sdl_screen->w-dst.w,
+			(uint16_t* restrict)sms_bitmap->pixels,
+			(uint16_t* restrict)sdl_screen->pixels+(sdl_screen->w-dst.w)/2+(sdl_screen->h-dst.h)/2*sdl_screen->w);
 		break;
 	}
-	SDL_SoftStretch(sms_bitmap, &dstT, sdl_screen, &dst);
+	//SDL_SoftStretch(sms_bitmap, &dstT, sdl_screen, &dst);
+	
 	SDL_UnlockSurface(sdl_screen);
 }
 
-void smsp_state(uint8_t slot, uint8_t mode)
+void smsp_state(uint8_t slot_number, uint8_t mode)
 {
 	// Save and Load States
-	int8_t stpath[PATH_MAX];
-	snprintf(stpath, sizeof(stpath), "%s%s.st%d", gdata.stdir, gdata.gamename, slot);
-	printf("Path state %s\n", stpath);
+	char stpath[PATH_MAX];
+	snprintf(stpath, sizeof(stpath), "%s%s.st%d", gdata.stdir, gdata.gamename, slot_number);
 	FILE *fd;
 	
 	switch(mode) {
@@ -180,7 +222,7 @@ void smsp_state(uint8_t slot, uint8_t mode)
 	}
 }
 
-void system_manage_sram(uint8_t *sram, uint8_t slot, uint8_t mode) 
+void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode) 
 {
 	// Set up save file name
 	FILE *fd;
@@ -212,68 +254,10 @@ void system_manage_sram(uint8_t *sram, uint8_t slot, uint8_t mode)
 	}
 }
 
-static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
-{
-	if (sms.console == CONSOLE_COLECO)
-    {
-		coleco.keypad[0] = 0xff;
-		coleco.keypad[1] = 0xff;
-	}
-	
-	switch(k)
-	{
-		/* At least allow them to play on the lowest difficulties,
-		 * Maybe this needs a better implementation ? */
-		case SDLK_TAB:
-			coleco.keypad[0] = 1;
-		break;
-		case SDLK_BACKSPACE:
-			coleco.keypad[0] = 2;
-		break;
-		case SDLK_ESCAPE:
-			if(p)
-				selectpressed = 1;
-		break;
-		case SDLK_RETURN:
-			if(p)
-				input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
-		break;
-		case SDLK_UP:
-			if(p)
-				input.pad[0] |= INPUT_UP;
-		break;	
-		case SDLK_DOWN:
-			if(p)
-				input.pad[0] |= INPUT_DOWN;
-		break;
-		case SDLK_LEFT:
-			if(p)
-				input.pad[0] |= INPUT_LEFT;
-		break;	
-		case SDLK_RIGHT:
-			if(p)
-				input.pad[0] |= INPUT_RIGHT;
-		break;
-		case SDLK_LCTRL:
-			if(p)
-				input.pad[0] |= INPUT_BUTTON1;
-		break;	
-		case SDLK_LALT:
-			if(p)
-				input.pad[0] |= INPUT_BUTTON2;
-		break;
-	}
-	
-	if (sms.console == CONSOLE_COLECO) input.system = 0;
-	
-	return 1;
-}
-
-
 static void bios_init()
 {
 	FILE *fd;
-	int8_t bios_path[256];
+	char bios_path[256];
 	
 	bios.rom = malloc(0x100000);
 	bios.enabled = 0;
@@ -305,11 +289,10 @@ static void bios_init()
 	}
 }
 
-
-static void smsp_gamedata_set(int8_t *filename) 
+static void smsp_gamedata_set(char *filename) 
 {
 	// Set paths, create directories
-	int8_t home_path[256];
+	char home_path[256];
 	snprintf(home_path, sizeof(home_path), "%s/.smsplus/", getenv("HOME"));
 	
 	if (mkdir(home_path, 0755) && errno != EEXIST) {
@@ -320,7 +303,7 @@ static void smsp_gamedata_set(int8_t *filename)
 	snprintf(gdata.gamename, sizeof(gdata.gamename), "%s", basename(filename));
 	
 	// Strip the file extension off
-	for (uint32_t i = strlen(gdata.gamename) - 1; i > 0; i--) {
+	for (unsigned long i = strlen(gdata.gamename) - 1; i > 0; i--) {
 		if (gdata.gamename[i] == '.') {
 			gdata.gamename[i] = '\0';
 			break;
@@ -334,7 +317,7 @@ static void smsp_gamedata_set(int8_t *filename)
 	}
 	
 	// Set up the sram file
-	snprintf(gdata.sramfile, sizeof(gdata.sramfile), "%s%s%s.sav", home_path, gdata.sramdir, gdata.gamename);
+	snprintf(gdata.sramfile, sizeof(gdata.sramfile), "%s%s.sav", gdata.sramdir, gdata.gamename);
 	
 	// Set up the state directory
 	snprintf(gdata.stdir, sizeof(gdata.stdir), "%sstate/", home_path);
@@ -356,14 +339,13 @@ static void smsp_gamedata_set(int8_t *filename)
 	
 }
 
-void Menu()
+static void Menu()
 {
     int16_t pressed = 0;
     int16_t currentselection = 1;
     uint16_t miniscreenwidth = 140;
     uint16_t miniscreenheight = 135;
     SDL_Rect dstRect;
-    int8_t *cmd = NULL;
     SDL_Event Event;
     /* Seriously, we need that mess due to crappy framebuffer drivers on the RS-07... */
     SDL_Surface* miniscreen = SDL_CreateRGBSurface(SDL_SWSURFACE, miniscreenwidth, miniscreenheight, 16, sdl_screen->format->Rmask, sdl_screen->format->Gmask, sdl_screen->format->Bmask, sdl_screen->format->Amask);
@@ -423,10 +405,13 @@ void Menu()
 					gfx_font_print(final_screen,5,105,bigfontred,"Keep Aspect Ratio");
 				break;
 				case 2:
-					gfx_font_print(final_screen,5,105,bigfontred,"Fullscreen (Auto-Crop)");
+					gfx_font_print(final_screen,5,105,bigfontred,"Fullscreen");
 				break;
 				case 3:
-					gfx_font_print(final_screen,5,105,bigfontred,"Fullscreen (No Crop)");
+					gfx_font_print(final_screen,5,105,bigfontred,"EPX/Scale2x Full");
+				break;
+				case 4:
+					gfx_font_print(final_screen,5,105,bigfontred,"EPX/Scale2x Unscaled");
 				break;
 			}
         }
@@ -441,10 +426,13 @@ void Menu()
 					gfx_font_print(final_screen,5,105,bigfontwhite,"Keep Aspect Ratio");
 				break;
 				case 2:
-					gfx_font_print(final_screen,5,105,bigfontwhite,"Fullscreen (Auto-Crop)");
+					gfx_font_print(final_screen,5,105,bigfontwhite,"Fullscreen");
 				break;
 				case 3:
-					gfx_font_print(final_screen,5,105,bigfontwhite,"Fullscreen (No Crop)");
+					gfx_font_print(final_screen,5,105,bigfontwhite,"EPX/Scale2x Full");
+				break;
+				case 4:
+					gfx_font_print(final_screen,5,105,bigfontwhite,"EPX/Scale2x Unscaled");
 				break;
 			}
         }
@@ -458,8 +446,6 @@ void Menu()
         gfx_font_print_center(final_screen,sdl_screen->h-70-gfx_font_height(font),font,"RS-97 port by gameblabla");
         gfx_font_print_center(final_screen,sdl_screen->h-60-gfx_font_height(font),font,"See full credits on github:");
         gfx_font_print_center(final_screen,sdl_screen->h-50-gfx_font_height(font),font,"https://github.com/gameblabla/sms_sdl");
-		
-
 
 		for(uint8_t i = 0; i < 2; i++)
 		{
@@ -499,7 +485,7 @@ void Menu()
 								case 4:
 									fullscreen--;
 										if (fullscreen < 0)
-											fullscreen = 3;
+											fullscreen = upscalers_available;
 									break;
 
 							}
@@ -515,7 +501,7 @@ void Menu()
 									break;
 								case 4:
 									fullscreen++;
-									if (fullscreen > 3)
+									if (fullscreen > upscalers_available)
 										fullscreen = 0;
 									break;
 							}
@@ -537,7 +523,7 @@ void Menu()
 								case 4:
 									fullscreen--;
 										if (fullscreen < 0)
-											fullscreen = 3;
+											fullscreen = upscalers_available;
 									break;
 
 							}
@@ -554,7 +540,7 @@ void Menu()
 									break;
 								case 4:
 									fullscreen++;
-									if (fullscreen > 3)
+									if (fullscreen > upscalers_available)
 										fullscreen = 0;
 									break;
 							}
@@ -596,7 +582,7 @@ void Menu()
             {
                 case 4 :
                     fullscreen++;
-                    if (fullscreen > 3)
+                    if (fullscreen > upscalers_available)
                         fullscreen = 0;
                     break;
                 case 2 :
@@ -612,24 +598,118 @@ void Menu()
 
 		SDL_BlitSurface(final_screen, NULL, sdl_screen, NULL);
 		SDL_Flip(sdl_screen);
-		//++sdl_video.frames_rendered;
     }
     
     if (currentselection == 5)
         quit = 1;
 	if (quit)
 	{
-		SDL_FreeSurface(miniscreen);
-		SDL_FreeSurface(black_screen);
-		SDL_FreeSurface(final_screen);
+		if (miniscreen) SDL_FreeSurface(miniscreen);
+		if (black_screen) SDL_FreeSurface(black_screen);
+		if (final_screen) SDL_FreeSurface(final_screen);
 	}
         
 }
 
-int main (int argc, char *argv[]) 
+static void Cleanup(void)
+{
+#ifdef SCALE2X_UPSCALER
+	if (scale2x_buf) SDL_FreeSurface(scale2x_buf);
+#endif
+	if (sdl_screen) SDL_FreeSurface(sdl_screen);
+	if (sms_bitmap) SDL_FreeSurface(sms_bitmap);
+	if (font) SDL_FreeSurface(font);
+	if (bigfontwhite) SDL_FreeSurface(bigfontwhite);
+	if (bigfontred) SDL_FreeSurface(bigfontred);
+	
+	for(uint8_t i=0;i<2;i++)
+	{
+		if (joystick[i]) SDL_JoystickClose(joystick[i]);
+	}
+	
+	if (bios.rom) free(bios.rom);
+	
+	// Deinitialize audio and video output
+	Sound_Close();
+	
+	SDL_Quit();
+
+	// Shut down
+	system_poweroff();
+	system_shutdown();	
+}
+
+static void Controls_papk3s()
 {
 	int16_t x_move = 0, y_move = 0;
-	Uint8 *keystate;
+	uint8_t *keystate;
+	keystate = SDL_GetKeyState(NULL);
+	
+	if (sms.console == CONSOLE_COLECO)
+    {
+		coleco.keypad[0] = 0xff;
+		coleco.keypad[1] = 0xff;
+	}
+	
+	if (keystate[SDLK_TAB])
+		coleco.keypad[0] = 1;
+		
+	if (keystate[SDLK_BACKSPACE])
+		coleco.keypad[0] = 2;
+		
+	for(uint8_t i=0;i<2;i++)
+	{
+		if (joystick[i] == NULL) joystick[i] = SDL_JoystickOpen(i);
+				
+		x_move = SDL_JoystickGetAxis(joystick[i], 0);
+		y_move = SDL_JoystickGetAxis(joystick[i], 1);
+
+		if (x_move > 500 || (i == 0 && keystate[SDLK_RIGHT]))
+			input.pad[i] |= INPUT_RIGHT;
+		else
+			input.pad[i] &= ~INPUT_RIGHT;
+					
+		if (x_move < -500 || (i == 0 && keystate[SDLK_LEFT]))
+			input.pad[i] |= INPUT_LEFT;
+		else
+			input.pad[i] &= ~INPUT_LEFT;
+
+		if (y_move > 500 || (i == 0 && keystate[SDLK_DOWN]))
+			input.pad[i] |= INPUT_DOWN;
+		else
+			input.pad[i] &= ~INPUT_DOWN;
+
+		if(y_move < -500 || (i == 0 && keystate[SDLK_UP]))
+			input.pad[i] |= INPUT_UP;
+		else
+			input.pad[i] &= ~INPUT_UP;
+
+		if((SDL_JoystickGetButton(joystick[i], 2) == SDL_PRESSED) || (i == 0 && keystate[SDLK_LCTRL]))
+			input.pad[i] |= INPUT_BUTTON1;
+		else
+			input.pad[i] &= ~INPUT_BUTTON1;
+				
+		if((SDL_JoystickGetButton(joystick[i], 1) == SDL_PRESSED) || (i == 0 && keystate[SDLK_LALT]))
+			input.pad[i] |= INPUT_BUTTON2;
+		else
+			input.pad[i] &= ~INPUT_BUTTON2;
+
+		if(((i == 0) && (SDL_JoystickGetButton(joystick[i], 9) == SDL_PRESSED)) || (keystate[SDLK_RETURN]))
+			input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
+		else
+			input.system &= ~(sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
+					
+		if((SDL_JoystickGetButton(joystick[i], 8) == SDL_PRESSED) || keystate[SDLK_ESCAPE])
+			selectpressed = 1;
+	}
+	
+	if (sms.console == CONSOLE_COLECO) input.system = 0;
+
+	SDL_JoystickUpdate();	
+}
+
+int main (int argc, char *argv[]) 
+{
 	SDL_Event event;
 	// Print Header
 	fprintf(stdout, "%s %s\n", APP_NAME, APP_VERSION);
@@ -678,7 +758,9 @@ int main (int argc, char *argv[])
 	SDL_Flip(sdl_screen);
 	
 	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 240, 16, 0, 0, 0, 0);
-	
+#ifdef SCALE2X_UPSCALER
+	scale2x_buf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS*2, 480, 16, 0, 0, 0, 0);
+#endif
 	img_background = SDL_LoadBMP("background.bmp");
 	
     font = gfx_tex_load_tga_from_array(fontarray);
@@ -718,8 +800,6 @@ int main (int argc, char *argv[])
 	// Initialize all systems and power on
 	system_poweron();
 	
-	frames_rendered = 0;
-	
 	// Loop until the user closes the window
 	while (!quit) 
 	{
@@ -732,8 +812,6 @@ int main (int argc, char *argv[])
 		// Execute frame(s)
 		system_frame(0);
 
-		++frames_rendered;
-		
 		SDL_Flip(sdl_screen);
 		
 		if (sms.console == CONSOLE_COLECO)
@@ -750,56 +828,8 @@ int main (int argc, char *argv[])
             input.system &= (IS_GG) ? ~INPUT_START : ~INPUT_PAUSE;
             selectpressed = 0;
 		}
-
-		keystate = SDL_GetKeyState(NULL);
-	
-		for(uint8_t i=0;i<2;i++)
-		{
-				if (joystick[i] == NULL) joystick[i] = SDL_JoystickOpen(i);
-				
-				x_move = SDL_JoystickGetAxis(joystick[i], 0);
-				y_move = SDL_JoystickGetAxis(joystick[i], 1);
-
-				if (x_move > 500 || (i == 0 && keystate[SDLK_RIGHT]))
-					input.pad[i] |= INPUT_RIGHT;
-				else
-					input.pad[i] &= ~INPUT_RIGHT;
-					
-				if (x_move < -500 || (i == 0 && keystate[SDLK_LEFT]))
-					input.pad[i] |= INPUT_LEFT;
-				else
-					input.pad[i] &= ~INPUT_LEFT;
-
-				if (y_move > 500 || (i == 0 && keystate[SDLK_DOWN]))
-					input.pad[i] |= INPUT_DOWN;
-				else
-					input.pad[i] &= ~INPUT_DOWN;
-
-				if(y_move < -500 || (i == 0 && keystate[SDLK_UP]))
-					input.pad[i] |= INPUT_UP;
-				else
-					input.pad[i] &= ~INPUT_UP;
-
-				if(SDL_JoystickGetButton(joystick[i], 2) == SDL_PRESSED || (i == 0 && keystate[SDLK_LCTRL]))
-					input.pad[i] |= INPUT_BUTTON1;
-				else
-					input.pad[i] &= ~INPUT_BUTTON1;
-				
-				if(SDL_JoystickGetButton(joystick[i], 1) == SDL_PRESSED || (i == 0 && keystate[SDLK_LALT]))
-					input.pad[i] |= INPUT_BUTTON2;
-				else
-					input.pad[i] &= ~INPUT_BUTTON2;
-
-				if(i == 0 && SDL_JoystickGetButton(joystick[i], 9) == SDL_PRESSED || keystate[SDLK_RETURN])
-					input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
-				else
-					input.system &= ~(sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
-					
-				if(SDL_JoystickGetButton(joystick[i], 8) == SDL_PRESSED || keystate[SDLK_ESCAPE])
-					selectpressed = 1;
-		}
-
-		SDL_JoystickUpdate();
+		
+		Controls_papk3s();
 
 		if(SDL_PollEvent(&event)) 
 		{
@@ -807,29 +837,12 @@ int main (int argc, char *argv[])
 			{
 				case SDL_QUIT:
 					quit = 1;
-				return;
+				return 0;
 			}
 		}
 	}
 	
-	if (sdl_screen) SDL_FreeSurface(sdl_screen);
-	if (sms_bitmap) SDL_FreeSurface(sms_bitmap);
-	if (font) SDL_FreeSurface(font);
-	if (bigfontwhite) SDL_FreeSurface(bigfontwhite);
-	if (bigfontred) SDL_FreeSurface(bigfontred);
+	Cleanup();
 	
-	for(uint8_t i=0;i<2;i++)
-	{
-		if (joystick[i]) SDL_JoystickClose(joystick[i]);
-	}
-	
-	// Deinitialize audio and video output
-	Sound_Close();
-	
-	SDL_Quit();
-
-	// Shut down
-	system_poweroff();
-	system_shutdown();
 	return 0;
 }
