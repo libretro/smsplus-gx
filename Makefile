@@ -3,7 +3,7 @@ PRGNAME     = sms.elf
 CC			= clang
 
 # Possible choices : rs97, k3s (PAP K3S), sdl, amini
-PORT = k3s
+PORT = sdl
 # Possible choices : alsa, pulse (pulseaudio), oss, sdl12 (SDL 1.2 sound output), portaudio, libao
 SOUND_OUTPUT = alsa
 # Possible choices : crabemu_sn76489 (less accurate, GPLv2), maxim_sn76489 (somewhat problematic license but good accuracy)
@@ -29,9 +29,9 @@ CFLAGS		:= -O0 -g -Weverything -Wno-padded -Wno-unused-parameter
 CFLAGS		+= -DLSB_FIRST -std=gnu99
 CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/generic -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
 
-ifeq ($(PROFILE), 1)
+ifeq ($(PROFILE), USE)
 CFLAGS 		+= -fprofile-generate=./
-else
+elifeq ($(PROFILE), DATA)
 CFLAGS		+= -fprofile-use
 endif
 
