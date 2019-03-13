@@ -732,8 +732,6 @@ int main (int argc, char *argv[])
 		// Execute frame(s)
 		system_frame(0);
 
-		++frames_rendered;
-		
 		SDL_Flip(sdl_screen);
 
 		if (selectpressed == 1)

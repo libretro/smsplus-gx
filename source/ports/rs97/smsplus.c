@@ -27,12 +27,12 @@ extern SDL_Surface *font;
 extern SDL_Surface *bigfontred;
 extern SDL_Surface *bigfontwhite;
 
-uint8_t fullscreen = 1;
+int8_t fullscreen = 1;
 uint8_t selectpressed = 0;
 uint8_t save_slot = 0;
 uint8_t quit = 0;
 
-const uint32_t upscalers_available = 1
+const int8_t upscalers_available = 1
 #ifdef SCALE2X_UPSCALER
 +1
 #endif
