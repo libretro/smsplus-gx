@@ -25,7 +25,6 @@
 #ifndef STATE_H_
 #define STATE_H_
 
-
 #define STATE_VERSION   0x0104      /* Version 1.4 (BCD) */
 #define STATE_HEADER    "SST\0"     /* State file header */
 
@@ -33,4 +32,4 @@
 extern uint32_t system_save_state(FILE *mem);
 extern void system_load_state(FILE *mem);
 
-#endif /* STATE_H_ */
+#endif /* _STATE_H_ */

@@ -26,14 +26,14 @@
 
 typedef struct
 {
-  uint32_t crc;
-  uint8_t glasses_3d;
-  uint8_t device;
-  uint8_t mapper;
-  uint8_t display;
-  uint8_t territory;
-  uint8_t console;
-  const char *name;
+	uint32_t crc;
+	uint8_t glasses_3d;
+	uint8_t device;
+	uint8_t mapper;
+	uint8_t display;
+	uint8_t territory;
+	uint8_t console;
+	const char *name;
 } rominfo_t;
 
 static rominfo_t game_list[GAME_DATABASE_CNT] =
@@ -127,7 +127,7 @@ static rominfo_t game_list[GAME_DATABASE_CNT] =
    "Bad Apple SMS"},  
   {0xDA2A68C6, 0, DEVICE_PAD2B, MAPPER_SEGA, DISPLAY_PAL, TERRITORY_EXPORT, CONSOLE_SMS2,
    "The Synchrobots"},  
-   
+
   /* games requiring 315-5124 VDP (Mark-III, Sega Master System) */
   {0x32759751, 0, DEVICE_PAD2B, MAPPER_SEGA, DISPLAY_NTSC, TERRITORY_DOMESTIC, CONSOLE_SMS,
    "Y's (J)"},
@@ -376,9 +376,9 @@ static void set_config()
 	}
 }
 
-uint32_t load_rom(const char *filename)
+uint32_t load_rom (const char *filename)
 {
-	if (cart.rom)
+	if(cart.rom)
 	{
 		free(cart.rom);
 		cart.rom = NULL;
@@ -412,6 +412,7 @@ uint32_t load_rom(const char *filename)
 			return 0;
 		}
 		fread(cart.rom, cart.size, 1, fd);
+
 		fclose(fd);
 	}
 

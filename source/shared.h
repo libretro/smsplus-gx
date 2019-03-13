@@ -44,6 +44,7 @@
 #include "fmintf.h"
 #include "sound.h"
 #include "system.h"
+#include "error.h"
 #include "loadrom.h"
 #include "config.h"
 #include "state.h"
@@ -52,4 +53,4 @@
 #include "unzip.h"
 #include "sound_output.h"
 
-#endif /* SHARED_H_ */
+#endif /* _SHARED_H_ */

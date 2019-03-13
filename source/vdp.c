@@ -21,19 +21,20 @@
  *  Video Display Processor (VDP) emulation.
  *
  ******************************************************************************/
+
 #include "shared.h"
 #include "hvc.h"
 
 /* Mark a pattern as dirty */
 #define MARK_BG_DIRTY(addr)                         \
 {                                                   \
-  uint32_t name = (addr >> 5) & 0x1FF;              \
-  if(bg_name_dirty[name] == 0)                      \
-  {                                                 \
-    bg_name_list[bg_list_index] = name;             \
-    bg_list_index++;                                \
-  }                                                 \
-  bg_name_dirty[name] |= (1 << ((addr >> 2) & 7));  \
+	int32_t name = (addr >> 5) & 0x1FF;				\
+	if(bg_name_dirty[name] == 0)					\
+	{												\
+		bg_name_list[bg_list_index] = name;			\
+		bg_list_index++;         					\
+	}												\
+	bg_name_dirty[name] |= (1 << ((addr >> 2) & 7));\
 }
 
 
@@ -43,7 +44,7 @@ vdp_t vdp;
 /* Initialize VDP emulation */
 void vdp_init(void)
 {
-	/* display area */
+  /* display area */
 	if ((sms.console == CONSOLE_GG) && (!option.extra_gg))
 	{
 		bitmap.viewport.w = 160;
@@ -113,14 +114,13 @@ void vdp_reset(void)
 
 void viewport_check(void)
 {
-	uint32_t i;
-	uint32_t m1 = (vdp.reg[1] >> 4) & 1;
-	uint32_t m3 = (vdp.reg[1] >> 3) & 1;
-	uint32_t m2 = (vdp.reg[0] >> 1) & 1;
-	uint32_t m4 = (vdp.reg[0] >> 2) & 1;
-	
+	int32_t i;
+	int32_t m1 = (vdp.reg[1] >> 4) & 1;
+	int32_t m3 = (vdp.reg[1] >> 3) & 1;
+	int32_t m2 = (vdp.reg[0] >> 1) & 1;
+	int32_t m4 = (vdp.reg[0] >> 2) & 1;
 	vdp.mode = (m4 << 3 | m3 << 2 | m2 << 1 | m1 << 0);
-
+	
 	/* Check for extended modes */
 	if (sms.console >= CONSOLE_SMS2)
 	{
@@ -154,7 +154,6 @@ void viewport_check(void)
 		vdp.height = 192;
 		vdp.extended = 0;
 		vdp.ntab = (vdp.reg[2] << 10) & 0x3800;
-
 		/* invalid text mode (Mode 4) */
 		if ((vdp.mode & 0x09) == 0x09) vdp.mode = 1;
 	}
@@ -164,9 +163,9 @@ void viewport_check(void)
 	{
 		if(bitmap.viewport.h != vdp.height)
 		{
-		  bitmap.viewport.oh = bitmap.viewport.h;
-		  bitmap.viewport.h = vdp.height;
-		  bitmap.viewport.changed = 1;
+			bitmap.viewport.oh = bitmap.viewport.h;
+			bitmap.viewport.h = vdp.height;
+			bitmap.viewport.changed = 1;
 		}
 	}
 	else
@@ -205,70 +204,66 @@ void viewport_check(void)
 
 void vdp_reg_w(uint8_t r, uint8_t d)
 {
-  /* Store register data */
-  vdp.reg[r] = d;
-
-  switch(r)
-  {
-    case 0x00: /* Mode Control No. 1 */
-
-      if(vdp.hint_pending)
-      {
-        if(d & 0x10) z80_set_irq_line(0, ASSERT_LINE);
-        else z80_set_irq_line(0, CLEAR_LINE);
-      }
-      viewport_check();
-      break;
-
+	/* Store register data */
+	vdp.reg[r] = d;
+	switch(r)
+	{
+	case 0x00: /* Mode Control No. 1 */
+		if(vdp.hint_pending)
+		{
+			if(d & 0x10) z80_set_irq_line(0, ASSERT_LINE);
+			else z80_set_irq_line(0, CLEAR_LINE);
+		}
+		viewport_check();
+	break;
     case 0x01: /* Mode Control No. 2 */
-      if(vdp.vint_pending)
-      {
-        if(d & 0x20) z80_set_irq_line(vdp.irq, ASSERT_LINE);
-        else z80_set_irq_line(vdp.irq, CLEAR_LINE);
-      }
-      viewport_check();
-      break;
+		if(vdp.vint_pending)
+		{
+			if(d & 0x20) z80_set_irq_line(vdp.irq, ASSERT_LINE);
+			else z80_set_irq_line(vdp.irq, CLEAR_LINE);
+		}
+		viewport_check();
+	break;
 
     case 0x02: /* Name Table A Base Address */
-      viewport_check();
-      break;
+		viewport_check();
+	break;
 
     case 0x03:
-      vdp.ct = (d <<  6) & 0x3FC0;
-      break;
+		vdp.ct = (d <<  6) & 0x3FC0;
+	break;
 
     case 0x04:
-      vdp.pg = (d << 11) & 0x3800;
-      break;
+		vdp.pg = (d << 11) & 0x3800;
+	break;
 
     case 0x05: /* Sprite Attribute Table Base Address */
-      vdp.satb = (d << 7) & 0x3F00;
-      vdp.sa = (d <<  7) & 0x3F80;
-      break;
+		vdp.satb = (d << 7) & 0x3F00;
+		vdp.sa = (d <<  7) & 0x3F80;
+	break;
 
     case 0x06:
-      vdp.sg = (d << 11) & 0x3800;
-      break;
+		vdp.sg = (d << 11) & 0x3800;
+	break;
 
     case 0x07:
-      vdp.bd = (d & 0x0F);
-      break;
+		vdp.bd = (d & 0x0F);
+	break;
   }
 }
 
 
-void vdp_write(uint32_t offset, uint8_t data)
+void vdp_write(int32_t offset, uint8_t data)
 {
-  uint32_t index;
+	int32_t index;
+	if (((z80_get_elapsed_cycles() + 1) / CYCLES_PER_LINE) > vdp.line)
+	{
+		/* render next line now BEFORE updating register */
+		render_line((vdp.line+1)%vdp.lpf);
+	}
 
-  if (((z80_get_elapsed_cycles() + 1) / CYCLES_PER_LINE) > vdp.line)
-  {
-    /* render next line now BEFORE updating register */
-    render_line((vdp.line+1)%vdp.lpf);
-  }
-
-  switch(offset & 1)
-  {
+	switch(offset & 1)
+	{
     case 0: /* Data port */
 
       vdp.pending = 0;
@@ -321,8 +316,8 @@ void vdp_write(uint32_t offset, uint8_t data)
     
         if(vdp.code == 2)
         {
-          uint8_t r = (data & 0x0F);
-          uint8_t d = vdp.latch;
+          int r = (data & 0x0F);
+          int d = vdp.latch;
           vdp_reg_w(r, d);
         }
       }
@@ -330,73 +325,70 @@ void vdp_write(uint32_t offset, uint8_t data)
   }
 }
 
-uint8_t vdp_read(uint32_t offset)
+uint8_t vdp_read(int32_t offset)
 {
-  uint8_t temp;
+	uint8_t temp;
 
-  switch(offset & 1)
-  {
-    case 0: /* CPU <-> VDP data buffer */
-      vdp.pending = 0;
-      temp = vdp.buffer;
-      vdp.buffer = vdp.vram[vdp.addr & 0x3FFF];
-      vdp.addr = (vdp.addr + 1) & 0x3FFF;
-      return temp;
+	switch(offset & 1)
+	{
+		case 0: /* CPU <-> VDP data buffer */
+		  vdp.pending = 0;
+		  temp = vdp.buffer;
+		  vdp.buffer = vdp.vram[vdp.addr & 0x3FFF];
+		  vdp.addr = (vdp.addr + 1) & 0x3FFF;
+		return temp;
+		case 1: /* Status flags */
+		{
+			/* cycle-accurate SPR_OVR and INT flags */
+			int32_t cyc   = z80_get_elapsed_cycles();
+			int32_t line  = vdp.line;
+			if ((cyc / CYCLES_PER_LINE) > line)
+			{
+				if (line == vdp.height) vdp.status |= 0x80;
+				line = (line + 1)%vdp.lpf;
+				render_line(line);
+			}
 
-    case 1: /* Status flags */
-    {
-      /* cycle-accurate SPR_OVR and INT flags */
-      uint32_t cyc = z80_get_elapsed_cycles();
-      uint32_t line = vdp.line;
-      if ((cyc / CYCLES_PER_LINE) > line)
-      {
-        if (line == vdp.height) vdp.status |= 0x80;
-        line = (line + 1)%vdp.lpf;
-        render_line(line);
-      }
+			/* low 5 bits return non-zero data (fixes PGA Tour Golf course map introduction) */
+			temp = vdp.status | 0x1f;
 
-      /* low 5 bits return non-zero data (fixes PGA Tour Golf course map introduction) */
-      temp = vdp.status | 0x1f;
+			/* clear flags */
+			vdp.status = 0;
+			vdp.pending = 0;
+			vdp.vint_pending = 0;
+			vdp.hint_pending = 0;
+			z80_set_irq_line(vdp.irq, CLEAR_LINE);
 
-      /* clear flags */
-      vdp.status = 0;
-      vdp.pending = 0;
-      vdp.vint_pending = 0;
-      vdp.hint_pending = 0;
-      z80_set_irq_line(vdp.irq, CLEAR_LINE);
+			/* cycle-accurate SPR_COL flag */
+			if (temp & 0x20)
+			{
+				uint8_t hc = hc_256[(cyc + 1) % CYCLES_PER_LINE];
+				if ((line == (vdp.spr_col >> 8)) && ((hc < (vdp.spr_col & 0xff)) || (hc > 0xf3)))
+				{
+					vdp.status |= 0x20;
+					temp &= ~0x20;
+				}
+			}
+			return temp;
+		}
+	}
 
-      /* cycle-accurate SPR_COL flag */
-      if (temp & 0x20)
-      {
-        uint8_t hc = hc_256[(cyc + 1) % CYCLES_PER_LINE];
-        if ((line == (vdp.spr_col >> 8)) && ((hc < (vdp.spr_col & 0xff)) || (hc > 0xf3)))
-        {
-          vdp.status |= 0x20;
-          temp &= ~0x20;
-        }
-      }
-
-      return temp;
-    }
-  }
-
-  /* Just to please the compiler */
-  return 0;
+	/* Just to please the compiler */
+	return 0;
 }
 
-uint8_t vdp_counter_r(uint32_t offset)
+uint8_t vdp_counter_r(int32_t offset)
 {
-  switch(offset & 1)
-  {
-    case 0: /* V Counter */
-      return vc_table[sms.display][vdp.extended][z80_get_elapsed_cycles() / CYCLES_PER_LINE];
+	switch(offset & 1)
+	{
+		case 0: /* V Counter */
+			return vc_table[sms.display][vdp.extended][z80_get_elapsed_cycles() / CYCLES_PER_LINE];
+		case 1: /* H Counter -- return previously latched values or ZERO */
+			return sms.hlatch;
+	}
 
-    case 1: /* H Counter -- return previously latched values or ZERO */
-      return sms.hlatch;
-  }
-
-  /* Just to please the compiler */
-  return 0;
+	/* Just to please the compiler */
+	return 0;
 }
 
 
@@ -404,9 +396,9 @@ uint8_t vdp_counter_r(uint32_t offset)
 /* Game Gear VDP handlers                           */
 /*--------------------------------------------------------------------------*/
 
-void gg_vdp_write(uint32_t offset, uint8_t data)
+void gg_vdp_write(int32_t offset, uint8_t data)
 {
-  uint32_t index;
+	int32_t index;
 
 	if (((z80_get_elapsed_cycles() + 1) / CYCLES_PER_LINE) > vdp.line)
 	{
@@ -414,137 +406,130 @@ void gg_vdp_write(uint32_t offset, uint8_t data)
 		render_line((vdp.line+1)%vdp.lpf);
 	}
 
-  switch(offset & 1)
-  {
-    case 0: /* Data port */
-      vdp.pending = 0;
-      switch(vdp.code)
-      {
-        case 0: /* VRAM write */
-        case 1: /* VRAM write */
-        case 2: /* VRAM write */
-          index = (vdp.addr & 0x3FFF);
-          if(data != vdp.vram[index])
-          {
-            vdp.vram[index] = data;
-            MARK_BG_DIRTY(vdp.addr);
-          }
-          vdp.buffer = data;
-          break;
-    
-        case 3: /* CRAM write */
-          if(vdp.addr & 1)
-          {
-            vdp.cram_latch = (vdp.cram_latch & 0x00FF) | ((data & 0xFF) << 8);
-            vdp.cram[(vdp.addr & 0x3E) | (0)] = (vdp.cram_latch >> 0) & 0xFF;
-            vdp.cram[(vdp.addr & 0x3E) | (1)] = (vdp.cram_latch >> 8) & 0xFF;
-            palette_sync((vdp.addr >> 1) & 0x1F);
-          }
-          else
-          {
-            vdp.cram_latch = (vdp.cram_latch & 0xFF00) | ((data & 0xFF) << 0);
-          }
-          vdp.buffer = data;
-          break;
-      }
-      vdp.addr = (vdp.addr + 1) & 0x3FFF;
-      return;
+	switch(offset & 1)
+	{
+		case 0: /* Data port */
+		vdp.pending = 0;
+		switch(vdp.code)
+		{
+			case 0: /* VRAM write */
+			case 1: /* VRAM write */
+			case 2: /* VRAM write */
+				index = (vdp.addr & 0x3FFF);
+				if(data != vdp.vram[index])
+				{
+					vdp.vram[index] = data;
+					MARK_BG_DIRTY(vdp.addr);
+				}
+				vdp.buffer = data;
+			break;
+			case 3: /* CRAM write */
+				if(vdp.addr & 1)
+				{
+					vdp.cram_latch = (vdp.cram_latch & 0x00FF) | ((data & 0xFF) << 8);
+					vdp.cram[(vdp.addr & 0x3E) | (0)] = (vdp.cram_latch >> 0) & 0xFF;
+					vdp.cram[(vdp.addr & 0x3E) | (1)] = (vdp.cram_latch >> 8) & 0xFF;
+					palette_sync((vdp.addr >> 1) & 0x1F);
+				}
+				else
+				{
+					vdp.cram_latch = (vdp.cram_latch & 0xFF00) | ((data & 0xFF) << 0);
+				}
+				vdp.buffer = data;
+			break;
+		}
+		vdp.addr = (vdp.addr + 1) & 0x3FFF;
+		return;
 
-    case 1: /* Control port */
-      if(vdp.pending == 0)
-      {
-        vdp.addr = (vdp.addr & 0x3F00) | (data & 0xFF);
-        vdp.latch = data;
-        vdp.pending = 1;
-      }
-      else
-      {
-        vdp.pending = 0;
-        vdp.code = (data >> 6) & 3;
-        vdp.addr = (data << 8 | vdp.latch) & 0x3FFF;
-
-        if(vdp.code == 0)
-        {
-          vdp.buffer = vdp.vram[vdp.addr & 0x3FFF];
-          vdp.addr = (vdp.addr + 1) & 0x3FFF;
-        }
-    
-        if(vdp.code == 2)
-        {
-          uint8_t r = (data & 0x0F);
-          uint8_t d = vdp.latch;
-          vdp_reg_w(r, d);
-        }
-      }
-      return;
-  }
+		case 1: /* Control port */
+		if(vdp.pending == 0)
+		{
+			vdp.addr = (vdp.addr & 0x3F00) | (data & 0xFF);
+			vdp.latch = data;
+			vdp.pending = 1;
+		}
+		else
+		{
+			vdp.pending = 0;
+			vdp.code = (data >> 6) & 3;
+			vdp.addr = (data << 8 | vdp.latch) & 0x3FFF;
+			if(vdp.code == 0)
+			{
+				vdp.buffer = vdp.vram[vdp.addr & 0x3FFF];
+				vdp.addr = (vdp.addr + 1) & 0x3FFF;
+			}
+			if(vdp.code == 2)
+			{
+				int32_t r = (data & 0x0F);
+				int32_t d = vdp.latch;
+				vdp_reg_w(r, d);
+			}
+		}
+		return;
+	}
 }
 
 /*--------------------------------------------------------------------------*/
 /* MegaDrive / Genesis VDP handlers                     */
 /*--------------------------------------------------------------------------*/
 
-void md_vdp_write(uint32_t offset, uint8_t data)
+void md_vdp_write(int32_t offset, uint8_t data)
 {
-  uint32_t index;
+	int32_t index;
+	switch(offset & 1)
+	{
+		case 0: /* Data port */
+		vdp.pending = 0;
+		switch(vdp.code)
+		{
+			case 0: /* VRAM write */
+			case 1: /* VRAM write */
+			index = (vdp.addr & 0x3FFF);
+			if(data != vdp.vram[index])
+			{
+				vdp.vram[index] = data;
+				MARK_BG_DIRTY(vdp.addr);
+			}
+			break;
+			case 2: /* CRAM write */
+			case 3: /* CRAM write */
+				index = (vdp.addr & 0x1F);
+				if(data != vdp.cram[index])
+				{
+					vdp.cram[index] = data;
+					palette_sync(index);
+				}
+			break;
+		}
+		vdp.addr = (vdp.addr + 1) & 0x3FFF;
+		return;
 
-  switch(offset & 1)
-  {
-    case 0: /* Data port */
+		case 1: /* Control port */
+		if(vdp.pending == 0)
+		{
+			vdp.latch = data;
+			vdp.pending = 1;
+		}
+		else
+		{
+			vdp.pending = 0;
+			vdp.code = (data >> 6) & 3;
+			vdp.addr = (data << 8 | vdp.latch) & 0x3FFF;
 
-      vdp.pending = 0;
-
-      switch(vdp.code)
-      {
-        case 0: /* VRAM write */
-        case 1: /* VRAM write */
-          index = (vdp.addr & 0x3FFF);
-          if(data != vdp.vram[index])
-          {
-            vdp.vram[index] = data;
-            MARK_BG_DIRTY(vdp.addr);
-          }
-          break;
+			if(vdp.code == 0)
+			{
+				vdp.buffer = vdp.vram[vdp.addr & 0x3FFF];
+				vdp.addr = (vdp.addr + 1) & 0x3FFF;
+			}
     
-        case 2: /* CRAM write */
-        case 3: /* CRAM write */
-          index = (vdp.addr & 0x1F);
-          if(data != vdp.cram[index])
-          {
-            vdp.cram[index] = data;
-            palette_sync(index);
-          }
-          break;
-      }
-      vdp.addr = (vdp.addr + 1) & 0x3FFF;
-      return;
-
-    case 1: /* Control port */
-      if(vdp.pending == 0)
-      {
-        vdp.latch = data;
-        vdp.pending = 1;
-      }
-      else
-      {
-        vdp.pending = 0;
-        vdp.code = (data >> 6) & 3;
-        vdp.addr = (data << 8 | vdp.latch) & 0x3FFF;
-
-        if(vdp.code == 0)
-        {
-          vdp.buffer = vdp.vram[vdp.addr & 0x3FFF];
-          vdp.addr = (vdp.addr + 1) & 0x3FFF;
-        }
-    
-        if(vdp.code == 2)
-        {
-          uint8_t r = (data & 0x0F);
-          uint8_t d = vdp.latch;
-          vdp_reg_w(r, d);
-        }
-      }
-      return;
+			if(vdp.code == 2)
+			{
+				int32_t r = (data & 0x0F);
+				int32_t d = vdp.latch;
+				vdp_reg_w(r, d);
+			}
+		}
+	return;
   }
 }
 
@@ -552,58 +537,55 @@ void md_vdp_write(uint32_t offset, uint8_t data)
 /* TMS9918 VDP handlers                           */
 /*--------------------------------------------------------------------------*/
 
-void tms_write(uint32_t offset, uint8_t data)
+void tms_write(int32_t offset, int32_t data)
 {
-  uint32_t index;
+	int32_t index;
+	switch(offset & 1)
+	{
+		case 0: /* Data port */
+			vdp.pending = 0;
 
-  switch(offset & 1)
-  {
-    case 0: /* Data port */
+			switch(vdp.code)
+			{
+				case 0: /* VRAM write */
+				case 1: /* VRAM write */
+				case 2: /* VRAM write */
+				case 3: /* VRAM write */
+				index = (vdp.addr & 0x3FFF);
+				if(data != vdp.vram[index])
+				{
+					vdp.vram[index] = data;
+					MARK_BG_DIRTY(vdp.addr);
+				}
+				break;
+			}
+			vdp.addr = (vdp.addr + 1) & 0x3FFF;
+		return;
 
-      vdp.pending = 0;
-
-      switch(vdp.code)
-      {
-        case 0: /* VRAM write */
-        case 1: /* VRAM write */
-        case 2: /* VRAM write */
-        case 3: /* VRAM write */
-          index = (vdp.addr & 0x3FFF);
-          if(data != vdp.vram[index])
-          {
-            vdp.vram[index] = data;
-            MARK_BG_DIRTY(vdp.addr);
-          }
-          break;
-      }
-      vdp.addr = (vdp.addr + 1) & 0x3FFF;
-      return;
-
-    case 1: /* Control port */
-      if(vdp.pending == 0)
-      {
-        vdp.latch = data;
-        vdp.pending = 1;
-      }
-      else
-      {
-        vdp.pending = 0;
-        vdp.code = (data >> 6) & 3;
-        vdp.addr = (data << 8 | vdp.latch) & 0x3FFF;
-
-        if(vdp.code == 0)
-        {
-          vdp.buffer = vdp.vram[vdp.addr & 0x3FFF];
-          vdp.addr = (vdp.addr + 1) & 0x3FFF;
-        }
+		case 1: /* Control port */
+		if(vdp.pending == 0)
+		{
+			vdp.latch = data;
+			vdp.pending = 1;
+		}
+		else
+		{
+			vdp.pending = 0;
+			vdp.code = (data >> 6) & 3;
+			vdp.addr = (data << 8 | vdp.latch) & 0x3FFF;
+			if(vdp.code == 0)
+			{
+				vdp.buffer = vdp.vram[vdp.addr & 0x3FFF];
+				vdp.addr = (vdp.addr + 1) & 0x3FFF;
+			}
     
-        if(vdp.code == 2)
-        {
-          uint8_t r = (data & 0x07);
-          uint8_t d = vdp.latch;
-          vdp_reg_w(r, d);
-        }
-      }
-      return;
-  }
+			if(vdp.code == 2)
+			{
+				int32_t r = (data & 0x07);
+				int32_t d = vdp.latch;
+				vdp_reg_w(r, d);
+			}
+		}
+		return;
+	}
 }

@@ -4,8 +4,8 @@
 */
 #include "shared.h"
 #include "ym2413.h"
-FM_Context fm_context;
-YM2413 *fmm;
+static FM_Context fm_context;
+static YM2413 *fmm;
 
 /* Only the 1st Master System supports FM sound. Because it is still processed even though it's not used,
 * don't process FM sound if it can't be used in any way.
@@ -34,18 +34,18 @@ void FM_Reset(void)
 }
 
 
-void FM_Update(int16_t **buffer, uint32_t length)
+void FM_Update(int16_t **buffer, int32_t length)
 {
 	if (isfm_used) ym2413_update(fmm, buffer, length);
 }
 
-void FM_WriteReg(uint32_t reg, uint32_t data)
+void FM_WriteReg(uint8_t reg, uint8_t data)
 {
     FM_Write(0, reg);
     FM_Write(1, data);
 }
 
-void FM_Write(uint32_t offset, uint32_t data)
+void FM_Write(uint32_t offset, uint8_t data)
 {
     if(offset & 1)
     {
@@ -68,7 +68,7 @@ void FM_GetContext(uint8_t *data)
 
 void FM_SetContext(uint8_t *data)
 {
-    uint32_t i;
+    uint8_t i;
     uint8_t *reg = fm_context.reg;
 
     memcpy(&fm_context, data, sizeof(FM_Context));

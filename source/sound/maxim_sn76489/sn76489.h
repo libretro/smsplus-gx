@@ -36,30 +36,28 @@ enum mute_values {
 typedef struct
 {
     /* expose this for inspection/modification for channel muting */
-    uint32_t Mute;
-    uint32_t BoostNoise;
-    uint32_t VolumeArray;
+    int32_t Mute;
+    int32_t BoostNoise;
+    int32_t VolumeArray;
     
     /* Variables */
     float Clock;
     float dClock;
-    uint32_t PSGStereo;
-    uint32_t NumClocksForSample;
-    uint32_t WhiteNoiseFeedback;
+    int32_t PSGStereo;
+    int32_t NumClocksForSample;
+    int32_t WhiteNoiseFeedback;
     
     /* PSG registers: */
-    uint16_t Registers[8];        /* Tone, vol x4 */
+    int32_t Registers[8];        /* Tone, vol x4 */
     int32_t LatchedRegister;
-    uint16_t NoiseShiftRegister;
-    int16_t NoiseFreq;            /* Noise channel signal generator frequency */
+    int32_t NoiseShiftRegister;
+    int32_t NoiseFreq;            /* Noise channel signal generator frequency */
     
     /* Output calculation variables */
-    int16_t ToneFreqVals[4];      /* Frequency register values (counters) */
+    int32_t ToneFreqVals[4];      /* Frequency register values (counters) */
     int8_t ToneFreqPos[4];        /* Frequency channel flip-flops */
-    int16_t Channels[4];          /* Value of each channel, before stereo is applied */
-    /* It was using LONG_MIN in sn76489.c before but that requires a 64-bits variable so i changed it to INT_MIN instead.
-     * So far, i haven't noticed any regressions yet. - Gameblabla
-     * */
+    int32_t Channels[4];          /* Value of each channel, before stereo is applied */
+    /* It was using LONG_MIN in sn76489.c before but that requires a 64-bits variable so i changed it to INT_MIN instead. So far, i haven't noticed any regressions yet. - Gameblabla */
     int32_t IntermediatePos[4];   /* intermediate values used at boundaries between + and - */
 
 } SN76489_Context;

@@ -116,7 +116,7 @@ void Sound_Init(void)
 
 void Sound_Update(void)
 {
-	uint32_t i;
+	int32_t i;
 	const int32_t volumeMultiplier = 3;
 	
 	if (!handle || !snd.output[1] || !snd.output[0]) return;

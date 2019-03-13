@@ -21,7 +21,6 @@
  *  Video Display Processor (VDP) emulation.
  *
  ******************************************************************************/
-
 #ifndef VDP_H_
 #define VDP_H_
 
@@ -47,25 +46,25 @@ typedef struct
     uint8_t status;
     uint8_t latch;
     uint8_t pending;
-    uint16_t addr;
     uint8_t code;
     uint8_t buffer;
-    uint32_t pn, ct, pg, sa, sg;
-    uint32_t ntab;
-    uint32_t satb;
-    int32_t line;
-    int32_t left;
-    uint16_t lpf;
     uint8_t height;
     uint8_t extended;
-    uint32_t mode;
     uint8_t irq;
     uint8_t vint_pending;
     uint8_t hint_pending;
-    uint16_t cram_latch;
-    uint16_t spr_col;
     uint8_t spr_ovr;
     uint8_t bd;
+    uint16_t lpf;
+    uint16_t cram_latch;
+    uint16_t addr;
+    int32_t pn, ct, pg, sa, sg;
+    int32_t ntab;
+    int32_t satb;
+    int32_t line;
+    int32_t left;
+    int32_t spr_col;
+    int32_t mode;
 } vdp_t;
 
 /* Global data */
@@ -77,12 +76,12 @@ extern void vdp_init(void);
 extern void vdp_shutdown(void);
 extern void vdp_reset(void);
 extern void viewport_check(void);
-extern uint8_t vdp_counter_r(uint32_t offset);
-extern uint8_t vdp_read(uint32_t offset);
-extern void vdp_write(uint32_t offset, uint8_t data);
-extern void gg_vdp_write(uint32_t offset, uint8_t data);
-extern void md_vdp_write(uint32_t offset, uint8_t data);
-extern void tms_write(uint32_t offset, uint8_t data);
+extern uint8_t vdp_counter_r(int32_t offset);
+extern uint8_t vdp_read(int32_t offset);
+extern void vdp_write(int32_t offset, uint8_t data);
+extern void gg_vdp_write(int32_t offset, uint8_t data);
+extern void md_vdp_write(int32_t offset, uint8_t data);
+extern void tms_write(int32_t offset, int32_t data);
 
-#endif /* VDP_H_ */
+#endif /* _VDP_H_ */
 

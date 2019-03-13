@@ -3,7 +3,7 @@
 #define FILEIO_H_
 
 /* Function prototypes */
-uint8_t *loadFromZipByName(char *archive, char *filename, uint32_t *filesize);
+uint8_t *loadFromZipByName(char *archive, const char *filename, uint32_t *filesize);
 int32_t check_zip(const char *filename);
 //int gzsize(gzFile *gd);
 

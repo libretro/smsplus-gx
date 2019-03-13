@@ -218,95 +218,82 @@ void render_shutdown(void)
 /* Initialize the rendering data */
 void render_init(void)
 {
-  int32_t i, j;
-  int32_t bx, sx, b, s, bp, bf, sf, c;
+	int32_t i, j;
+	int32_t bx, sx, b, s, bp, bf, sf, c;
 
-  make_tms_tables();
+	make_tms_tables();
 
-  /* Generate 64k of data for the look up table */
-  for(bx = 0; bx < 0x100; bx++)
-  {
-    for(sx = 0; sx < 0x100; sx++)
-    {
-      /* Background pixel */
-      b  = (bx & 0x0F);
+	/* Generate 64k of data for the look up table */
+	for(bx = 0; bx < 0x100; bx++)
+	{
+		for(sx = 0; sx < 0x100; sx++)
+		{
+			/* Background pixel */
+			b  = (bx & 0x0F);
 
-      /* Background priority */
-      bp = (bx & 0x20) ? 1 : 0;
+			/* Background priority */
+			bp = (bx & 0x20) ? 1 : 0;
 
-      /* Full background pixel + priority + sprite marker */
-      bf = (bx & 0x7F);
+			/* Full background pixel + priority + sprite marker */
+			bf = (bx & 0x7F);
 
-      /* Sprite pixel */
-      s  = (sx & 0x0F);
+			/* Sprite pixel */
+			s  = (sx & 0x0F);
 
-      /* Full sprite pixel, w/ palette and marker bits added */
-      sf = (sx & 0x0F) | 0x10 | 0x40;
+			/* Full sprite pixel, w/ palette and marker bits added */
+			sf = (sx & 0x0F) | 0x10 | 0x40;
 
-      /* Overwriting a sprite pixel ? */
-      if(bx & 0x40)
-      {
-        /* Return the input */
-        c = bf;
-      }
-      else
-      {
-        /* Work out priority and transparency for both pixels */
-        if(bp)
-        {
-          /* Underlying pixel is high priority */
-          if(b)
-          {
-            c = bf | 0x40;
-          }
-          else
-          {
-            if(s)
-            {
-              c = sf;
-            }
-            else
-            {
-              c = bf;
-            }
-          }
-        }
-        else
-        {
-          /* Underlying pixel is low priority */
-          if(s)
-          {
-            c = sf;
-          }
-          else
-          {
-            c = bf;
-          }
-        }
-      }
+			/* Overwriting a sprite pixel ? */
+			if(bx & 0x40)
+			{
+				/* Return the input */
+				c = bf;
+			}
+			else
+			{
+				/* Work out priority and transparency for both pixels */
+				if(bp)
+				{
+					/* Underlying pixel is high priority */
+					if(b)
+					{
+						c = bf | 0x40;
+					}
+					else
+					{
+						if(s) c = sf;
+						else c = bf;
+					}
+				}
+				else
+				{
+					/* Underlying pixel is low priority */
+					if(s) c = sf;
+					else c = bf;
+				}
+			}
+			/* Store result */
+			lut[(bx << 8) | (sx)] = c;
+		}
+	}
 
-      /* Store result */
-      lut[(bx << 8) | (sx)] = c;
-    }
-  }
-
-  /* Make bitplane to pixel lookup table */
-  for(i = 0; i < 0x100; i++)
-  for(j = 0; j < 0x100; j++)
-  {
-    int x;
-    uint32_t out = 0;
-    for(x = 0; x < 8; x++)
-    {
-      out |= (j & (0x80 >> x)) ? (uint32_t)(8 << (x << 2)) : 0;
-      out |= (i & (0x80 >> x)) ? (uint32_t)(4 << (x << 2)) : 0;
-    }
+	/* Make bitplane to pixel lookup table */
+	for(i = 0; i < 0x100; i++)
+	for(j = 0; j < 0x100; j++)
+	{
+		int32_t x;
+		uint32_t out = 0;
+		for(x = 0; x < 8; x++)
+		{
+			out |= (j & (0x80 >> x)) ? (uint32_t)(8 << (x << 2)) : 0;
+			out |= (i & (0x80 >> x)) ? (uint32_t)(4 << (x << 2)) : 0;
+		}
 #if LSB_FIRST
-    bp_lut[(j << 8) | (i)] = out;
+		bp_lut[(j << 8) | (i)] = out;
 #else
-    bp_lut[(i << 8) | (j)] = out;
+		bp_lut[(i << 8) | (j)] = out;
 #endif
-  }
+	}
 
   sms_cram_expand_table[0] =  0;
   sms_cram_expand_table[1] = (5 << 3)  + (1 << 2);
@@ -315,8 +302,8 @@ void render_init(void)
 
   for(i = 0; i < 16; i++)
   {
-    uint8_t c = i << 4 | i;
-    gg_cram_expand_table[i] = c;    
+	uint8_t c2 = i << 4 | i;
+	gg_cram_expand_table[i] = c2;    
   }
 }
 
@@ -518,7 +505,8 @@ void render_bg_sms(int32_t line)
 	/* Draw last column (clipped) */
 	if(shift)
 	{
-		int32_t x, c, a;
+		int32_t x;
+		uint8_t c, a;
 		uint8_t *p = &linebuf[(0 - shift)+(column << 3)];
 		attr = nt[(column + nt_scroll) & 0x1F];
 #ifndef LSB_FIRST
@@ -821,9 +809,9 @@ static void update_bg_pattern_cache(void)
 
 static void remap_8_to_16(int32_t line)
 {
-	uint32_t i;
+	int32_t i;
 	uint16_t *p = (uint16_t *)&bitmap.data[(line * bitmap.pitch)];
-	uint32_t width = bitmap.viewport.w + 2*bitmap.viewport.x;
+	int32_t width = bitmap.viewport.w + 2*bitmap.viewport.x;
 	
 	for(i = 0; i < width; i++)
 	{

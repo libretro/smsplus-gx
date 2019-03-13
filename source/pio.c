@@ -63,7 +63,7 @@ static io_state *io_current;
 
 void pio_init(void)
 {
-  uint32_t i, j;
+  int32_t i, j;
 
   /* Make pin state LUT */
   for(j = 0; j < 2; j++)
@@ -159,7 +159,7 @@ void pio_ctrl_w(uint8_t data)
 static uint8_t paddle_toggle[2] = {0,0};
 static uint8_t lightgun_latch =0;
 
-static uint8_t device_r(uint32_t port)
+static uint8_t device_r(int32_t port)
 {
   uint8_t temp = 0x7F;
 
@@ -229,12 +229,12 @@ static uint8_t device_r(uint32_t port)
       /* check TH INPUT */
       if (io_current->th_dir[port] == PIN_DIR_IN)
       {
-        uint32_t hc = hc_256[z80_get_elapsed_cycles() % CYCLES_PER_LINE];
-        uint32_t dx = input.analog[port][0] - (hc*2);
-        uint32_t dy = input.analog[port][1] - vdp.line;
+        int32_t hc = hc_256[z80_get_elapsed_cycles() % CYCLES_PER_LINE];
+        int32_t dx = input.analog[port][0] - (hc*2);
+        int32_t dy = input.analog[port][1] - vdp.line;
 
         /* is current pixel is within lightgun spot ? */
-        if ((dy <= 5) && (dx <= 60))
+        if ((abs(dy) <= 5) && (abs(dx) <= 60))
         {
           /* set TH low */
           temp &= ~0x40;
@@ -243,7 +243,7 @@ static uint8_t device_r(uint32_t port)
           if (!lightgun_latch)
           {
             /* latch estimated HC value */
-			sms.hlatch = sms.gun_offset + (input.analog[port][0])/2;
+            sms.hlatch = sms.gun_offset + (input.analog[port][0])/2;
             lightgun_latch = 1; 
           }
         }
@@ -263,7 +263,7 @@ static uint8_t device_r(uint32_t port)
 }
 
 
-uint8_t pio_port_r(uint32_t offset)
+uint8_t pio_port_r(int32_t offset)
 {
   uint8_t temp = 0xFF;
 
@@ -376,12 +376,12 @@ uint8_t pio_port_r(uint32_t offset)
 }
 
 /* Game Gear specific IO ports */
-uint8_t sio_r(uint32_t offset)
+uint8_t sio_r(int32_t offset)
 {
-  uint8_t temp;
+	uint8_t temp;
 
-  switch(offset & 0xFF)
-  {
+	switch(offset & 0xFF)
+	{
     case 0: /* Input port #2 */
       temp = 0xE0;
       if(input.system & INPUT_START)          temp &= ~0x80;
@@ -415,13 +415,12 @@ uint8_t sio_r(uint32_t offset)
 
     case 6: /* Stereo sound control */
       return 0xFF;
-  }
-
+	}
 	/* Just to please compiler */
 	return 0;
 }
 
-void sio_w(uint32_t offset, uint8_t data)
+void sio_w(int32_t offset, int32_t data)
 {
   switch(offset & 0xFF)
   {
@@ -470,30 +469,27 @@ static uint8_t keymask[12] =
   0x76  /* # */
 };
 
-uint8_t coleco_pio_r(uint32_t port)
+uint8_t coleco_pio_r(int32_t port)
 {
-  uint8_t temp = 0x7f;
+	uint8_t temp = 0x7f;
+	if (coleco.pio_mode)
+	{
+		/* Joystick  */
+		if(input.pad[port] & INPUT_UP) temp &= ~1;
+		else if(input.pad[port] & INPUT_DOWN) temp &= ~4;
+		if(input.pad[port] & INPUT_LEFT) temp &= ~8;
+		else if(input.pad[port] & INPUT_RIGHT) temp &= ~2;
+		/* Left Button */
+		if(input.pad[port] & INPUT_BUTTON1) temp &= ~0x40;
+	}
+	else
+	{
+		/* KeyPad (0-9,*,#) */
+		if (coleco.keypad[port] < 12)
+		temp = keymask[coleco.keypad[port]];
+		/* Right Button */
+		if(input.pad[port] & INPUT_BUTTON2) temp &= ~0x40;
+	}
 
-  if (coleco.pio_mode)
-  {
-    /* Joystick  */
-    if(input.pad[port] & INPUT_UP) temp &= ~1;
-    else if(input.pad[port] & INPUT_DOWN) temp &= ~4;
-    if(input.pad[port] & INPUT_LEFT) temp &= ~8;
-    else if(input.pad[port] & INPUT_RIGHT) temp &= ~2;
-
-    /* Left Button */
-    if(input.pad[port] & INPUT_BUTTON1) temp &= ~0x40;
-  }
-  else
-  {
-    /* KeyPad (0-9,*,#) */
-    if (coleco.keypad[port] < 12)
-     temp = keymask[coleco.keypad[port]];
-
-    /* Right Button */
-    if(input.pad[port] & INPUT_BUTTON2) temp &= ~0x40;
-  }
-
-  return temp;
+	return temp;
 }

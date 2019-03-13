@@ -48,4 +48,4 @@ extern void render_bg_sms(int32_t line);
 extern void render_obj_sms(int32_t line);
 extern void palette_sync(int32_t index);
 
-#endif /* RENDER_H_ */
+#endif /* _RENDER_H_ */

@@ -6,10 +6,10 @@
 #include "shared.h"
 
 
-uint8_t *loadFromZipByName(char *archive, char *filename, uint32_t *filesize)
+uint8_t *loadFromZipByName(char *archive, const char *filename, uint32_t *filesize)
 {
     char name[PATH_MAX];
-    unsigned char *buffer;
+    uint8_t *buffer;
 
     int32_t zerror = UNZ_OK;
     unzFile zhandle;
@@ -64,7 +64,7 @@ uint8_t *loadFromZipByName(char *archive, char *filename, uint32_t *filesize)
     unzCloseCurrentFile(zhandle);
     unzClose(zhandle);
 
-    memcpy(filename, name, PATH_MAX);
+	memcpy(filename, name, PATH_MAX);
     return (buffer);
 }
 
@@ -74,7 +74,7 @@ uint8_t *loadFromZipByName(char *archive, char *filename, uint32_t *filesize)
 */
 int32_t check_zip(const char *filename)
 {
-    unsigned char buf[2];
+    uint8_t buf[2];
     FILE* fd = NULL;
     fd = fopen(filename, "rb");
     if(!fd) return (0);

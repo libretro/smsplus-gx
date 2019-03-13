@@ -22,7 +22,7 @@
 
 #include "shared.h"
 
-uint32_t text_counter;               /* Text offset counter */
+int32_t text_counter;               /* Text offset counter */
 
 static uint8_t tms_lookup[16][256][2];   /* Expand BD, PG data into 8-bit pixels (G1,G2) */
 static uint8_t mc_lookup[16][256][8];    /* Expand BD, PG data into 8-bit pixels (MC) */
@@ -43,23 +43,22 @@ typedef struct {
 } tms_sprite;
 
 static tms_sprite sprites[4];
-static uint32_t sprites_found;
+static int32_t sprites_found;
 
 static void render_bg_m0(int32_t line);
 static void render_bg_m1(int32_t line);
 static void render_bg_m1x(int32_t line);
-static void render_bg_inv(void);
+static void render_bg_inv(int32_t line);
 static void render_bg_m3(int32_t line);
 static void render_bg_m3x(int32_t line);
 static void render_bg_m2(int32_t line);
 
 void parse_line(int32_t line)
 {
-    int32_t yp;
-    uint32_t i;
-    uint32_t mode = vdp.reg[1] & 3;
+    int32_t yp, i;
+    int32_t mode = vdp.reg[1] & 3;
     int32_t size = size_tab[mode];
-    uint32_t diff, name;
+    int32_t diff, name;
     uint8_t *sa, *sg;
     tms_sprite *p;
 
@@ -69,7 +68,7 @@ void parse_line(int32_t line)
     /* Parse sprites */
     for(i = 0; i < 32; i++)
     {
-        /* Point to current sprite in SA and our current sprite record */
+        /* Point32_t to current sprite in SA and our current sprite record */
         p = &sprites[sprites_found];
         sa = &vdp.vram[vdp.sa + (i << 2)];
 
@@ -132,9 +131,8 @@ parse_end:
 
 void render_obj_tms(int32_t line)
 {
-    uint32_t i;
-    int32_t size, x = 0;
-    int32_t start, end, mode;
+    int32_t i, x = 0;
+    int32_t size, start, end, mode;
     uint8_t *lb, *lut, *ex[2];
     tms_sprite *p;
 
@@ -148,7 +146,7 @@ void render_obj_tms(int32_t line)
         lb = &linebuf[p->xpos];
         lut = &tms_obj_lut[(p->attr & 0x0F) << 8];
 
-        /* Point to expanded PG data */
+        /* Point32_t to expanded PG data */
         ex[0] = bp_expand[p->sg[0]];
         ex[1] = bp_expand[p->sg[1]];
 
@@ -292,9 +290,9 @@ void render_obj_tms(int32_t line)
 
 void make_tms_tables(void)
 {
-    uint32_t i, j, x, ct;
-    uint32_t bd, pg;
-    uint32_t sx, bx;
+    int32_t i, j, x;
+    int32_t bd, pg, ct;
+    int32_t sx, bx;
 
     for(sx = 0; sx < 16; sx++)
     {
@@ -328,8 +326,8 @@ void make_tms_tables(void)
     /* Text lookup table */
     for(bd = 0; bd < 256; bd++)
     {
-        uint32_t bg = (bd >> 0) & 0x0F;
-        uint32_t fg = (bd >> 4) & 0x0F;
+        uint8_t bg = (bd >> 0) & 0x0F;
+        uint8_t fg = (bd >> 4) & 0x0F;
 
         /* If foreground is transparent, use background color */
         if(fg == 0) fg = bg;
@@ -343,8 +341,8 @@ void make_tms_tables(void)
     {
         for(pg = 0; pg < 256; pg++)
         {
-            uint32_t l = (pg >> 4) & 0x0F;
-            uint32_t r = (pg >> 0) & 0x0F;
+            int32_t l = (pg >> 4) & 0x0F;
+            int32_t r = (pg >> 0) & 0x0F;
 
             /* If foreground is transparent, use background color */
             if(l == 0) l = bd;
@@ -353,7 +351,7 @@ void make_tms_tables(void)
             /* Unpack 2 nibbles across eight pixels */
             for(x = 0; x < 8; x++)
             {
-                uint32_t c = (x & 4) ? r : l;
+                int32_t c = (x & 4) ? r : l;
 
                 mc_lookup[bd][pg][x] = c;
             }
@@ -366,7 +364,7 @@ void make_tms_tables(void)
     {
         for(j = 0; j < 8; j++)
         {
-            uint32_t c = (i >> (j ^ 7)) & 1;
+            int32_t c = (i >> (j ^ 7)) & 1;
             bp_expand[i][j] = c;
         }
     }
@@ -376,9 +374,9 @@ void make_tms_tables(void)
     {
         for(ct = 0; ct < 0x100; ct++)
         {
-            uint8_t backdrop = (bd & 0x0F);
-            uint8_t background = (ct >> 0) & 0x0F;
-            uint8_t foreground = (ct >> 4) & 0x0F;
+            int32_t backdrop = (bd & 0x0F);
+            int32_t background = (ct >> 0) & 0x0F;
+            int32_t foreground = (ct >> 4) & 0x0F;
 
             /* If foreground is transparent, use background color */
             if(background == 0) background = backdrop;
@@ -416,7 +414,7 @@ void render_bg_tms(int32_t line)
             break;
 
         case 5: /* Invalid (1+3) */
-            render_bg_inv();
+            render_bg_inv(line);
             break;
 
         case 6: /* Multicolor (Extended PG) */
@@ -424,7 +422,7 @@ void render_bg_tms(int32_t line)
             break;
 
         case 7: /* Invalid (1+2+3) */
-            render_bg_inv();
+            render_bg_inv(line);
             break;
     }
 }
@@ -432,9 +430,9 @@ void render_bg_tms(int32_t line)
 /* Graphics I */
 static void render_bg_m0(int32_t line)
 {
-    uint32_t v_row  = (line & 7);
-    uint32_t column;
-    uint32_t name;
+    int32_t v_row  = (line & 7);
+    int32_t column;
+    int32_t name;
 
     uint8_t *clut;
     uint8_t *bpex;
@@ -455,8 +453,8 @@ static void render_bg_m0(int32_t line)
 /* Text */
 static void render_bg_m1(int32_t line)
 {
-    uint32_t v_row  = (line & 7);
-    uint32_t column;
+    int32_t v_row  = (line & 7);
+    int32_t column;
 
     uint8_t *clut;
     uint8_t *bpex;
@@ -486,8 +484,8 @@ static void render_bg_m1(int32_t line)
 /* Text + extended PG */
 static void render_bg_m1x(int32_t line)
 {
-    uint32_t v_row  = (line & 7);
-    uint32_t column;
+    int32_t v_row  = (line & 7);
+    int32_t column;
 
     uint8_t *clut;
     uint8_t *bpex;
@@ -507,9 +505,9 @@ static void render_bg_m1x(int32_t line)
 }
 
 /* Invalid (2+3/1+2+3) */
-static void render_bg_inv()
+static void render_bg_inv(int32_t line)
 {
-    uint32_t column;
+    int32_t column;
     uint8_t *clut;
     uint8_t *bpex;
     uint8_t *lb = &linebuf[0];
@@ -527,7 +525,7 @@ static void render_bg_inv()
 /* Multicolor */
 static void render_bg_m3(int32_t line)
 {
-    uint32_t column;
+    int32_t column;
     uint8_t *mcex;
     uint8_t *lb = &linebuf[0];
 
@@ -544,7 +542,7 @@ static void render_bg_m3(int32_t line)
 /* Multicolor + extended PG */
 static void render_bg_m3x(int32_t line)
 {
-    uint32_t column;
+    int32_t column;
     uint8_t *mcex;
     uint8_t *lb = &linebuf[0];
     uint8_t *pn = &vdp.vram[vdp.pn + ((line >> 3) << 5)];
@@ -560,9 +558,9 @@ static void render_bg_m3x(int32_t line)
 /* Graphics II */
 static void render_bg_m2(int32_t line)
 {
-    uint32_t v_row  = (line & 7);
-    uint32_t column;
-    uint32_t name;
+    int32_t v_row  = (line & 7);
+    int32_t column;
+    int32_t name;
 
     uint8_t *clut;
     uint8_t *bpex;

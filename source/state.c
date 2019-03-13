@@ -22,6 +22,8 @@
 
 #include "shared.h"
 
+static uint8_t state[0x10000];
+static uint32_t bufferptr;
 #ifndef MAXIM_PSG
 extern sn76489_t psg_sn;
 #endif
@@ -51,6 +53,10 @@ uint32_t system_save_state(FILE* fd)
     #ifdef MAXIM_PSG
     fwrite(SN76489_GetContextPtr(0), SN76489_GetContextSize(), sizeof(int8_t), fd);
     #else
+<<<<<<< HEAD
+=======
+    extern sn76489_t psg_sn;
+>>>>>>> parent of b9f02b1... Removing CrabZ80's core. (it was never working and i doubt it would be
     fwrite(&psg_sn, sizeof(sn76489_t), sizeof(int8_t), fd);
     #endif
 	
@@ -59,7 +65,7 @@ uint32_t system_save_state(FILE* fd)
 
 void system_load_state(FILE* fd)
 {
-	uint16_t i;
+	int32_t i;
 	uint8_t *buf;
 	
 	/* Initialize everything */
@@ -75,7 +81,7 @@ void system_load_state(FILE* fd)
 	vdp_init();
 	SMSPLUS_sound_init();
 
-	fread(cart.fcr, 4, sizeof(int8_t), fd);
+	fread(cart.fcr, sizeof(int8_t), 4, fd);
 
     fread(cart.sram, 0x8000, sizeof(int8_t), fd);
 
@@ -84,7 +90,6 @@ void system_load_state(FILE* fd)
 
     /* Load YM2413 context */
     buf = malloc(FM_GetContextSize());
-    if (!buf) return;
     fread(buf, FM_GetContextSize(), sizeof(int8_t), fd);
     FM_SetContext(buf);
     free(buf);
@@ -92,13 +97,15 @@ void system_load_state(FILE* fd)
     /* Load SN76489 context */
     #ifdef MAXIM_PSG
     buf = malloc(SN76489_GetContextSize());
-    if (!buf) return;
     fread(buf, SN76489_GetContextSize(), sizeof(int8_t), fd);
     SN76489_SetContext(0, buf);
     free(buf);
     #else
+<<<<<<< HEAD
+=======
+    extern sn76489_t psg_sn;
+>>>>>>> parent of b9f02b1... Removing CrabZ80's core. (it was never working and i doubt it would be
     buf = malloc(sizeof(sn76489_t));
-    if (!buf) return;
     fread(buf, sizeof(sn76489_t), sizeof(int8_t), fd);
     memcpy(&psg_sn, buf, sizeof(sn76489_t));
     free(buf);
@@ -136,7 +143,7 @@ void system_load_state(FILE* fd)
 	for(i = 0; i < 0x200; i++)
 	{
 		bg_name_list[i] = i;
-		bg_name_dirty[i] = 0;
+		bg_name_dirty[i] = 255;
 	}
 
 	/* Restore palette */

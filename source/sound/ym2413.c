@@ -1468,12 +1468,12 @@ static void sound_stream_update(YM2413 *fm, int16_t **buf, int32_t samples)
         advance_lfo(fm);
 
         /* FM part */
-        for(int32_t j=0; j<6; j++)
+        for(uint32_t j=0; j<6; j++)
             chan_calc(fm, &fm->P_CH[j]);
 
         if(!(fm->rhythm & 0x20))
         {
-            for(int32_t j=6; j<9; j++)
+            for(uint32_t j=6; j<9; j++)
                 chan_calc(fm, &fm->P_CH[j]);
         }
         else        /* Rhythm part */
@@ -1494,8 +1494,6 @@ static void sound_stream_update(YM2413 *fm, int16_t **buf, int32_t samples)
 static void device_start(YM2413 *fm, int32_t clock, int32_t rate)
 {
     float fb = (clock / 72.0f) / rate;
-
-	//m_stream = machine().sound().stream_alloc(*this,0,2,rate);
 
 	for (int32_t x=0; x<TL_RES_LEN; x++)
 	{
@@ -1556,7 +1554,6 @@ static void device_start(YM2413 *fm, int32_t clock, int32_t rate)
 	for( int32_t i = 0 ; i < 1024; i++ )
 	{
 		/* OPLL (YM2413) phase increment counter = 18bit */
-
 		fm->fn_tab[i] = i * (64 * fb * (1<<(FREQ_SH-10))); /* -10 because chip works with 10.10 fixed point, while we use 16.16 */
 	}
 
@@ -1601,10 +1598,10 @@ static void device_reset(YM2413 *fm)
 		write_reg(fm, i, 0x00);
 
 	/* reset operator parameters */
-	for(int32_t c = 0 ; c < 9 ; c++ )
+	for(uint32_t c = 0 ; c < 9 ; c++ )
 	{
 		struct OPLL_CH *CH = &fm->P_CH[c];
-		for(int32_t s = 0 ; s < 2 ; s++ )
+		for(uint32_t s = 0 ; s < 2 ; s++ )
 		{
 			/* wave table */
 			CH->SLOT[s].wavetable = 0;

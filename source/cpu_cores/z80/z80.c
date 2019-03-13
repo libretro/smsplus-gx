@@ -588,7 +588,6 @@ INLINE void wm(uint32_t addr, uint8_t value)
 	cpu_writemem16(addr, value);
 }
 
-
 /***************************************************************
  * Write a word to given memory location
  ***************************************************************/
@@ -3240,7 +3239,7 @@ void take_interrupt()
 	int32_t irq_vector;
 
 	/* there isn't a valid previous program counter */
-	PRVPC = -1;
+	PRVPC = 0xffff;
 
 	/* Check if processor was halted */
 	leave_halt();
@@ -3249,7 +3248,7 @@ void take_interrupt()
 	Z80.iff1 = Z80.iff2 = 0;
 
 	/* Call back the cpu interface to retrieve the vector */
-	irq_vector = (*Z80.irq_callback)();
+	irq_vector = (*Z80.irq_callback)(0xFFFF);
 
 	/* Interrupt mode 2. Call [i:databyte] */
 	if( Z80.im == 2 )
@@ -3283,7 +3282,7 @@ void take_interrupt()
 				case 0xcd0000:  /* call */
 					push(Z80.pc);
 					PCD = irq_vector & 0xffff;
-						/* CALL $xxxx cycles */
+					/* CALL $xxxx cycles */
 					Z80.icount -= cc[Z80_TABLE_op][0xcd];
 					break;
 				case 0xc30000:  /* jump */
@@ -3309,7 +3308,7 @@ void take_interrupt()
 /****************************************************************************
  * Processor initialization
  ****************************************************************************/
-void z80_init(int32_t (*irqcallback)(void))
+void z80_init(int32_t (*irqcallback)(int32_t))
 {
 	int32_t i, p;
 	int32_t oldval, newval, val;
@@ -3443,8 +3442,8 @@ int32_t z80_execute(int32_t cycles)
 	/* to just check here */
 	if (Z80.nmi_pending)
 	{
-		PRVPC = -1;            /* there isn't a valid previous program counter */
-		leave_halt();            /* Check if processor was halted */
+		PRVPC = 0xffff;	/* there isn't a valid previous program counter */
+		leave_halt();	/* Check if processor was halted */
 
 #if HAS_LDAIR_QUIRK
 		/* reset parity flag after LD A,I or LD A,R */

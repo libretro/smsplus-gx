@@ -7,6 +7,8 @@
 #define INPUT_LINE_NMI 32
 #define INPUT_LINE_IRQ0 0
 
+#define Z80.pc.w.l (0)
+
 extern void CPUZ80_Init();
 extern void CPUZ80_Reset();
 extern void CPUIRQ_Pause();

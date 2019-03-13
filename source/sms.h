@@ -100,10 +100,10 @@ typedef struct
 	uint8_t territory;
 	uint8_t console;
 	uint8_t display;
-	uint8_t fm_detect;
+	uint32_t fm_detect;
 	uint8_t glasses_3d;
 	uint8_t hlatch;
-	uint8_t use_fm;
+	int32_t use_fm;
 	uint8_t memctrl;
 	uint8_t ioctrl;
 	uint8_t irq;
@@ -124,17 +124,18 @@ typedef struct
 {
 	uint8_t *rom;
 	uint8_t enabled;
-	uint8_t fcr[4];
+	/* We need to use an unsigned short for pages, as Bad Apple SMS requires it !*/
 	uint16_t pages;
+	uint8_t fcr[4];
 } bios_t;
 
 typedef struct
 {
 	uint8_t *rom;
-	uint8_t *fcr;
-	uint8_t mapper;
 	/* We need to use an unsigned short for pages, as Bad Apple SMS requires it !*/
 	uint16_t pages;
+	uint8_t *fcr;
+	uint8_t mapper;
 } slot_t;
 
 typedef struct 
@@ -159,6 +160,6 @@ extern void sms_shutdown(void);
 extern void mapper_reset(void);
 extern void mapper_8k_w(uint16_t address, uint8_t data);
 extern void mapper_16k_w(uint16_t address, uint8_t data);
-extern int32_t sms_irq_callback(void);
+extern int32_t sms_irq_callback(int32_t param);
 
-#endif /* SMS_H_ */
+#endif /* _SMS_H_ */

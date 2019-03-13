@@ -21,12 +21,11 @@
  *   Sega Master System manager
  *
  ******************************************************************************/
-
 #ifndef SYSTEM_H_
 #define SYSTEM_H_
 
-#define APP_NAME            "SMS Plus"
-#define APP_VERSION         "1.3"
+#define APP_NAME            "SMS Plus GX"
+#define APP_VERSION         "1.8"
 
 #define PALETTE_SIZE        0x20
 
@@ -56,23 +55,23 @@ enum
 typedef struct
 {
 	uint8_t pad[2];
-	uint32_t analog[2][2];
+	int32_t analog[2][2];
 	uint8_t system;
 } input_t;
 
 /* Game image structure */
 typedef struct
 {
-	uint32_t size;
-	uint32_t crc;
-	uint32_t sram_crc;
 	uint8_t *rom;
 	uint8_t loaded;
+	uint32_t size;
+	/* We need to use an unsigned short for pages, as Bad Apple SMS requires it !*/
+	uint16_t pages;
+	uint32_t crc;
+	uint32_t sram_crc;
 	uint8_t mapper;
 	uint8_t sram[0x8000];
 	uint8_t fcr[4];
-	/* We need to use an unsigned short for pages, as Bad Apple SMS requires it !*/
-	uint16_t pages;
 } cart_t;
 
 /* Bitmap structure */
@@ -106,6 +105,6 @@ extern void system_manage_sram(uint8_t *sram, uint8_t slot, uint8_t mode);
 extern void system_poweron(void);
 extern void system_poweroff(void);
 
-#endif /* SYSTEM_H_ */
+#endif /* _SYSTEM_H_ */
 
 

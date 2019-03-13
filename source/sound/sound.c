@@ -28,10 +28,8 @@
 snd_t snd;
 static int16_t **fm_buffer;
 static int16_t **psg_buffer;
-static uint8_t *fmbuf = NULL;
-static uint8_t *psgbuf = NULL;
-int32_t *smptab;
-uint32_t smptab_len;
+static int32_t *smptab;
+static int32_t smptab_len;
 
 #ifndef MAXIM_PSG
 sn76489_t psg_sn;
@@ -39,8 +37,10 @@ sn76489_t psg_sn;
 
 uint32_t SMSPLUS_sound_init(void)
 {
+	static uint8_t *fmbuf = NULL;
+	static uint8_t *psgbuf = NULL;
 	int32_t restore_sound = 0;
-	uint32_t i;
+	int32_t i;
 
 	snd.fm_which = option.fm;
 	snd.fps = (sms.display == DISPLAY_NTSC) ? FPS_NTSC : FPS_PAL;
@@ -106,8 +106,8 @@ uint32_t SMSPLUS_sound_init(void)
 	
 	for (i = 0; i < smptab_len; i++)
 	{
-		double calc = (snd.sample_count * i);
-		calc = calc / (double)smptab_len;
+		float calc = (snd.sample_count * i);
+		calc = calc / (float)smptab_len;
 		smptab[i] = (int32_t)calc;
 	}
 
@@ -189,9 +189,6 @@ void SMSPLUS_sound_shutdown(void)
 		}
 	}
 	
-	if (psgbuf) free(psgbuf);
-	if (fmbuf) free(fmbuf);
-	
 	/* Shut down SN76489 emulation */
     #ifdef MAXIM_PSG
     SN76489_Shutdown();
@@ -220,7 +217,7 @@ void SMSPLUS_sound_reset(void)
 }
 
 
-void SMSPLUS_sound_update(uint32_t line)
+void SMSPLUS_sound_update(int32_t line)
 {
 	int16_t *fm[2], *psg[2];
 
@@ -277,9 +274,9 @@ void SMSPLUS_sound_update(uint32_t line)
 }
 
 /* Generic FM+PSG stereo mixer callback */
-void SMSPLUS_sound_mixer_callback(int16_t **output, uint32_t length)
+void SMSPLUS_sound_mixer_callback(int16_t **output, int32_t length)
 {
-	uint32_t i;
+	int32_t i;
 	for(i = 0; i < length; i++)
 	{
 		int16_t temp = (fm_buffer[0][i] + fm_buffer[1][i]) / 2;
@@ -292,7 +289,7 @@ void SMSPLUS_sound_mixer_callback(int16_t **output, uint32_t length)
 /* Sound chip access handlers                                               */
 /*--------------------------------------------------------------------------*/
 
-void psg_stereo_w(uint32_t data)
+void psg_stereo_w(int32_t data)
 {
 	if(!snd.enabled) return;
 	#ifdef MAXIM_PSG
@@ -303,7 +300,7 @@ void psg_stereo_w(uint32_t data)
 }
 
 
-void psg_write(uint32_t data)
+void psg_write(int32_t data)
 {
 	if(!snd.enabled) return;
 	#ifdef MAXIM_PSG
@@ -328,7 +325,7 @@ void fmunit_detect_w(uint32_t data)
 	sms.fm_detect = data;
 }
 
-void fmunit_write(uint32_t offset, uint32_t data)
+void fmunit_write(uint32_t offset, uint8_t data)
 {
 	if(!snd.enabled || !sms.use_fm) return;
 	FM_Write(offset, data);

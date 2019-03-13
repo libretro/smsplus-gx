@@ -8,7 +8,7 @@
 #define AVERAGELO(CD) ((((CD) & 0xF7DE) >> 1) + (((CD) & 0xF7DE0000) >> 17))
 
 /* alekmaul's scaler taken from mame4all */
-void bitmap_scale(uint32_t startx, uint32_t starty, uint32_t viswidth, uint32_t visheight, uint32_t newwidth, uint32_t newheight,uint32_t pitchsrc,uint32_t pitchdest, uint16_t *src, uint16_t *dst)
+void bitmap_scale(uint32_t startx, uint32_t starty, uint32_t viswidth, uint32_t visheight, uint32_t newwidth, uint32_t newheight,uint32_t pitchsrc,uint32_t pitchdest, uint16_t* restrict src, uint16_t* restrict dst)
 {
     uint32_t W,H,ix,iy,x,y;
     x=startx<<16;
@@ -20,7 +20,7 @@ void bitmap_scale(uint32_t startx, uint32_t starty, uint32_t viswidth, uint32_t 
 
     do 
     {
-        uint16_t *buffer_mem=&src[(y>>16)*pitchsrc];
+        uint16_t* restrict buffer_mem=&src[(y>>16)*pitchsrc];
         W=newwidth; x=startx<<16;
         do 
         {
@@ -45,7 +45,7 @@ void bitmap_scale(uint32_t startx, uint32_t starty, uint32_t viswidth, uint32_t 
 
     SMS has 256x192 screen, but GG uses 160x144 window centered at x=48, y=24
 */
-void upscale_160x144_to_320x240(uint32_t *dst, uint32_t *src)
+void upscale_160x144_to_320x240(uint32_t* restrict dst, uint32_t* restrict src)
 {
     uint32_t midh = 240 / 2;
     uint32_t Eh = 0;
@@ -112,7 +112,7 @@ void upscale_160x144_to_320x240(uint32_t *dst, uint32_t *src)
         uint32_t *src - pointer to 256x192x16bpp buffer
 */
 
-void upscale_SMS_to_320x240(uint32_t *dst, uint32_t *src, uint32_t height_scale)
+void upscale_SMS_to_320x240(uint32_t* restrict dst, uint32_t* restrict src, uint32_t height_scale)
 {
     uint32_t midh = 240 / 2;
     uint32_t Eh = 0;
@@ -161,7 +161,7 @@ void upscale_SMS_to_320x240(uint32_t *dst, uint32_t *src, uint32_t height_scale)
 
 /* Game Gear*/
 
-void upscale_160x144_to_320x272_for_480x272(uint32_t *dst, uint32_t *src)
+void upscale_160x144_to_320x272_for_480x272(uint32_t* restrict dst, uint32_t* restrict src)
 {
     uint32_t Eh = 0;
     uint32_t source = 0;
@@ -208,7 +208,7 @@ void upscale_160x144_to_320x272_for_480x272(uint32_t *dst, uint32_t *src)
 }
 
 
-void upscale_160x144_to_480x272(uint32_t *dst, uint32_t *src)
+void upscale_160x144_to_480x272(uint32_t* restrict dst, uint32_t* restrict src)
 {
     uint32_t Eh = 0;
     uint32_t source = 0;
@@ -255,7 +255,7 @@ void upscale_160x144_to_480x272(uint32_t *dst, uint32_t *src)
     }
 }
 
-void upscale_256xXXX_to_384x272_for_480x272(uint32_t *dst, uint32_t *src, uint32_t height)
+void upscale_256xXXX_to_384x272_for_480x272(uint32_t* restrict dst, uint32_t* restrict src, uint32_t height)
 {
     uint32_t Eh = 0;
     uint32_t source = 0;
@@ -295,7 +295,7 @@ void upscale_256xXXX_to_384x272_for_480x272(uint32_t *dst, uint32_t *src, uint32
     }
 }
 
-void upscale_256xXXX_to_480x272(uint32_t *dst, uint32_t *src, uint32_t height)
+void upscale_256xXXX_to_480x272(uint32_t* restrict dst, uint32_t* restrict src, uint32_t height)
 {
     uint32_t Eh = 0;
     uint32_t source = 0;

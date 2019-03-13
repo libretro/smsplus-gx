@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "shared.h"
 #include "smsplus.h"
+#include "text_gui.h"
 
 SDL_Surface *font = NULL;
 SDL_Surface *bigfontred = NULL;
@@ -10,10 +11,10 @@ SDL_Surface *bigfontwhite = NULL;
 
 extern SDL_Surface* sdl_screen;
 
-uint16_t gfx_font_width(SDL_Surface* inFont, char* inString) {
+int32_t gfx_font_width(SDL_Surface* inFont, char* inString) {
 	if((inFont == NULL) || (inString == NULL))
 		return 0;
-	uint16_t i, tempCur, tempMax;
+	int32_t i, tempCur, tempMax;
 	for(i = 0, tempCur = 0, tempMax = 0; inString[i] != '\0'; i++) {
 		if(inString[i] == '\t')
 			tempCur += 4;
@@ -27,13 +28,13 @@ uint16_t gfx_font_width(SDL_Surface* inFont, char* inString) {
 	return tempMax;
 }
 
-int16_t gfx_font_height(SDL_Surface* inFont) {
+int32_t gfx_font_height(SDL_Surface* inFont) {
 	if(inFont == NULL)
 		return 0;
 	return (inFont->h >> 4);
 }
 
-void gfx_font_print(SDL_Surface* dest,int16_t inX, int16_t inY, SDL_Surface* inFont, char* inString) 
+void gfx_font_print(SDL_Surface* dest, int32_t inX, int32_t inY, SDL_Surface* inFont, char* inString) 
 {
     if((inFont == NULL) || (inString == NULL))
         return;
@@ -41,8 +42,8 @@ void gfx_font_print(SDL_Surface* dest,int16_t inX, int16_t inY, SDL_Surface* inF
     uint16_t* tempBuffer = dest->pixels;
     uint16_t* tempFont = inFont->pixels;
     uint8_t*  tempChar;
-    int16_t   tempX = inX;
-    int16_t   tempY = inY;
+    int32_t   tempX = inX;
+    int32_t   tempY = inY;
     int32_t i, j, x, y;
 
     SDL_LockSurface(dest);
@@ -80,15 +81,15 @@ void gfx_font_print(SDL_Surface* dest,int16_t inX, int16_t inY, SDL_Surface* inF
     SDL_UnlockSurface(inFont);
 }
 
-void gfx_font_print_center(SDL_Surface* dest,int16_t inY, SDL_Surface* inFont, char* inString) 
+void gfx_font_print_center(SDL_Surface* dest,int32_t inY, SDL_Surface* inFont, char* inString) 
 {
-    int16_t tempX = (dest->w - gfx_font_width(inFont, inString)) >> 1;
+    int32_t tempX = (dest->w - gfx_font_width(inFont, inString)) >> 1;
     gfx_font_print(dest,tempX, inY, inFont, inString);
 }
 
-void gfx_font_print_fromright(SDL_Surface* dest,int16_t inX, int16_t inY, SDL_Surface* inFont, char* inString) 
+void gfx_font_print_fromright(SDL_Surface* dest,int32_t inX, int32_t inY, SDL_Surface* inFont, char* inString) 
 {
-    int16_t tempX = inX - gfx_font_width(inFont, inString);
+    int32_t tempX = inX - gfx_font_width(inFont, inString);
     gfx_font_print(dest,tempX, inY, inFont, inString);
 }
 
@@ -97,8 +98,8 @@ SDL_Surface* gfx_tex_load_tga_from_array(uint8_t* buffer)
     if(buffer == NULL)
         return NULL;
 
-    uint16_t tga_width;
-    uint16_t tga_height;
+    int32_t tga_width;
+    int32_t tga_height;
     uint8_t  tga_descriptor;
     
     tga_width = buffer[12] + (buffer[13] << 8);
@@ -115,8 +116,8 @@ SDL_Surface* gfx_tex_load_tga_from_array(uint8_t* buffer)
 
     uint32_t upsideDown = (tga_descriptor & 0x20) > 0;
 
-    uintptr_t i;
-    uintptr_t iNew;
+    int32_t i;
+    int32_t iNew;
     uint8_t tempColor[3];
     SDL_LockSurface(tempTexture);
     uint16_t* tempTexPtr = tempTexture->pixels;

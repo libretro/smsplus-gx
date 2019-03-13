@@ -40,9 +40,9 @@ typedef struct
 	PAIR  pc,sp,af,bc,de,hl,ix,iy,wz;
 	PAIR  af2,bc2,de2,hl2;
 	PAIR prvpc;
-	uint8_t  r,r2,iff1,iff2,halt,im,i;
-	uint8_t  after_ei;      /* are we in the EI shadow? */
-	uint8_t after_ldair; /* same, but for LD A,I or LD A,R */
+	uint8_t	r,r2,iff1,iff2,halt,im,i;
+	uint8_t	after_ei;      /* are we in the EI shadow? */
+	uint8_t	after_ldair; /* same, but for LD A,I or LD A,R */
   
 	uint8_t *cc_op;
 	uint8_t *cc_cb;
@@ -53,10 +53,10 @@ typedef struct
 	
 	uint16_t ea;
 	
-	int32_t  nmi_state;      /* nmi line state */
-	uint32_t  nmi_pending;    /* nmi pending */
-	uint32_t  irq_state;      /* irq line state */
-	int32_t    (*irq_callback)(void);
+	int32_t	nmi_state;      /* nmi line state */
+	int32_t nmi_pending;    /* nmi pending */
+	int32_t irq_state;      /* irq line state */
+	int32_t (*irq_callback)(int32_t);
 	int32_t icount;
 	int32_t wait_state;         // wait line state
 	int32_t busrq_state;        // bus request line state
@@ -66,7 +66,7 @@ typedef struct
 extern int32_t z80_cycle_count;
 extern Z80_Regs Z80;
 
-void z80_init(int32_t (*irqcallback)(void));
+void z80_init(int32_t (*irqcallback)(int32_t));
 void z80_reset (void);
 void z80_exit (void);
 int32_t z80_execute(int32_t cycles);

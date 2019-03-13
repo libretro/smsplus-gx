@@ -29,9 +29,9 @@
 uint32_t load_rom(const char *filename);
 
 #ifndef NGC
-unsigned char *loadzip(char *archive, const char *filename, uint32_t *filesize);
+uint8_t *loadzip(char *archive, const char *filename, int32_t *filesize);
 extern char game_name[PATH_MAX];
 #endif
 
-#endif /* LOADROM_H_ */
+#endif /* _LOADROM_H_ */
 
