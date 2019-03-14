@@ -30,7 +30,6 @@
 
 #ifndef SCALE2X_H
 #define SCALE2X_H
-#include <SDL/SDL.h>
 void scale2x(uint16_t* restrict srcpixels, uint16_t* restrict dstpixels, const int32_t srcpitch, const int32_t dstpitch, const int32_t width, const int32_t height);
 #endif
 
