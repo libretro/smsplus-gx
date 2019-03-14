@@ -20,7 +20,6 @@
 #include <malloc.h>
 #include <math.h>
 #include <limits.h>
-#include <zlib.h>
 
 #ifndef NGC
 #ifndef PATH_MAX
@@ -48,9 +47,14 @@
 #include "config.h"
 #include "state.h"
 #include "z80_wrap.h"
+#include "sound_output.h"
+
+#ifndef NOZIP_SUPPORT
+#include "miniz.h"
 #include "fileio.h"
 #include "unzip.h"
-#include "sound_output.h"
+#endif
+
 #ifdef SCALE2X_UPSCALER
 #include "scale2x.h"
 #endif
