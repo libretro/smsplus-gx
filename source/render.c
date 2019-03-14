@@ -66,14 +66,14 @@ static uint8_t object_index_count;
 static uint8_t active_border[2][3] =
 {
 	{24, 8,  0},  /* NTSC VDP */
-	{24, 8,  0}  /*  PAL VDP */
+	{24, 8,  0}   /* PAL  VDP */
 };
 
 /* Active Scan Area height */
 static uint16_t active_range[2] =
 {
 	243, /* NTSC VDP */
-	294  /*  PAL VDP */
+	267  /* PAL  VDP */
 };
 
 /* CRAM palette in TMS compatibility mode */
@@ -418,12 +418,12 @@ void render_line(int32_t line)
 	/* Putting this in an ifdef because the condition loop is executed every render_line */
 	if (sms.device[0] == DEVICE_LIGHTGUN)
 	{
-		int dy = vdp.line - input.analog[0][1];
+		int32_t dy = vdp.line - input.analog[0][1];
 		if (abs(dy) < 6)
 		{
-			int i;
-			int start = input.analog[0][0] - 4;
-			int end = input.analog[0][0] + 4;
+			int32_t i;
+			int32_t start = input.analog[0][0] - 4;
+			int32_t end = input.analog[0][0] + 4;
 			if (start < 0) start = 0;
 			if (end > 255) end = 255;
 			for (i=start; i<end+1; i++)
