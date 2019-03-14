@@ -76,7 +76,7 @@ void system_load_state(FILE* fd)
 	vdp_init();
 	SMSPLUS_sound_init();
 
-	fread(cart.fcr, sizeof(int8_t), 4, fd);
+	fread(cart.fcr, 4, sizeof(int8_t), fd);
 
     fread(cart.sram, 0x8000, sizeof(int8_t), fd);
 
