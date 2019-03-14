@@ -38,8 +38,7 @@ uint32_t system_save_state(FILE* fd)
     /* Save SMS context */
     fwrite(&sms, sizeof(sms_t), sizeof(int8_t), fd);
 
-	for(i=0;i<4;i++)
-		fputc(cart.fcr[i], fd);
+	fwrite(cart.fcr, 4, sizeof(int8_t), fd);
 
     fwrite(cart.sram, 0x8000, sizeof(int8_t), fd);
 
