@@ -316,8 +316,8 @@ void vdp_write(int32_t offset, uint8_t data)
     
         if(vdp.code == 2)
         {
-          int r = (data & 0x0F);
-          int d = vdp.latch;
+          uint8_t r = (data & 0x0F);
+          uint8_t d = vdp.latch;
           vdp_reg_w(r, d);
         }
       }
