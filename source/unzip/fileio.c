@@ -2,9 +2,7 @@
     fileio.c --
     File management.
 */
-#include <zlib.h>
 #include "shared.h"
-
 
 uint8_t *loadFromZipByName(char *archive, const char *filename, uint32_t *filesize)
 {
