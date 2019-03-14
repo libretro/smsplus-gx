@@ -730,6 +730,7 @@ int main (int argc, char *argv[])
 	option.tms_pal = 2;
 	option.console = 0;
 	option.nosound = 0;
+	option.soundlevel = 2;
 	
 	smsp_gamedata_set(argv[1]);
 	

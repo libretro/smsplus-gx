@@ -536,12 +536,11 @@ int main (int argc, char *argv[])
 	
 	option.fm = 1;
 	option.spritelimit = 1;
-	option.filter = -1;
 	option.country = 0;
-	option.overscan = 0;
 	option.tms_pal = 2;
 	option.console = 0;
 	option.nosound = 0;
+	option.soundlevel = 2;
 	
 	strcpy(option.game_name, argv[1]);
 	
