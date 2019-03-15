@@ -19,7 +19,7 @@ esac
 # Create GmenuNx entry file plus other things
 
 print 'Package: sms_sdl
-Version: 20190219
+Version: 20190315
 Description: SMS/GG emulator
 Section: emus
 Priority: optional
@@ -36,7 +36,7 @@ description=Master System/GG Emulator
 exec=/home/retrofw/emus/sms_sdl/sms_sdl
 clock=600
 selectordir=/home/retrofw/roms
-selectorfilter=.sms,.bin,.gg,.zip,.rom,.sg
+selectorfilter=.sms,.bin,.gg,.zip,.rom,.sg,.col,.ggsms
 ' > home/retrofw/apps/gmenu2x/sections/emulators/sms_sdl
 
 tar -czvf control.tar.gz control --owner=0 --group=0
