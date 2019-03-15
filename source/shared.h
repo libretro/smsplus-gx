@@ -49,11 +49,9 @@
 #include "z80_wrap.h"
 #include "sound_output.h"
 
-#ifndef NOZIP_SUPPORT
 #include "miniz.h"
 #include "fileio.h"
 #include "unzip.h"
-#endif
 
 #ifdef SCALE2X_UPSCALER
 #include "scale2x.h"

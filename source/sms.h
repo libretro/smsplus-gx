@@ -94,19 +94,6 @@ enum {
 /* SMS context */
 typedef struct
 {
-	uint8_t wram[0x2000];
-	uint8_t paused;
-	uint8_t save;
-	uint8_t territory;
-	uint8_t console;
-	uint8_t display;
-	uint32_t fm_detect;
-	uint8_t glasses_3d;
-	uint8_t hlatch;
-	int32_t use_fm;
-	uint8_t memctrl;
-	uint8_t ioctrl;
-	uint8_t irq;
 	struct 
 	{
 		uint8_t pdr;    /* Parallel data register */
@@ -115,8 +102,21 @@ typedef struct
 		uint8_t rxdata; /* Receive data buffer */
 		uint8_t sctrl;  /* Serial mode control and status */
 	} sio;
+	uint8_t wram[0x2000];
+	uint8_t paused;
+	uint8_t save;
+	uint8_t territory;
+	uint8_t console;
+	uint8_t display;
+	uint8_t glasses_3d;
+	uint8_t hlatch;
+	uint8_t memctrl;
+	uint8_t ioctrl;
+	uint8_t irq;
 	uint8_t device[2];
 	uint8_t gun_offset;
+	uint32_t fm_detect;
+	int32_t use_fm;
 } sms_t;
 
 /* BIOS ROM */
