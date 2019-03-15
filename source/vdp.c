@@ -460,8 +460,8 @@ void gg_vdp_write(int32_t offset, uint8_t data)
 			}
 			if(vdp.code == 2)
 			{
-				int32_t r = (data & 0x0F);
-				int32_t d = vdp.latch;
+				uint8_t r = (data & 0x0F);
+				uint8_t d = vdp.latch;
 				vdp_reg_w(r, d);
 			}
 		}
@@ -524,8 +524,8 @@ void md_vdp_write(int32_t offset, uint8_t data)
     
 			if(vdp.code == 2)
 			{
-				int32_t r = (data & 0x0F);
-				int32_t d = vdp.latch;
+				uint8_t r = (data & 0x0F);
+				uint8_t d = vdp.latch;
 				vdp_reg_w(r, d);
 			}
 		}
@@ -537,7 +537,7 @@ void md_vdp_write(int32_t offset, uint8_t data)
 /* TMS9918 VDP handlers                           */
 /*--------------------------------------------------------------------------*/
 
-void tms_write(int32_t offset, int32_t data)
+void tms_write(int32_t offset, uint8_t data)
 {
 	int32_t index;
 	switch(offset & 1)
@@ -581,8 +581,8 @@ void tms_write(int32_t offset, int32_t data)
     
 			if(vdp.code == 2)
 			{
-				int32_t r = (data & 0x07);
-				int32_t d = vdp.latch;
+				uint8_t r = (data & 0x07);
+				uint8_t d = vdp.latch;
 				vdp_reg_w(r, d);
 			}
 		}

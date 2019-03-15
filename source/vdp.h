@@ -81,7 +81,7 @@ extern uint8_t vdp_read(int32_t offset);
 extern void vdp_write(int32_t offset, uint8_t data);
 extern void gg_vdp_write(int32_t offset, uint8_t data);
 extern void md_vdp_write(int32_t offset, uint8_t data);
-extern void tms_write(int32_t offset, int32_t data);
+extern void tms_write(int32_t offset, uint8_t data);
 
 #endif /* _VDP_H_ */
 
