@@ -9,9 +9,6 @@
 #define VIDEO_WIDTH_GG 160
 #define VIDEO_HEIGHT_GG 144
 
-/* Right now it doesn't set VSYNC so disable for now */
-//#define VSYNC_SUPPORTED 1
-
 typedef struct {
 	char gamename[256];
 	char sramdir[256];

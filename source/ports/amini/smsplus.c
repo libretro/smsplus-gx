@@ -25,13 +25,14 @@ static SDL_Surface* img_background, *sms_bitmap;
 uint32_t countedFrames = 0;
 uint32_t start;
 
+static char home_path[256];
+
 static SDL_Joystick* joystick[2];
 
 extern SDL_Surface *font;
 extern SDL_Surface *bigfontred;
 extern SDL_Surface *bigfontwhite;
 
-static uint8_t fullscreen = 1;
 static uint8_t selectpressed = 0;
 static uint8_t save_slot = 0;
 static uint8_t quit = 0;
@@ -39,7 +40,7 @@ static uint8_t quit = 0;
 static void video_update()
 {
 	SDL_LockSurface(sdl_screen);
-	switch(fullscreen) 
+	switch(option.fullscreen) 
 	{
         case 0: // native res
 		if(sms.console == CONSOLE_GG) 
@@ -61,7 +62,7 @@ static void video_update()
 		break;
 	}
 	SDL_UnlockSurface(sdl_screen);	
-	
+	SDL_Flip(sdl_screen);
 }
 
 void smsp_state(uint8_t slot_number, uint8_t mode)
@@ -303,7 +304,6 @@ static void bios_init()
 static void smsp_gamedata_set(char *filename) 
 {
 	// Set paths, create directories
-	int8_t home_path[256];
 	snprintf(home_path, sizeof(home_path), "%s/.smsplus/", getenv("HOME"));
 	
 	if (mkdir(home_path, 0755) && errno != EEXIST) {
@@ -384,7 +384,7 @@ void Menu()
 		else SDL_BlitSurface(img_background,NULL,final_screen,NULL);
         SDL_BlitSurface(miniscreen,NULL,final_screen,&dstRect);
 
-        gfx_font_print_center(final_screen,22,bigfontwhite,"SMSPlus-GX");
+        gfx_font_print_center(final_screen,22,bigfontwhite,"SMS Plus GX");
 
         if (currentselection == 1)
             gfx_font_print(final_screen,5,25,bigfontred,"Continue");
@@ -407,18 +407,18 @@ void Menu()
 
         if (currentselection == 4)
         {
-            if (fullscreen == 1)
+            if (option.fullscreen == 1)
                 gfx_font_print(final_screen,5,105,bigfontred,"Stretched");
-			else if (fullscreen == 2)
+			else if (option.fullscreen == 2)
 				gfx_font_print(final_screen,5,105,bigfontred,"Keep Aspect");
             else
 				gfx_font_print(final_screen,5,105,bigfontred,"Native");
         }
         else
         {
-            if (fullscreen == 1)
+            if (option.fullscreen == 1)
                 gfx_font_print(final_screen,5,105,bigfontwhite,"Stretched");
-			else if (fullscreen == 2)
+			else if (option.fullscreen == 2)
 				gfx_font_print(final_screen,5,105,bigfontwhite,"Keep Aspect");
             else
 				gfx_font_print(final_screen,5,105,bigfontwhite,"Native");
@@ -430,7 +430,7 @@ void Menu()
             gfx_font_print(final_screen,5,125,bigfontwhite,"Quit");
 
         gfx_font_print_center(final_screen,sdl_screen->h-50-gfx_font_height(font),font,"SMS_SDL for the RS-97");
-        gfx_font_print_center(final_screen,sdl_screen->h-40-gfx_font_height(font),font,"RS-97 port by gameblabla");
+        gfx_font_print_center(final_screen,sdl_screen->h-40-gfx_font_height(font),font,"AMINI port by gameblabla");
         gfx_font_print_center(final_screen,sdl_screen->h-30-gfx_font_height(font),font,"See full credits on github:");
         gfx_font_print_center(final_screen,sdl_screen->h-20-gfx_font_height(font),font,"https://github.com/gameblabla/sms_sdl");
 		
@@ -472,10 +472,10 @@ void Menu()
 									if (save_slot > 0) save_slot--;
 									break;
 								case 4:
-									if (fullscreen == 0)
-										fullscreen = 2;
+									if (option.fullscreen == 0)
+										option.fullscreen = 2;
 									else
-										fullscreen--;
+										option.fullscreen--;
 									break;
 
 							}
@@ -490,9 +490,9 @@ void Menu()
 										save_slot = 9;
 									break;
 								case 4:
-									fullscreen++;
-									if (fullscreen > 2)
-										fullscreen = 0;
+									option.fullscreen++;
+									if (option.fullscreen > 2)
+										option.fullscreen = 0;
 									break;
 							}
 							break;
@@ -511,10 +511,10 @@ void Menu()
 									if (save_slot > 0) save_slot--;
 									break;
 								case 4:
-									if (fullscreen == 0)
-										fullscreen = 2;
+									if (option.fullscreen == 0)
+										option.fullscreen = 2;
 									else
-										fullscreen--;
+										option.fullscreen--;
 									break;
 
 							}
@@ -530,9 +530,9 @@ void Menu()
 										save_slot = 9;
 									break;
 								case 4:
-									fullscreen++;
-									if (fullscreen > 2)
-										fullscreen = 0;
+									option.fullscreen++;
+									if (option.fullscreen > 2)
+										option.fullscreen = 0;
 									break;
 							}
 						}
@@ -572,9 +572,9 @@ void Menu()
             switch(currentselection)
             {
                 case 4 :
-                    fullscreen++;
-                    if (fullscreen > 2)
-                        fullscreen = 0;
+                    option.fullscreen++;
+                    if (option.fullscreen > 2)
+                        option.fullscreen = 0;
                     break;
                 case 2 :
                     smsp_state(save_slot, 0);
@@ -599,6 +599,35 @@ void Menu()
 	if (miniscreen) SDL_FreeSurface(miniscreen);
 	if (black_screen) SDL_FreeSurface(black_screen);
 	if (final_screen) SDL_FreeSurface(final_screen);
+}
+
+static void config_load()
+{
+	char config_path[256];
+	snprintf(config_path, sizeof(config_path), "%s/config.cfg", home_path);
+	FILE* fp;
+	
+
+	fp = fopen(config_path, "rb");
+	if (fp)
+	{
+		fread(&option, sizeof(option), sizeof(int8_t), fp);
+		fclose(fp);
+	}
+}
+
+static void config_save()
+{
+	char config_path[256];
+	snprintf(config_path, sizeof(config_path), "%s/config.cfg", home_path);
+	FILE* fp;
+	
+	fp = fopen(config_path, "wb");
+	if (fp)
+	{
+		fwrite(&option, sizeof(option), sizeof(int8_t), fp);
+		fclose(fp);
+	}
 }
 
 static void Cleanup(void)
@@ -639,26 +668,29 @@ int main (int argc, char *argv[])
 		return 0;
 	}
 	
+	smsp_gamedata_set(argv[1]);
+	
 	memset(&option, 0, sizeof(option));
 	
+	option.fullscreen = 1;
 	option.fm = 1;
-	option.spritelimit = 0;
-	option.filter = -1;
-	option.country = 0;
-	option.overscan = 0;
+	option.spritelimit = 1;
 	option.tms_pal = 2;
 	option.console = 0;
 	option.nosound = 0;
 	option.soundlevel = 2;
 	
-	smsp_gamedata_set(argv[1]);
+	config_load();
 	
-	// Force Colecovision mode
-	if (strcmp(strrchr(argv[1], '.'), ".col") == 0)
-	{
-		option.console = 6;
-	}
-
+	option.country = 0;
+	
+	strcpy(option.game_name, argv[1]);
+	
+	// Force Colecovision mode if extension is .col
+	if (strcmp(strrchr(argv[1], '.'), ".col") == 0) option.console = 6;
+	// Sometimes Game Gear games are not properly detected, force them accordingly
+	else if (strcmp(strrchr(argv[1], '.'), ".gg") == 0) option.console = 3;
+	
 	// Load ROM
 	if(!load_rom(argv[1])) {
 		fprintf(stderr, "Error: Failed to load %s.\n", argv[1]);
@@ -724,16 +756,14 @@ int main (int argc, char *argv[])
 	// Loop until the user closes the window
 	while (!quit) 
 	{
+		// Execute frame(s)
+		system_frame(0);
+		
 		// Refresh video data
 		video_update();
 		
 		// Output audio
 		Sound_Update();
-		
-		// Execute frame(s)
-		system_frame(0);
-
-		SDL_Flip(sdl_screen);
 
 		if (selectpressed == 1)
 		{
@@ -762,6 +792,7 @@ int main (int argc, char *argv[])
 		}
 	}
 	
+	config_save();
 	Cleanup();
 	
 	return 0;

@@ -26,20 +26,20 @@
 #include "font_drawing.h"
 
 static gamedata_t gdata;
+static char home_path[256];
 
-static uint16_t* restrict fbp = 0;
-uint16_t* restrict backbuffer = 0;
-
+static uint16_t* restrict buffer_fbdev[1];
 static int fbfd = 0, keyboard_fd = 0;
 static struct input_event data;
+
 static struct fb_var_screeninfo orig_vinfo;
 static struct fb_var_screeninfo vinfo;
 static struct fb_fix_screeninfo finfo;
+
 static size_t screensize = 0;
 
 t_config option;
 
-static int8_t fullscreen = 1;
 static uint8_t selectpressed = 0;
 static uint8_t save_slot = 0;
 static uint8_t quit = 0;
@@ -56,24 +56,36 @@ const int8_t upscalers_available = 1
 ;
 static uint16_t* restrict sms_bitmap;
 
+static void Clear_buffers()
+{
+	memset(buffer_fbdev[0], 0, screensize);
+}
+
+static inline void swap_buffers()
+{
+	//long screen = 0;
+	//ioctl(fbfd, FBIO_WAITFORVSYNC, &screen);
+	//"Pan" to the back buffer
+	ioctl(fbfd, FBIOPAN_DISPLAY, &vinfo);
+}
 
 static void video_update()
 {
-	switch(fullscreen) 
+	switch(option.fullscreen) 
 	{
 		// Native
         case 0: 
 		if(sms.console == CONSOLE_GG) 
-			bitmap_scale(48,0,160,144,160,144,256,HOST_WIDTH_RESOLUTION-160,(uint16_t* restrict)sms_bitmap,(uint16_t* restrict)fbp+(HOST_WIDTH_RESOLUTION-160)/2+(HOST_HEIGHT_RESOLUTION-144)/2*HOST_WIDTH_RESOLUTION);
+			bitmap_scale(48,0,160,144,160,144,256,HOST_WIDTH_RESOLUTION-160,(uint16_t* restrict)sms_bitmap,(uint16_t* restrict)buffer_fbdev[0]+(HOST_WIDTH_RESOLUTION-160)/2+(HOST_HEIGHT_RESOLUTION-144)/2*HOST_WIDTH_RESOLUTION);
 		else 
-			bitmap_scale(0,0,256,vdp.height,256,(vdp.height),256,HOST_WIDTH_RESOLUTION-256,(uint16_t* restrict)sms_bitmap,(uint16_t* restrict)fbp+(HOST_WIDTH_RESOLUTION-256)/2+(HOST_HEIGHT_RESOLUTION-(vdp.height))/2*HOST_WIDTH_RESOLUTION);
+			bitmap_scale(0,0,256,vdp.height,256,(vdp.height),256,HOST_WIDTH_RESOLUTION-256,(uint16_t* restrict)sms_bitmap,(uint16_t* restrict)buffer_fbdev[0]+(HOST_WIDTH_RESOLUTION-256)/2+(HOST_HEIGHT_RESOLUTION-(vdp.height))/2*HOST_WIDTH_RESOLUTION);
 		break;
 		// Fullscreen
 		case 1:
 		if(sms.console == CONSOLE_GG) 
-			upscale_160x144_to_320x240((uint32_t* restrict)fbp, (uint32_t* restrict)sms_bitmap+24);
+			upscale_160x144_to_320x240((uint32_t* restrict)buffer_fbdev[0], (uint32_t* restrict)sms_bitmap+24);
 		else 
-			upscale_SMS_to_320x240((uint32_t* restrict)fbp, (uint32_t* restrict)sms_bitmap, vdp.height);
+			upscale_SMS_to_320x240((uint32_t* restrict)buffer_fbdev[0], (uint32_t* restrict)sms_bitmap, vdp.height);
 		break;
 		// Hqx
 		case 2:
@@ -92,10 +104,11 @@ static void video_update()
 			dst_h = vdp.height*2;
 		}
 		scale2x(sms_bitmap, scale2x_buf, 512, 1024, 256, 240);
-		bitmap_scale(dst_x,0,dst_w,dst_h,HOST_WIDTH_RESOLUTION,HOST_HEIGHT_RESOLUTION,512,0,scale2x_buf,fbp);
+		bitmap_scale(dst_x,0,dst_w,dst_h,HOST_WIDTH_RESOLUTION,HOST_HEIGHT_RESOLUTION,512,0,scale2x_buf,buffer_fbdev[0]);
 #endif
 		break;
 	}
+	swap_buffers();
 }
 
 void smsp_state(uint8_t slot_number, uint8_t mode)
@@ -285,7 +298,6 @@ static void bios_init()
 static void smsp_gamedata_set(char *filename) 
 {
 	// Set paths, create directories
-	char home_path[256];
 	snprintf(home_path, sizeof(home_path), "%s/.smsplus/", getenv("HOME"));
 	
 	if (mkdir(home_path, 0755) && errno != EEXIST) {
@@ -332,9 +344,6 @@ static void smsp_gamedata_set(char *filename)
 	
 }
 
-#define TextWhite 65535
-#define TextRed ((255>>3)<<11) + ((0>>2)<<5) + (0>>3)
-
 static void Menu()
 {
 	uint32_t pressed = 0;
@@ -344,6 +353,8 @@ static void Menu()
 	char text[50];
 	int bytes;
 	
+	Clear_buffers();
+
 	while(((currentselection != 1) && (currentselection != 6)) || (!pressed))
 	{
 		bytes = read(keyboard_fd, &data, sizeof(data));
@@ -377,9 +388,9 @@ static void Menu()
 							if (save_slot > 0) save_slot--;
 						break;
 						case 4:
-							fullscreen--;
-							if (fullscreen < 0)
-							fullscreen = upscalers_available;
+							option.fullscreen--;
+							if (option.fullscreen < 0)
+							option.fullscreen = upscalers_available;
 						break;
 						case 5:
 							option.soundlevel--;
@@ -401,9 +412,9 @@ static void Menu()
 							save_slot = 9;
 						break;
 						case 4:
-							fullscreen++;
-							if (fullscreen > upscalers_available)
-							fullscreen = 0;
+							option.fullscreen++;
+							if (option.fullscreen > upscalers_available)
+							option.fullscreen = 0;
 						break;
 						case 5 :
 							option.soundlevel++;
@@ -425,9 +436,9 @@ static void Menu()
 							option.soundlevel = 0;
 						break;
 						case 4 :
-							fullscreen++;
-							if (fullscreen > upscalers_available)
-							fullscreen = 0;
+							option.fullscreen++;
+							if (option.fullscreen > upscalers_available)
+							option.fullscreen = 0;
 						break;
 						case 2 :
 							smsp_state(save_slot, 1);
@@ -445,16 +456,77 @@ static void Menu()
 			default:
 			break;
 		}
+
+		memset(buffer_fbdev[0], 0, screensize);
+
+		print_string("SMS PLUS GX", TextWhite, 0, 105, 15, buffer_fbdev[0]);
 		
-		memset(backbuffer, 0, (320*240)*sizeof(uint16_t));
+		if (currentselection == 1) print_string("Continue", TextRed, 0, 5, 45, buffer_fbdev[0]);
+		else  print_string("Continue", TextWhite, 0, 5, 45, buffer_fbdev[0]);
 		
+		snprintf(text, sizeof(text), "Load State %d", save_slot);
+		
+		if (currentselection == 2) print_string(text, TextRed, 0, 5, 65, buffer_fbdev[0]);
+		else print_string(text, TextWhite, 0, 5, 65, buffer_fbdev[0]);
+		
+		snprintf(text, sizeof(text), "Save State %d", save_slot);
+		
+		if (currentselection == 3) print_string(text, TextRed, 0, 5, 85, buffer_fbdev[0]);
+		else print_string(text, TextWhite, 0, 5, 85, buffer_fbdev[0]);
+		
+
+        if (currentselection == 4)
+        {
+			switch(option.fullscreen)
+			{
+				case 0:
+					print_string("Scaling : Native", TextRed, 0, 5, 105, buffer_fbdev[0]);
+				break;
+				case 1:
+					print_string("Scaling : Stretched", TextRed, 0, 5, 105, buffer_fbdev[0]);
+				break;
+				case 2:
+					print_string("Scaling : EPX/Scale2x", TextRed, 0, 5, 105, buffer_fbdev[0]);
+				break;
+			}
+        }
+        else
+        {
+			switch(option.fullscreen)
+			{
+				case 0:
+					print_string("Scaling : Native", TextWhite, 0, 5, 105, buffer_fbdev[0]);
+				break;
+				case 1:
+					print_string("Scaling : Stretched", TextWhite, 0, 5, 105, buffer_fbdev[0]);
+				break;
+				case 2:
+					print_string("Scaling : EPX/Scale2x", TextWhite, 0, 5, 105, buffer_fbdev[0]);
+				break;
+			}
+        }
+
+		snprintf(text, sizeof(text), "Sound volume : %d", option.soundlevel);
+		
+		if (currentselection == 5) print_string(text, TextRed, 0, 5, 125, buffer_fbdev[0]);
+		else print_string(text, TextWhite, 0, 5, 125, buffer_fbdev[0]);
+		
+		if (currentselection == 6) print_string("Quit", TextRed, 0, 5, 145, buffer_fbdev[0]);
+		else print_string("Quit", TextWhite, 0, 5, 145, buffer_fbdev[0]);
+		
+		print_string("Based on SMS Plus by Charles Mcdonald", TextWhite, 0, 5, 175, buffer_fbdev[0]);
+		print_string("Fork of SMS Plus GX by gameblabla", TextWhite, 0, 5, 190, buffer_fbdev[0]);
+		print_string("Scaler : Alekmaul", TextWhite, 0, 5, 205, buffer_fbdev[0]);
+		print_string("Text drawing : n2DLib", TextWhite, 0, 5, 220, buffer_fbdev[0]);
+		
+
 		if(IS_GG)
 		{
 			bitmap_scale(48,0,
 			160,144,
 			miniscreenwidth,miniscreenheight,
 			256, HOST_WIDTH_RESOLUTION-miniscreenwidth,
-			(uint16_t* restrict)sms_bitmap,(uint16_t* restrict)backbuffer+(HOST_WIDTH_RESOLUTION+45)/2+(HOST_HEIGHT_RESOLUTION-vdp.height+24)/2*HOST_WIDTH_RESOLUTION);
+			(uint16_t* restrict)sms_bitmap,(uint16_t* restrict)buffer_fbdev[0]+(HOST_WIDTH_RESOLUTION+45)/2+(HOST_HEIGHT_RESOLUTION-vdp.height+24)/2*HOST_WIDTH_RESOLUTION);
 		}
 		else
 		{
@@ -462,85 +534,44 @@ static void Menu()
 			256,vdp.height,
 			miniscreenwidth,miniscreenheight,
 			256, HOST_WIDTH_RESOLUTION-miniscreenwidth,
-			(uint16_t* restrict)sms_bitmap,(uint16_t* restrict)backbuffer+(HOST_WIDTH_RESOLUTION+45)/2+(HOST_HEIGHT_RESOLUTION-vdp.height+24)/2*HOST_WIDTH_RESOLUTION);
+			(uint16_t* restrict)sms_bitmap,(uint16_t* restrict)buffer_fbdev[0]+(HOST_WIDTH_RESOLUTION+45)/2+(HOST_HEIGHT_RESOLUTION-vdp.height+24)/2*HOST_WIDTH_RESOLUTION);
 		}
 		
-		print_string("SMS PLUS GX", TextWhite, 0, 105, 15);
-		
-		if (currentselection == 1) print_string("Continue", TextRed, 0, 5, 45);
-		else  print_string("Continue", TextWhite, 0, 5, 45);
-		
-		snprintf(text, sizeof(text), "Load State %d", save_slot);
-		
-		if (currentselection == 2) print_string(text, TextRed, 0, 5, 65);
-		else print_string(text, TextWhite, 0, 5, 65);
-		
-		snprintf(text, sizeof(text), "Save State %d", save_slot);
-		
-		if (currentselection == 3) print_string(text, TextRed, 0, 5, 85);
-		else print_string(text, TextWhite, 0, 5, 85);
-		
-
-        if (currentselection == 4)
-        {
-			switch(fullscreen)
-			{
-				case 0:
-					print_string("Scaling : Native", TextRed, 0, 5, 105);
-				break;
-				case 1:
-					print_string("Scaling : Stretched", TextRed, 0, 5, 105);
-				break;
-				case 2:
-					print_string("Scaling : EPX/Scale2x", TextRed, 0, 5, 105);
-				break;
-			}
-        }
-        else
-        {
-			switch(fullscreen)
-			{
-				case 0:
-					print_string("Scaling : Native", TextWhite, 0, 5, 105);
-				break;
-				case 1:
-					print_string("Scaling : Stretched", TextWhite, 0, 5, 105);
-				break;
-				case 2:
-					print_string("Scaling : EPX/Scale2x", TextWhite, 0, 5, 105);
-				break;
-			}
-        }
-		
-		
-		snprintf(text, sizeof(text), "Sound volume : %d", option.soundlevel);
-		
-		if (currentselection == 5) print_string(text, TextRed, 0, 5, 125);
-		else print_string(text, TextWhite, 0, 5, 125);
-		
-		if (currentselection == 6) print_string("Quit", TextRed, 0, 5, 145);
-		else print_string("Quit", TextWhite, 0, 5, 145);
-		
-		print_string("Based on SMS Plus by Charles Mcdonald", TextWhite, 0, 5, 175);
-		print_string("Fork of SMS Plus GX by gameblabla", TextWhite, 0, 5, 190);
-		print_string("Scaler : Alekmaul", TextWhite, 0, 5, 205);
-		print_string("Text drawing : n2DLib", TextWhite, 0, 5, 220);
-		
-		memmove(fbp, backbuffer, (320*240)*sizeof(uint16_t));
-		
-		#ifdef VSYNC_SUPPORTED
-		int arg = 0;
-		if ( ioctl(fbfd, FBIO_WAITFORVSYNC, 0) < 0 ) 
-		{
-		}
-		#endif
+		swap_buffers();
 	}
 	
-	memset(backbuffer, 0, (320*240)*sizeof(uint16_t));
-	memset(fbp, 0, (320*240)*sizeof(uint16_t));
+	Clear_buffers();
 	
     if (currentselection == 6)
         quit = 1;
+}
+
+static void config_load()
+{
+	char config_path[256];
+	snprintf(config_path, sizeof(config_path), "%s/config.cfg", home_path);
+	FILE* fp;
+
+	fp = fopen(config_path, "rb");
+	if (fp)
+	{
+		fread(&option, sizeof(option), sizeof(int8_t), fp);
+		fclose(fp);
+	}
+}
+
+static void config_save()
+{
+	char config_path[256];
+	snprintf(config_path, sizeof(config_path), "%s/config.cfg", home_path);
+	FILE* fp;
+	
+	fp = fopen(config_path, "wb");
+	if (fp)
+	{
+		fwrite(&option, sizeof(option), sizeof(int8_t), fp);
+		fclose(fp);
+	}
 }
 
 
@@ -550,8 +581,8 @@ static void Cleanup(void)
 	if (scale2x_buf) free(scale2x_buf);
 #endif
 	if (sms_bitmap) free(sms_bitmap);
-	if (backbuffer) free(backbuffer);
-	munmap(fbp, screensize);
+	if (buffer_fbdev[0]) free(buffer_fbdev[0]);
+	munmap(buffer_fbdev[0], screensize);
 	
 	if (ioctl(fbfd, FBIOPUT_VSCREENINFO, &orig_vinfo)) 
 	{
@@ -579,22 +610,28 @@ int main (int argc, char *argv[])
 		return 0;
 	}
 	
+	smsp_gamedata_set(argv[1]);
+	
 	memset(&option, 0, sizeof(option));
 	
+	option.fullscreen = 1;
 	option.fm = 1;
 	option.spritelimit = 1;
 	option.country = 0;
 	option.tms_pal = 2;
-	option.console = 0;
 	option.nosound = 0;
-	option.soundlevel = 1;
+	option.soundlevel = 2;
+	
+	config_load();
+	
+	option.console = 0;
 	
 	strcpy(option.game_name, argv[1]);
 	
-	smsp_gamedata_set(argv[1]);
-	
-	// Force Colecovision mode
+	// Force Colecovision mode if extension is .col
 	if (strcmp(strrchr(argv[1], '.'), ".col") == 0) option.console = 6;
+	// Sometimes Game Gear games are not properly detected, force them accordingly
+	else if (strcmp(strrchr(argv[1], '.'), ".gg") == 0) option.console = 3;
 	
 	// Load ROM
 	if(!load_rom(argv[1])) {
@@ -609,10 +646,6 @@ int main (int argc, char *argv[])
 		printf("Error: Cannot open Keyboard\n");
 		return 1;
 	}
-	
-	ioctl(keyboard_fd, VT_LOCKSWITCH, 1);
-	ioctl(keyboard_fd, VT_ACTIVATE, 1);
-	ioctl(keyboard_fd, VT_WAITACTIVE, 1);
 	
 	fbfd = open("/dev/fb0", O_RDWR | O_SYNC);
 	if (!fbfd) 
@@ -633,19 +666,19 @@ int main (int argc, char *argv[])
 	if (ioctl(fbfd, FBIOPUT_VSCREENINFO, &vinfo)) {
 		printf("Error : Setting variable information.\n");
 	}
-  
+	
 	// Get fixed screen information
 	if (ioctl(fbfd, FBIOGET_FSCREENINFO, &finfo)) {
-		printf("Error : Reading fixed information.\n");
+		printf("Error reading fixed information.\n");
 	}
-
-	// map fb to user mem 
-	screensize = finfo.smem_len;
 	
-	fbp = mmap(0, screensize, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd, 0);
-	
+	screensize = (320*240)*2;
+	buffer_fbdev[0] = mmap(0, screensize, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd, 0);
 	sms_bitmap = malloc((VIDEO_WIDTH_SMS*240)*sizeof(uint16_t));
-	backbuffer = malloc((320*240)*sizeof(uint16_t));
+
+    vinfo.xoffset = 0;
+    vinfo.yoffset = 0;
+	ioctl(fbfd, FBIOPAN_DISPLAY, &vinfo); 
 
 	Sound_Init();
 
@@ -676,24 +709,16 @@ int main (int argc, char *argv[])
 	// Initialize all systems and power on
 	system_poweron();
 	
+	Clear_buffers();
+	
 	// Loop until the user closes the window
 	while (!quit) 
 	{
-		// Refresh video data
-		video_update();
-		
-		// Output audio
-		Sound_Update();
-		
 		// Execute frame(s)
 		system_frame(0);
 		
-		#ifdef VSYNC_SUPPORTED
-		int arg = 0;
-		if ( ioctl(fbfd, FBIO_WAITFORVSYNC, &arg) < 0 ) 
-		{
-		}
-		#endif
+		// Refresh video data
+		video_update();
 		
 		if (selectpressed == 1)
 		{
@@ -703,8 +728,12 @@ int main (int argc, char *argv[])
 		}
 		
 		Controls();
+		
+		// Output audio
+		Sound_Update();
 	}
 	
+	config_save();
 	Cleanup();
 	
 	return 0;

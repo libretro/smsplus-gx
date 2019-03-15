@@ -10,17 +10,16 @@
 #include "shared.h"
 #include "scaler.h"
 #include "smsplus.h"
-#include "text_gui.h"
-#include "bigfontwhite.h"
-#include "bigfontred.h"
-#include "font.h"
+#include "font_drawing.h"
 
 static gamedata_t gdata;
 
 t_config option;
 
-SDL_Surface* sdl_screen;
+static SDL_Surface* sdl_screen;
 static SDL_Surface *sms_bitmap;
+
+static char home_path[256];
 
 #ifdef SCALE2X_UPSCALER
 static SDL_Surface* scale2x_buf;
@@ -31,7 +30,6 @@ extern SDL_Surface *font;
 extern SDL_Surface *bigfontred;
 extern SDL_Surface *bigfontwhite;
 
-static uint8_t fullscreen = 1;
 static uint8_t selectpressed = 0;
 static uint8_t save_slot = 0;
 static uint8_t quit = 0;
@@ -44,7 +42,7 @@ static const uint32_t upscalers_available = 1
 static void video_update(void)
 {
 	SDL_LockSurface(sdl_screen);
-	switch(fullscreen) 
+	switch(option.fullscreen)
 	{
 		// native res
         case 0:
@@ -85,7 +83,7 @@ static void video_update(void)
 		break;
 	}
 	SDL_UnlockSurface(sdl_screen);	
-	
+	SDL_Flip(sdl_screen);
 }
 
 void smsp_state(uint8_t slot_number, uint8_t mode)
@@ -261,7 +259,6 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 	return 1;
 }
 
-
 static void bios_init()
 {
 	FILE *fd;
@@ -297,12 +294,10 @@ static void bios_init()
 	}
 }
 
-
 static void smsp_gamedata_set(char *filename) 
 {
 	unsigned long i;
 	// Set paths, create directories
-	char home_path[256];
 	snprintf(home_path, sizeof(home_path), "%s/.smsplus/", getenv("HOME"));
 	
 	if (mkdir(home_path, 0755) && errno != EEXIST) {
@@ -349,14 +344,16 @@ static void smsp_gamedata_set(char *filename)
 	
 }
 
-static void Menu(void)
+void Menu()
 {
+	char text[50];
     int16_t pressed = 0;
     int16_t currentselection = 1;
-    uint16_t miniscreenwidth = 140;
-    uint16_t miniscreenheight = 135;
+    uint16_t miniscreenwidth = 160;
+    uint16_t miniscreenheight = 144;
     SDL_Rect dstRect;
     SDL_Event Event;
+    
     SDL_Surface* miniscreen = SDL_CreateRGBSurface(SDL_SWSURFACE, miniscreenwidth, miniscreenheight, 16, sdl_screen->format->Rmask, sdl_screen->format->Gmask, sdl_screen->format->Bmask, sdl_screen->format->Amask);
 
     SDL_LockSurface(miniscreen);
@@ -366,79 +363,75 @@ static void Menu(void)
         bitmap_scale(0,0,256,192,miniscreenwidth,miniscreenheight,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)miniscreen->pixels);
         
     SDL_UnlockSurface(miniscreen);
-    char text[50];
-
-    SDL_PollEvent(&Event);
-    while (((currentselection != 1) && (currentselection != 5)) || (!pressed))
+    
+    while (((currentselection != 1) && (currentselection != 6)) || (!pressed))
     {
         pressed = 0;
-        SDL_FillRect( sdl_screen, NULL, 0 );
-
+ 		SDL_FillRect( sdl_screen, NULL, 0 );
+		
         dstRect.x = HOST_WIDTH_RESOLUTION-5-miniscreenwidth;
-        dstRect.y = 30;
+        dstRect.y = 28;
         SDL_BlitSurface(miniscreen,NULL,sdl_screen,&dstRect);
 
-        gfx_font_print_center(sdl_screen,5,bigfontwhite,"SMSPlus-GX");
-
-        if (currentselection == 1)
-            gfx_font_print(sdl_screen,5,25,bigfontred,"Continue");
-        else
-            gfx_font_print(sdl_screen,5,25,bigfontwhite,"Continue");
-
-        sprintf(text,"Save State %d",save_slot);
-
-        if (currentselection == 2)
-            gfx_font_print(sdl_screen,5,65,bigfontred,text);
-        else
-            gfx_font_print(sdl_screen,5,65,bigfontwhite,text);
-
-        sprintf(text,"Load State %d",save_slot);
-
-        if (currentselection == 3)
-            gfx_font_print(sdl_screen,5,85,bigfontred,text);
-        else
-            gfx_font_print(sdl_screen,5,85,bigfontwhite,text);
+		print_string("SMS PLUS GX", TextWhite, 0, 105, 15, sdl_screen->pixels);
+		
+		if (currentselection == 1) print_string("Continue", TextRed, 0, 5, 45, sdl_screen->pixels);
+		else  print_string("Continue", TextWhite, 0, 5, 45, sdl_screen->pixels);
+		
+		snprintf(text, sizeof(text), "Load State %d", save_slot);
+		
+		if (currentselection == 2) print_string(text, TextRed, 0, 5, 65, sdl_screen->pixels);
+		else print_string(text, TextWhite, 0, 5, 65, sdl_screen->pixels);
+		
+		snprintf(text, sizeof(text), "Save State %d", save_slot);
+		
+		if (currentselection == 3) print_string(text, TextRed, 0, 5, 85, sdl_screen->pixels);
+		else print_string(text, TextWhite, 0, 5, 85, sdl_screen->pixels);
+		
 
         if (currentselection == 4)
         {
-			switch(fullscreen)
+			switch(option.fullscreen)
 			{
 				case 0:
-					gfx_font_print(sdl_screen,5,105,bigfontred,"Native");
+					print_string("Scaling : Native", TextRed, 0, 5, 105, sdl_screen->pixels);
 				break;
 				case 1:
-					gfx_font_print(sdl_screen,5,105,bigfontred,"Stretched");
+					print_string("Scaling : Stretched", TextRed, 0, 5, 105, sdl_screen->pixels);
 				break;
 				case 2:
-					gfx_font_print(sdl_screen,5,105,bigfontred,"EPX/Scale2X");
+					print_string("Scaling : EPX/Scale2x", TextRed, 0, 5, 105, sdl_screen->pixels);
 				break;
 			}
         }
         else
         {
-			switch(fullscreen)
+			switch(option.fullscreen)
 			{
 				case 0:
-					gfx_font_print(sdl_screen,5,105,bigfontwhite,"Native");
+					print_string("Scaling : Native", TextWhite, 0, 5, 105, sdl_screen->pixels);
 				break;
 				case 1:
-					gfx_font_print(sdl_screen,5,105,bigfontwhite,"Stretched");
+					print_string("Scaling : Stretched", TextWhite, 0, 5, 105, sdl_screen->pixels);
 				break;
 				case 2:
-					gfx_font_print(sdl_screen,5,105,bigfontwhite,"EPX/Scale2X");
+					print_string("Scaling : EPX/Scale2x", TextWhite, 0, 5, 105, sdl_screen->pixels);
 				break;
 			}
         }
 
-        if (currentselection == 5)
-            gfx_font_print(sdl_screen,5,125,bigfontred,"Quit");
-        else
-            gfx_font_print(sdl_screen,5,125,bigfontwhite,"Quit");
-
-        gfx_font_print_center(sdl_screen,sdl_screen->h-40-gfx_font_height(font),font,"SMS_SDL for the RS-97");
-        gfx_font_print_center(sdl_screen,sdl_screen->h-30-gfx_font_height(font),font,"RS-97 port by gameblabla");
-        gfx_font_print_center(sdl_screen,sdl_screen->h-20-gfx_font_height(font),font,"See full credits on github:");
-        gfx_font_print_center(sdl_screen,sdl_screen->h-10-gfx_font_height(font),font,"https://github.com/gameblabla/sms_sdl");
+		snprintf(text, sizeof(text), "Sound volume : %d", option.soundlevel);
+		
+		if (currentselection == 5) print_string(text, TextRed, 0, 5, 125, sdl_screen->pixels);
+		else print_string(text, TextWhite, 0, 5, 125, sdl_screen->pixels);
+		
+		if (currentselection == 6) print_string("Quit", TextRed, 0, 5, 145, sdl_screen->pixels);
+		else print_string("Quit", TextWhite, 0, 5, 145, sdl_screen->pixels);
+		
+		print_string("Based on SMS Plus by Charles Mcdonald", TextWhite, 0, 5, 175, sdl_screen->pixels);
+		print_string("Fork of SMS Plus GX by gameblabla", TextWhite, 0, 5, 190, sdl_screen->pixels);
+		print_string("Scaler : Alekmaul", TextWhite, 0, 5, 205, sdl_screen->pixels);
+		print_string("Text drawing : n2DLib", TextWhite, 0, 5, 220, sdl_screen->pixels);
 
         while (SDL_PollEvent(&Event))
         {
@@ -449,11 +442,11 @@ static void Menu(void)
                     case SDLK_UP:
                         currentselection--;
                         if (currentselection == 0)
-                            currentselection = 5;
+                            currentselection = 6;
                         break;
                     case SDLK_DOWN:
                         currentselection++;
-                        if (currentselection == 6)
+                        if (currentselection == 7)
                             currentselection = 1;
                         break;
                     case SDLK_LCTRL:
@@ -467,14 +460,17 @@ static void Menu(void)
                             case 2:
                             case 3:
                                 if (save_slot > 0) save_slot--;
-                                break;
+							break;
                             case 4:
-								if (fullscreen == 0)
-									fullscreen = upscalers_available;
-								else
-									fullscreen--;
-                                break;
-
+							option.fullscreen--;
+							if (option.fullscreen < 0)
+								option.fullscreen = upscalers_available;
+							break;
+							case 5:
+								option.soundlevel--;
+								if (option.soundlevel < 1)
+									option.soundlevel = 4;
+							break;
                         }
                         break;
                     case SDLK_RIGHT:
@@ -485,37 +481,52 @@ static void Menu(void)
                                 save_slot++;
 								if (save_slot == 10)
 									save_slot = 9;
-                                break;
+							break;
                             case 4:
-                                fullscreen++;
-                                if (fullscreen > upscalers_available)
-                                    fullscreen = 0;
-                                break;
+                                option.fullscreen++;
+                                if (option.fullscreen > upscalers_available)
+                                    option.fullscreen = 0;
+							break;
+							case 5:
+								option.soundlevel++;
+								if (option.soundlevel > 4)
+									option.soundlevel = 1;
+							break;
                         }
                         break;
 					default:
 					break;
                 }
             }
+            else if (Event.type == SDL_QUIT)
+            {
+				currentselection = 6;
+			}
         }
 
         if (pressed)
         {
             switch(currentselection)
             {
+				case 5:
+					option.soundlevel++;
+					if (option.soundlevel > 4)
+						option.soundlevel = 1;
+				break;
                 case 4 :
-					if (fullscreen == 0)
-						fullscreen = upscalers_available;
-					else
-						fullscreen--;
+                    option.fullscreen++;
+                    if (option.fullscreen > upscalers_available)
+                        option.fullscreen = 0;
                     break;
                 case 2 :
-                    smsp_state(save_slot, 0);
+                    smsp_state(save_slot, 1);
 					currentselection = 1;
                     break;
                 case 3 :
-					smsp_state(save_slot, 1);
+					smsp_state(save_slot, 0);
 					currentselection = 1;
+				break;
+				default:
 				break;
             }
         }
@@ -523,13 +534,48 @@ static void Menu(void)
 		SDL_Flip(sdl_screen);
     }
     
-    if (currentselection == 5)
-    {
-		quit = 1;
-	}
-        
-	if (miniscreen) SDL_FreeSurface(miniscreen);
+    SDL_FillRect(sdl_screen, NULL, 0);
+    SDL_Flip(sdl_screen);
+    #ifdef SDL_TRIPLEBUF
+    SDL_FillRect(sdl_screen, NULL, 0);
+    SDL_Flip(sdl_screen);
+    #endif
+    
+    if (miniscreen) SDL_FreeSurface(miniscreen);
+    
+    if (currentselection == 6)
+        quit = 1;
 }
+
+
+static void config_load()
+{
+	char config_path[256];
+	snprintf(config_path, sizeof(config_path), "%s/config.cfg", home_path);
+	FILE* fp;
+	
+	fp = fopen(config_path, "rb");
+	if (fp)
+	{
+		fread(&option, sizeof(option), sizeof(int8_t), fp);
+		fclose(fp);
+	}
+}
+
+static void config_save()
+{
+	char config_path[256];
+	snprintf(config_path, sizeof(config_path), "%s/config.cfg", home_path);
+	FILE* fp;
+	
+	fp = fopen(config_path, "wb");
+	if (fp)
+	{
+		fwrite(&option, sizeof(option), sizeof(int8_t), fp);
+		fclose(fp);
+	}
+}
+
 
 static void Cleanup(void)
 {
@@ -538,10 +584,7 @@ static void Cleanup(void)
 #endif
 	if (sdl_screen) SDL_FreeSurface(sdl_screen);
 	if (sms_bitmap) SDL_FreeSurface(sms_bitmap);
-	if (font) SDL_FreeSurface(font);
-	if (bigfontwhite) SDL_FreeSurface(bigfontwhite);
-	if (bigfontred) SDL_FreeSurface(bigfontred);
-	
+
 	if (bios.rom) free(bios.rom);
 	
 	// Deinitialize audio and video output
@@ -566,23 +609,28 @@ int main (int argc, char *argv[])
 		exit(1);
 	}
 	
+	smsp_gamedata_set(argv[1]);
+	
 	memset(&option, 0, sizeof(option));
 	
+	option.fullscreen = 1;
 	option.fm = 1;
-	option.spritelimit = 0;
+	option.spritelimit = 1;
 	option.country = 0;
 	option.tms_pal = 2;
-	option.console = 0;
 	option.nosound = 0;
 	option.soundlevel = 2;
 	
-	smsp_gamedata_set(argv[1]);
+	config_load();
+	
+	option.console = 0;
+	
+	strcpy(option.game_name, argv[1]);
 
-	// Force Colecovision mode
-	if (strcmp(strrchr(argv[1], '.'), ".col") == 0)
-	{
-		option.console = 6;
-	}
+	// Force Colecovision mode if extension is .col
+	if (strcmp(strrchr(argv[1], '.'), ".col") == 0) option.console = 6;
+	// Sometimes Game Gear games are not properly detected, force them accordingly
+	else if (strcmp(strrchr(argv[1], '.'), ".gg") == 0) option.console = 3;
 
 	// Load ROM
 	if(!load_rom(argv[1])) {
@@ -608,10 +656,6 @@ int main (int argc, char *argv[])
 	scale2x_buf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS*2, 480, 16, 0, 0, 0, 0);
 #endif
 	SDL_WM_SetCaption("SMS Plus GX", NULL);
-	
-	font = gfx_tex_load_tga_from_array(fontarray);
-    bigfontwhite = gfx_tex_load_tga_from_array(bigfontwhitearray);
-    bigfontred = gfx_tex_load_tga_from_array(bigfontredarray);
 	
 	fprintf(stdout, "CRC : %08X\n", cart.crc);
 	
@@ -643,17 +687,15 @@ int main (int argc, char *argv[])
 	// Loop until the user closes the window
 	while (!quit) 
 	{
+		// Execute frame(s)
+		system_frame(0);
+		
 		// Refresh video data
 		video_update();
 		
 		// Output audio
 		Sound_Update();
-		
-		// Execute frame(s)
-		system_frame(0);
 
-		SDL_Flip(sdl_screen);
-		
 		if (selectpressed == 1)
 		{
             Menu();
@@ -679,6 +721,7 @@ int main (int argc, char *argv[])
 		}
 	}
 	
+	config_save();
 	Cleanup();
 	
 	return 0;
