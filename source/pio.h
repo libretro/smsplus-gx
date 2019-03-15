@@ -63,7 +63,7 @@ extern void pio_reset(void);
 extern void pio_shutdown(void);
 extern void pio_ctrl_w(uint8_t data);
 extern uint8_t pio_port_r(int32_t offset);
-extern void sio_w(int32_t offset, int32_t data);
+extern void sio_w(int32_t offset, uint8_t data);
 extern uint8_t sio_r(int32_t offset);
 extern uint8_t coleco_pio_r(int32_t port);
 

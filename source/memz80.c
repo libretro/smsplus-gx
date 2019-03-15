@@ -161,7 +161,7 @@ void sms_port_w(uint16_t port, uint8_t data)
 	}
 }
 
-uint8_t  sms_port_r(uint16_t port)
+uint8_t sms_port_r(uint16_t port)
 {
 	port &= 0xFF;
 	/* FM unit */
@@ -187,7 +187,7 @@ uint8_t  sms_port_r(uint16_t port)
 /* Game Gear port handlers                                                  */
 /*--------------------------------------------------------------------------*/
 
-void gg_port_w(uint16_t port, uint8_t  data)
+void gg_port_w(uint16_t port, uint8_t data)
 {
 	port &= 0xFF;
 	if(port <= 0x20) {
@@ -249,7 +249,7 @@ uint8_t gg_port_r(uint16_t port)
 /* Game Gear (MS) port handlers                                             */
 /*--------------------------------------------------------------------------*/
 
-void ggms_port_w(uint16_t port, uint8_t  data)
+void ggms_port_w(uint16_t port, uint8_t data)
 {
 	port &= 0xFF;
 	if(port <= 0x20) 
@@ -309,7 +309,7 @@ uint8_t  ggms_port_r(uint16_t port)
 /* MegaDrive / Genesis port handlers                                        */
 /*--------------------------------------------------------------------------*/
 
-void md_port_w(uint16_t port, uint8_t  data)
+void md_port_w(uint16_t port, uint8_t data)
 {
 	switch(port & 0xC1)
 	{
@@ -360,7 +360,7 @@ uint8_t  md_port_r(uint16_t port)
 /* SG1000,SC3000,SF7000 port handlers                                       */
 /*--------------------------------------------------------------------------*/
 
-void tms_port_w(uint16_t port, uint8_t  data)
+void tms_port_w(uint16_t port, uint8_t data)
 {
 	switch(port & 0xC0)
 	{
@@ -391,7 +391,7 @@ uint8_t  tms_port_r(uint16_t port)
 /*--------------------------------------------------------------------------*/
 /* Colecovision port handlers                                               */
 /*--------------------------------------------------------------------------*/
-void coleco_port_w(uint16_t port, uint8_t  data)
+void coleco_port_w(uint16_t port, uint8_t data)
 {
 	/* A7 is used as enable input */
 	/* A6 & A5 are used to decode the address */

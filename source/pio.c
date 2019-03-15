@@ -420,7 +420,7 @@ uint8_t sio_r(int32_t offset)
 	return 0;
 }
 
-void sio_w(int32_t offset, int32_t data)
+void sio_w(int32_t offset, uint8_t data)
 {
   switch(offset & 0xFF)
   {
