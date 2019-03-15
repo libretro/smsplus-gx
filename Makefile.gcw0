@@ -1,8 +1,7 @@
 PRGNAME     = sms_sdl
+CC			= /opt/gcw0-toolchain/usr/bin/mipsel-linux-gcc
 
-CC			= /opt/rs97-toolchain/bin/mipsel-linux-gcc
-
-# Possible choices : rs97, k3s (PAP K3S), sdl, amini
+# Possible choices : rs97, k3s (PAP K3S), sdl, amini, fbdev
 PORT = rs97
 # Possible choices : alsa, pulse (pulseaudio), oss, sdl12 (SDL 1.2 sound output), portaudio, libao
 SOUND_OUTPUT = alsa
@@ -12,12 +11,10 @@ SOUND_ENGINE = maxim_sn76489
 Z80_CORE = z80
 SCALE2X_UPSCALER = 1
 PROFILE = 0
+ZIP_SUPPORT = 1
 
-# add SDL dependencies
-
-# Files to be r
-SRCDIR		= ./source ./source/unzip ./source/cpu_cores/$(Z80_CORE) ./source/sound
-SRCDIR		+= ./source/generic ./source/ports/$(PORT) ./source/sound/$(SOUND_ENGINE) ./source/sound_output/$(SOUND_OUTPUT)
+SRCDIR		= ./source ./source/cpu_cores/$(Z80_CORE) ./source/sound ./source/unzip
+SRCDIR		+= ./source/scalers ./source/ports/$(PORT) ./source/sound/$(SOUND_ENGINE) ./source/sound_output/$(SOUND_OUTPUT)
 VPATH		= $(SRCDIR)
 SRC_C		= $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.c))
 SRC_CP		= $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.cpp))
@@ -25,19 +22,29 @@ OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
 OBJ_CP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CP)))
 OBJS		= $(OBJ_C) $(OBJ_CP)
 
-CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-check-zero-division -fsingle-precision-constant -fno-common -mips32 -fno-PIC -mno-abicalls -flto
+CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-fp-exceptions -mno-check-zero-division -fsingle-precision-constant -fno-common -mips32 -fno-PIC -mno-abicalls -flto
+# SMS Plus GX suffers from alignment issues so setting these to 1 helps.
+CFLAGS		+= -falign-functions=1 -falign-jumps=1 -falign-loops=1 -falign-labels=1
+CFLAGS		+= -fipa-pta -fsection-anchors -fdelete-dead-exceptions
 CFLAGS		+= -DALIGN_DWORD
 CFLAGS		+= -DLSB_FIRST -std=gnu99
-CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/generic -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
+CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/scalers -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
 
-ifeq ($(PROFILE), USE)
+SRCDIR		+= ./source/text/fb
+CFLAGS		+= -Isource/text/fb
+
+ifeq ($(PROFILE), YES)
 CFLAGS 		+= -fprofile-generate=/usr/local/home/.smsplus
-elifeq ($(PROFILE), DATA)
-CFLAGS		+= -fprofile-use
+else ifeq ($(PROFILE), APPLY)
+CFLAGS		+= -fprofile-use -fbranch-probabilities
 endif
 
 ifeq ($(SOUND_ENGINE), maxim_sn76489)
 CFLAGS 		+= -DMAXIM_PSG
+endif
+
+ifeq ($(ZIP_SUPPORT), 0)
+CFLAGS 		+= -DNOZIP_SUPPORT
 endif
 
 ifeq ($(SCALE2X_UPSCALER), 1)
@@ -46,7 +53,7 @@ CFLAGS		+= -Isource/scale2x
 SRCDIR		+= ./source/scale2x
 endif
 
-LDFLAGS     = -lSDL -lm -lz -lc -no-pie -Wl,--as-needed -Wl,--gc-sections -s -flto
+LDFLAGS     = -lc -lgcc -lSDL -lm -Wl,--as-needed -Wl,--gc-sections -flto
 
 ifeq ($(SOUND_OUTPUT), portaudio)
 LDFLAGS		+= -lportaudio
