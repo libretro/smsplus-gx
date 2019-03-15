@@ -4,7 +4,9 @@
 #include <stdint.h>
 #include <string.h>
 
-extern uint16_t* restrict backbuffer;
-void print_string(const char *s,const uint16_t fg_color, const uint16_t bg_color, int32_t x, int32_t y);
+#define TextWhite 65535
+#define TextRed ((255>>3)<<11) + ((0>>2)<<5) + (0>>3)
+
+void print_string(const char *s,const uint16_t fg_color, const uint16_t bg_color, int32_t x, int32_t y, uint16_t* restrict buffer);
 
 #endif

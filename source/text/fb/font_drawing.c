@@ -4,7 +4,7 @@
 #include "font_drawing.h"
 #include "font_menudata.h"
 
-#define setPixel(x,y,c) *((uint16_t* restrict)backbuffer + ((x) + (y) * 320)) = c;
+#define setPixel(buffer, x,y,c) *((uint16_t* restrict)buffer + ((x) + (y) * 320)) = c;
 
 static int32_t isOutlinePixel(uint8_t* charfont, int32_t x, int32_t y)
 {
@@ -48,7 +48,7 @@ static int32_t isOutlinePixel(uint8_t* charfont, int32_t x, int32_t y)
 	}
 	else
 	{
-		int8_t b = 1 << (7 - x);
+		int32_t b = 1 << (7 - x);
 		if(yis0)
 		{
 			return !(*charfont & b) && (
@@ -71,7 +71,7 @@ static int32_t isOutlinePixel(uint8_t* charfont, int32_t x, int32_t y)
 	}
 }
 
-static void drawChar(int32_t *x, int32_t *y, int32_t margin, char ch, uint16_t fc, uint16_t olc)
+static void drawChar(uint16_t* restrict buffer, int32_t *x, int32_t *y, int32_t margin, char ch, uint16_t fc, uint16_t olc)
 {
 	int32_t i, j;
 	uint8_t *charSprite;
@@ -90,11 +90,11 @@ static void drawChar(int32_t *x, int32_t *y, int32_t margin, char ch, uint16_t f
 			{
 				if((charSprite[i] >> j) & 1)
 				{
-					setPixel(*x + (7 - j), *y + i, fc);
+					setPixel(buffer, *x + (7 - j), *y + i, fc);
 				}
 				else if(isOutlinePixel(charSprite, 7 - j, i))
 				{
-					setPixel(*x + (7 - j), *y + i, olc);
+					setPixel(buffer, *x + (7 - j), *y + i, olc);
 				}
 			}
 		}
@@ -102,14 +102,14 @@ static void drawChar(int32_t *x, int32_t *y, int32_t margin, char ch, uint16_t f
 	}
 }
 
-static void drawString(int32_t *x, int32_t *y, int32_t _x, const char *str, uint16_t fc, uint16_t olc)
+static void drawString(uint16_t* restrict buffer, int32_t *x, int32_t *y, int32_t _x, const char *str, uint16_t fc, uint16_t olc)
 {
-	int32_t i, max = strlen(str) + 1;
+	unsigned long i, max = strlen(str) + 1;
 	for(i = 0; i < max; i++)
-		drawChar(x, y, _x, str[i], fc, olc);
+		drawChar(buffer, x, y, _x, str[i], fc, olc);
 }
 
-void print_string(const char *s,const uint16_t fg_color, const uint16_t bg_color, int32_t x, int32_t y) 
+void print_string(const char *s,const uint16_t fg_color, const uint16_t bg_color, int32_t x, int32_t y, uint16_t* restrict buffer) 
 {
-	drawString(&x, &y, 0, s, fg_color, bg_color);
+	drawString(buffer, &x, &y, 0, s, fg_color, bg_color);
 }
