@@ -30,8 +30,6 @@ extern sn76489_t psg_sn;
 
 uint32_t system_save_state(FILE* fd)
 {
-	uint32_t i;
-	
     /* Save VDP context */
     fwrite(&vdp, sizeof(vdp_t), sizeof(int8_t), fd);
 
@@ -60,7 +58,6 @@ uint32_t system_save_state(FILE* fd)
 
 void system_load_state(FILE* fd)
 {
-	int32_t i;
 	uint8_t *buf;
 	
 	/* Initialize everything */
@@ -131,13 +128,13 @@ void system_load_state(FILE* fd)
 
 	/* Force full pattern cache update */
 	bg_list_index = 0x200;
-	for(i = 0; i < 0x200; i++)
+	for(uint16_t i = 0; i < 0x200; i++)
 	{
 		bg_name_list[i] = i;
 		bg_name_dirty[i] = 255;
 	}
 
 	/* Restore palette */
-	for(i = 0; i < PALETTE_SIZE; i++)
+	for(uint32_t i = 0; i < PALETTE_SIZE; i++)
 		palette_sync(i);
 }
