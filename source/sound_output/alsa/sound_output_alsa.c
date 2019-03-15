@@ -107,7 +107,7 @@ void Sound_Init(void)
 		return;
 	}
 
-#ifdef VSYNC_SUPPORTED
+#ifdef NONBLOCKING_AUDIO
 	snd_pcm_nonblock(handle, 1);
 #endif
 	
@@ -117,14 +117,13 @@ void Sound_Init(void)
 void Sound_Update(void)
 {
 	int32_t i;
-	const int32_t volumeMultiplier = 3;
-	
+
 	if (!handle || !snd.output[1] || !snd.output[0]) return;
 
 	for (i = 0; i < (4 * (SOUND_FREQUENCY / snd.fps)); i++) 
 	{
-		buffer_snd[i * 2] = snd.output[1][i] * volumeMultiplier;
-		buffer_snd[i * 2 + 1] = snd.output[0][i] * volumeMultiplier;
+		buffer_snd[i * 2] = snd.output[1][i] * option.soundlevel;
+		buffer_snd[i * 2 + 1] = snd.output[0][i] * option.soundlevel;
 	}
 	
 	long rc = snd_pcm_writei(handle, buffer_snd, (SOUND_FREQUENCY / snd.fps));

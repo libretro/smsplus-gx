@@ -20,9 +20,9 @@ void Sound_Init()
 	
 	option.sndrate = SOUND_FREQUENCY;
 	
-	oss_audio_fd = open("/dev/dsp", O_WRONLY
-	/* Use non-blocking mode instead when V-sync is properly supported. */
-#ifdef VSYNC_SUPPORTED
+	oss_audio_fd = open("/dev/dsp", O_WRONLY 
+	/* Probably shouldn't be used now ? */
+#ifdef NONBLOCKING_AUDIO
 	| O_NONBLOCK
 #endif
 	);
@@ -56,13 +56,12 @@ void Sound_Init()
 
 void Sound_Update()
 {
-	uint32_t i;
-	const uint32_t volumeMultiplier = 3;
+	int32_t i;
 
 	for (i = 0; i < (4 * (SOUND_FREQUENCY / snd.fps)); i++) 
 	{
-		buffer_snd[i * 2] = snd.output[1][i] * volumeMultiplier;
-		buffer_snd[i * 2 + 1] = snd.output[0][i] * volumeMultiplier;
+		buffer_snd[i * 2] = snd.output[1][i] * option.soundlevel;
+		buffer_snd[i * 2 + 1] = snd.output[0][i] * option.soundlevel;
 	}
 	write(oss_audio_fd, buffer_snd, 4 * (SOUND_FREQUENCY / snd.fps) );
 }

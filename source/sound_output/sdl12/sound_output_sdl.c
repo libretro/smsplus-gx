@@ -137,13 +137,12 @@ void Sound_Init()
 
 void Sound_Update()
 {
-	uint32_t i;
-	const int32_t volumeMultiplier = 3;
+	int32_t i;
 
 	for (i = 0; i < (4 * (SOUND_FREQUENCY / snd.fps)); i++) 
 	{
-		buffer_snd[i * 2] = snd.output[1][i] * volumeMultiplier;
-		buffer_snd[i * 2 + 1] = snd.output[0][i] * volumeMultiplier;
+		buffer_snd[i * 2] = snd.output[1][i] * option.soundlevel;
+		buffer_snd[i * 2 + 1] = snd.output[0][i] * option.soundlevel;
 	}
 	
 	SDL_LockAudio();
