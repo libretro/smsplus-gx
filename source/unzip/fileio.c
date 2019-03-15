@@ -3,6 +3,7 @@
     File management.
 */
 #include "shared.h"
+#include "unzip.h"
 
 uint8_t *loadFromZipByName(char *archive, const char *filename, uint32_t *filesize)
 {

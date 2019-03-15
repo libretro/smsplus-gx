@@ -22,23 +22,20 @@
 #define _ZLIBIOAPI64_H
 
 #if (!defined(_WIN32)) && (!defined(WIN32)) && (!defined(__APPLE__))
-
-  // Linux needs this to support file operation on files larger then 4+GB
-  // But might need better if/def to select just the platforms that needs them.
-
-       /* #ifndef __USE_FILE_OFFSET64
-                #define __USE_FILE_OFFSET64
-        #endif
-        #ifndef __USE_LARGEFILE64
-                #define __USE_LARGEFILE64
-        #endif
-        #ifndef _LARGEFILE64_SOURCE
-                #define _LARGEFILE64_SOURCE
-        #endif
-        #ifndef _FILE_OFFSET_BIT
-                #define _FILE_OFFSET_BIT 64
-        #endif*/
-
+	// Linux needs this to support file operation on files larger then 4+GB
+	// But might need better if/def to select just the platforms that needs them.
+	#ifndef __USE_FILE_OFFSET64
+		#define __USE_FILE_OFFSET64
+	#endif
+	#ifndef __USE_LARGEFILE64
+		#define __USE_LARGEFILE64
+	#endif
+	#ifndef _LARGEFILE64_SOURCE
+		#define _LARGEFILE64_SOURCE
+	#endif
+	#ifndef _FILE_OFFSET_BIT
+		#define _FILE_OFFSET_BIT 64
+	#endif
 #endif
 
 #include <stdio.h>
