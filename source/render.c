@@ -26,7 +26,7 @@
 /*** Vertical Counter Tables ***/
 extern uint8_t *vc_table[2][3];
 
-struct
+static struct
 {
   uint16_t yrange;
   uint16_t xpos;
@@ -218,7 +218,7 @@ void render_shutdown(void)
 /* Initialize the rendering data */
 void render_init(void)
 {
-	int32_t i, j;
+	int32_t j;
 	int32_t bx, sx, b, s, bp, bf, sf, c;
 
 	make_tms_tables();
@@ -278,7 +278,7 @@ void render_init(void)
 	}
 
 	/* Make bitplane to pixel lookup table */
-	for(i = 0; i < 0x100; i++)
+	for(int32_t i = 0; i < 0x100; i++)
 	for(j = 0; j < 0x100; j++)
 	{
 		int32_t x;
@@ -295,16 +295,15 @@ void render_init(void)
 #endif
 	}
 
-  sms_cram_expand_table[0] =  0;
-  sms_cram_expand_table[1] = (5 << 3)  + (1 << 2);
-  sms_cram_expand_table[2] = (15 << 3) + (1 << 2);
-  sms_cram_expand_table[3] = (27 << 3) + (1 << 2);
+	sms_cram_expand_table[0] =  0;
+	sms_cram_expand_table[1] = 0x55;
+	sms_cram_expand_table[2] = 0xAA;
+	sms_cram_expand_table[3] = 0xFF;
 
-  for(i = 0; i < 16; i++)
-  {
-	uint8_t c2 = i << 4 | i;
-	gg_cram_expand_table[i] = c2;    
-  }
+	for(uint8_t i = 0; i < 16; i++)
+	{
+		gg_cram_expand_table[i] = i << 4 | i;    
+	}
 }
 
 
@@ -355,7 +354,7 @@ void render_line(int32_t line)
 	/* Ensure we're within the VDP active area (incl. overscan) */
 	int32_t top_border = active_border[sms.display][vdp.extended];
 	int32_t vline = (line + top_border) % vdp.lpf;
-
+	
 	if (vline >= active_range[sms.display]) return;
 
 	/* adjust for Game Gear screen */
@@ -658,6 +657,7 @@ void palette_sync(int32_t index)
 			r = gg_cram_expand_table[r];
 			g = gg_cram_expand_table[g];
 			b = gg_cram_expand_table[b];
+			pixel[index] = MAKE_PIXEL(r, g, b);
 		}
 		else
 		{
@@ -666,10 +666,12 @@ void palette_sync(int32_t index)
 			r = (vdp.cram[index] >> 0) & 3;
 			g = (vdp.cram[index] >> 2) & 3;
 			b = (vdp.cram[index] >> 4) & 3;
-
+			
 			r = sms_cram_expand_table[r];
 			g = sms_cram_expand_table[g];
 			b = sms_cram_expand_table[b];
+			
+			pixel[index] = MAKE_PIXEL((r), (g), (b));
 		}
 	}
 	else
@@ -697,9 +699,9 @@ void palette_sync(int32_t index)
 			g = sms_cram_expand_table[g];
 			b = sms_cram_expand_table[b];
 		}
+		pixel[index] = MAKE_PIXEL(r, g, b);
 	}
 
-	pixel[index] = MAKE_PIXEL(r, g, b);
 }
 
 static void parse_satb(int32_t line)
@@ -811,8 +813,8 @@ static void remap_8_to_16(int32_t line)
 {
 	int32_t i;
 	uint16_t *p = (uint16_t *)&bitmap.data[(line * bitmap.pitch)];
-	int32_t width = bitmap.viewport.w + 2*bitmap.viewport.x;
-	
+	int32_t width = (bitmap.viewport.w)+2 * bitmap.viewport.x;
+
 	for(i = 0; i < width; i++)
 	{
 		p[i] = pixel[ internal_buffer[i] & PIXEL_MASK ];
