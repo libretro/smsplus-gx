@@ -1,4 +1,13 @@
-SMSPlus-GX RS97
+TODO LIST
+=========
 
-- There's a lot of un-necesarry convertion between integers and all according to Clang.
+-  There's a lot of conversions between integers and all according to Clang.
 It might not be possible to fix all of that in one go though but perhaps we could fix most of them ?
+
+Update : We fixed most of them, but some will have to remain due to the design of SMS Plus GX.
+
+-  Implement triple buffering support in FBDev.
+It could fix our speed issues in fbdev... or not.
+
+-  Add FBDev specific miyoo port
+Basically a hardware-accelerated miyoo port directly using DMA.
