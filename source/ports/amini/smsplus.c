@@ -127,13 +127,6 @@ static void Controls()
 {
 	int16_t x_move = 0, y_move = 0;
 	uint8_t *keystate;
-	
-	if (sms.console == CONSOLE_COLECO)
-    {
-		coleco.keypad[0] = 0xff;
-		coleco.keypad[1] = 0xff;
-	}
-	
 	keystate = SDL_GetKeyState(NULL);
 	
 	for(uint8_t i=0;i<2;i++)
@@ -176,18 +169,11 @@ static void Controls()
 		if(i == 0 && SDL_JoystickGetButton(joystick[i], 9) == SDL_PRESSED || keystate[SDLK_RETURN])
 			input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
 		else
-			input.system &= ~(sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
+			input.system &= (sms.console == CONSOLE_GG) ? ~INPUT_START : ~INPUT_PAUSE;
 					
 		if(SDL_JoystickGetButton(joystick[i], 8) == SDL_PRESSED)
 			selectpressed = 1;
 	}
-	
-	if (keystate[SDLK_0])
-	if (keystate[SDLK_1])
-	if (keystate[SDLK_2])
-	if (keystate[SDLK_3])
-	if (keystate[SDLK_4])
-	if (keystate[SDLK_UP])
 	
 	SDL_JoystickUpdate();	
 }
