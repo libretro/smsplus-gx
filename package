@@ -2,8 +2,8 @@
 
 mkdir -p ipkg/home/retrofw/emus/sms_sdl
 mkdir -p ipkg/home/retrofw/apps/gmenu2x/sections/emulators
-cp sms_sdl ipkg/home/retrofw/emus/sms_sdl/sms_sdl
-cp sms_sdl.png ipkg/home/retrofw/emus/sms_sdl/sms_sdl.png
+cp ./sms_sdl ipkg/home/retrofw/emus/sms_sdl/sms_sdl
+cp ./sms_sdl.png ipkg/home/retrofw/emus/sms_sdl/sms_sdl.png
 
 cd ipkg
 
@@ -36,8 +36,7 @@ description=Master System/GG Emulator
 exec=/home/retrofw/emus/sms_sdl/sms_sdl
 clock=600
 selectordir=/home/retrofw/roms
-selectorfilter=.sms,.bin,.gg,.zip,.rom,.sg,.col,.ggsms
-' > home/retrofw/apps/gmenu2x/sections/emulators/sms_sdl
+selectorfilter=.sms,.bin,.gg,.zip,.rom,.sg,.col,.ggsms' > home/retrofw/apps/gmenu2x/sections/emulators/sms_sdl
 
 tar -czvf control.tar.gz control --owner=0 --group=0
 tar -czvf data.tar.gz home --owner=0 --group=0
