@@ -6,11 +6,21 @@ Known issues
 Active Range should be 294 for PAL but it had to be set to 267 to make Dizzy work properly.
 Unfortunately this is still not quite correct, we need a proper fix for it.
 
--  The Adventures of Batman & Robin (Game Gear) Disappearing health bar & score
+- LCD Persistence issues
 
-The health bar & score alternates and disappear. 
-The issue also affects Genesis Plus GX.
-It looks like it may have to do with sprites going overbound from the looks of it.
+Some games take advantage of the Game Gear's poor LCD screen.
+If this behaviour is not replicated then it results in some heavy flickering.
+
+Here's a list of affected games :
+The Adventures of Batman & Robin (Disappearing HUD)
+Super Monaco GP 2 (Titlescreen)
+Space Harrier
+Ninja Gaiden (affects 3rd & 2nd act)
+Halley Wars
+MLBPA Baseball
+
+MAME has an implementation of LCD persistence here (first appeared in MESS 0.135) :
+https://github.com/mamedev/mame/blob/08cd6110268f9363e6c2cb9f0b6d92c00dadfbd6/src/mame/machine/sms.cpp#L1557
 
 - Graphics Board
 http://www.smspower.org/forums/15032-SegaGraphicBoardV20ReverseEngineering
@@ -24,10 +34,16 @@ The code is left turned off for now because most games also support the controll
 
 There's also an issue with memory mapping. I believe we don't suffer from that bug ?
 
--  Korean games (Mostly SG-1000 & Master System)
-Some of these are interesting and rely on odd behaviours and/or require hardware extensions.
-(Extra RAM for the SG-1000 for example)
+- Support for 4PAK Mapper
+Mostly similar to Codemasters's writemap function except for 8000-0xBFFF range.
 
+Write xx to 3FFE: map bank (xx)&maxbankmask to memory slot in 0000-3FFF region
+Write yy to 7FFF: map bank (yy)&maxbankmask to memory slot in 4000-7FFF region
+Write zz to BFFF: map bank ((xx&0x30)+(zz))&maxbankmask to memory slot in 8000-BFFF region
+
+Implementations :
+https://github.com/ocornut/meka/blob/e0f6d9eb89217c4a083fe09b71900c5fa9321abf/meka/srcs/mappers.c#L402
+https://github.com/OpenEmu/CrabEmu-Core/blob/a25c7277cd14f9e32647e1b9e1a45621fb051f13/consoles/sms/mapper-4PAA.c
 
 Problematic games (To be checked & tested)
 =================================
