@@ -668,7 +668,7 @@ int main (int argc, char *argv[])
 	
 	config_load();
 	
-	option.country = 0;
+	option.console = 0;
 	
 	strcpy(option.game_name, argv[1]);
 	
