@@ -20,6 +20,6 @@ extern void upscale_256xXXX_to_480x272(uint32_t* restrict dst, uint32_t* restric
 void upscale_160x144_to_320x320_for_480x320(uint32_t* restrict dst, uint32_t* restrict src);
 void upscale_160x144_to_480x320(uint32_t* restrict dst, uint32_t* restrict src);
 void upscale_256xXXX_to_384x320_for_480x320(uint32_t* restrict dst, uint32_t* restrict src, uint32_t height);
-void upscale_256xXXX_to_480x320(uint32_t* restrict dst, uint32_t* restrict src, uint32_t height)
+void upscale_256xXXX_to_480x320(uint32_t* restrict dst, uint32_t* restrict src, uint32_t height);
 
 #endif
