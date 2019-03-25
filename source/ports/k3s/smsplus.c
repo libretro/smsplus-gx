@@ -38,9 +38,7 @@ static const int8_t upscalers_available = 2
 
 static void video_update()
 {
-#ifdef SCALE2X_UPSCALER
 	SDL_Rect dst, dstT;
-#endif
 	SDL_LockSurface(sdl_screen);
 	switch(option.fullscreen) 
 	{
@@ -696,7 +694,7 @@ static void Controls_papk3s()
 		if(((i == 0) && (SDL_JoystickGetButton(joystick[i], 9) == SDL_PRESSED)) || (keystate[SDLK_RETURN]))
 			input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
 		else
-			input.system &= ~(sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
+			input.system &= (sms.console == CONSOLE_GG) ? ~INPUT_START : ~INPUT_PAUSE;
 					
 		if((SDL_JoystickGetButton(joystick[i], 8) == SDL_PRESSED) || keystate[SDLK_ESCAPE])
 			selectpressed = 1;
