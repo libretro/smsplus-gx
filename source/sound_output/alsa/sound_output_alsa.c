@@ -116,24 +116,32 @@ void Sound_Init(void)
 
 void Sound_Update(void)
 {
-	int32_t i;
+	uint32_t i;
+	uint32_t len = SOUND_FREQUENCY / snd.fps;
+	long ret;
 
 	if (!handle || !snd.output[1] || !snd.output[0]) return;
 
-	for (i = 0; i < (4 * (SOUND_FREQUENCY / snd.fps)); i++) 
+	for (i = 0; i < (4 * len); i++) 
 	{
 		buffer_snd[i * 2] = snd.output[1][i] * option.soundlevel;
 		buffer_snd[i * 2 + 1] = snd.output[0][i] * option.soundlevel;
 	}
 	
-	long rc = snd_pcm_writei(handle, buffer_snd, (SOUND_FREQUENCY / snd.fps));
-	if (rc == -EPIPE)
+	ret = snd_pcm_writei(handle, buffer_snd, len);
+	while(ret != len) 
 	{
-		/* EPIPE means underrun */
-		fprintf(stderr, "ALSA: underrun occurred\n");
-		snd_pcm_prepare(handle);
-		snd_pcm_writei(handle, buffer_snd, (SOUND_FREQUENCY / snd.fps));
+		if (ret < 0) 
+		{
+			snd_pcm_prepare( handle );
+		}
+		else 
+		{
+			len -= ret;
+		}
+		ret = snd_pcm_writei(handle, buffer_snd, len);
 	}
+	
 }
 
 void Sound_Close(void)
