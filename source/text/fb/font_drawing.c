@@ -81,7 +81,7 @@ static void drawChar(uint16_t* restrict buffer, int32_t *x, int32_t *y, int32_t 
 		*x = margin;
 		*y += 8;
 	}
-	else if(*y < 239)
+	else if(*y < HOST_HEIGHT_RESOLUTION-1)
 	{
 		charSprite = ch * 8 + n2DLib_font;
 		// Draw charSprite as monochrome 8*8 image using given color
