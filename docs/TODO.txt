@@ -1,13 +1,25 @@
 TODO LIST
 =========
 
--  There's a lot of conversions between integers and all according to Clang.
+-  We badly need to switch to MAME's PSG emulator as it reproduces the noise channel better than Maxim's own PSG emulator.
+
+Unfortunately i can't get it to work properly.
+
+https://discordapp.com/channels/560341807448457227/564226531782819851-  There's a lot of conversions between integers and all according to Clang.
 It might not be possible to fix all of that in one go though but perhaps we could fix most of them ?
 
 Update : We fixed most of them, but some will have to remain due to the design of SMS Plus GX.
 
--  Implement triple buffering support in FBDev.
-It could fix our speed issues in fbdev... or not.
+- Switch render.c internally to 16-bits instead of using remap_8_to_16.
+Right now, SMS Plus assumes that we use an 8-bits display instead.
+For better performance on devices we target (RGB565 mainly), this will need to be switched to 16-bits internally.
 
--  Add FBDev specific miyoo port
-Basically a hardware-accelerated miyoo port directly using DMA.
+remap_8_to_16 is COMPLETE AND UTTER CRAP and takes away most of our CPU cycles simply because of it.
+I've seen some other ports trying to simplify said code.
+The Odroid-Go port of SMS Plus GX does such a thing, see here :
+https://github.com/OtherCrashOverride/go-play/blob/71636ed569ea6ecbb128fbd30bc4c5eedb59eab1/smsplusgx-go/components/smsplus/render.c
+
+But if you look at it, it still uses an 8-bits buffer.
+Looks like they still use an 8-bits display on the Odroid-Go.
+
+We really want to do it the proper way but perhaps getting rid of caching can help us do so.

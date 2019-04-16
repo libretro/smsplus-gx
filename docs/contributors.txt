@@ -14,9 +14,7 @@ He worked on SMSPlus-GX, with several improvements such as improved accuracy, fi
 It was originally designed for the Gamecube/Wii.
 https://github.com/ekeeke/smsplus-gx
 
-This fork also has code for Colecovision but Colecovision support seems to be a bit spotty
-and requires a BIOS.
-
+This fork also has code for Colecovision but Colecovision support seems to be a bit spotty and requires a BIOS.
 The overscan code got removed because it was not useful and little to no SMS games make use of it.
 
 Alekmaul
@@ -32,8 +30,6 @@ dmitrysmagin
 
 - Menu code based on his fork sms_sdl-rzx50 available here :
 https://github.com/dmitrysmagin/sms_sdl-rzx50
-
-The fonts were also taken from that repository.
 
 I suspect he also did the SDL sound code that was found in FBA-SDL.
 That code is so much better than what we used to have so thank you Dmitry !
