@@ -17,6 +17,8 @@ typedef struct {
 	char game_name[0x100];
 	uint8_t use_bios;
 	uint8_t soundlevel;
+	/* For input remapping */
+	uint32_t config_buttons[19];
 } t_config;
 extern t_config option;
 
