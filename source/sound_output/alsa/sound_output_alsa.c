@@ -120,7 +120,7 @@ void Sound_Update(void)
 	uint32_t len = SOUND_FREQUENCY / snd.fps;
 	long ret;
 
-	if (!handle || !snd.output[1] || !snd.output[0]) return;
+	if (!handle) return;
 
 	for (i = 0; i < (4 * len); i++) 
 	{
