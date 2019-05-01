@@ -408,7 +408,6 @@ uint32_t load_rom (const char *filename)
 		cart.rom = loadFromZipByName((char*)filename, name, &cart.size);
 		if (!cart.rom)
 			return 0;
-		strcpy(option.game_name, name);
 	}
 #endif
 	else
