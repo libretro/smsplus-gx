@@ -21,7 +21,7 @@ OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
 OBJ_CP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CP)))
 OBJS		= $(OBJ_C) $(OBJ_CP)
 
-CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-fp-exceptions -mno-check-zero-division -mframe-header-opt -fsingle-precision-constant -fno-common -mips32 -fno-PIC -mno-abicalls -flto -fwhole-program
+CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-fp-exceptions -mno-check-zero-division -mframe-header-opt -fsingle-precision-constant -fno-common -mips32 -flto -fwhole-program
 CFLAGS		+= -DALIGN_DWORD
 CFLAGS		+= -DLSB_FIRST -std=gnu99
 CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/scalers -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
