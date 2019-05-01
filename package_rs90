@@ -25,7 +25,7 @@ Icon=icon
 Terminal=false
 Type=Application
 Categories=emulators;
-X-OD-NeedsDownscaling=false' > opk/default.gcw0.desktop
+X-OD-NeedsDownscaling=false' > opk/default.rs90.desktop
 
 mksquashfs ./opk smsplus_rs90.opk -all-root -noappend -no-exports -no-xattrs
 
