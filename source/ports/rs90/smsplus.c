@@ -125,112 +125,80 @@ void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode)
 
 static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 {
+	/* We can't use switch... case because we are not using constants */
 	if (sms.console == CONSOLE_COLECO)
     {
 		coleco.keypad[0] = 0xff;
 		coleco.keypad[1] = 0xff;
+		
+		if (k == option.config_buttons[CONFIG_BUTTON_ONE]) coleco.keypad[0] = 1;
+		else if (k == option.config_buttons[CONFIG_BUTTON_TWO]) coleco.keypad[0] = 2;
+		else if (k == option.config_buttons[CONFIG_BUTTON_THREE]) coleco.keypad[0] = 3;
+		else if (k == option.config_buttons[CONFIG_BUTTON_FOUR]) coleco.keypad[0] = 4;
+		else if (k == option.config_buttons[CONFIG_BUTTON_FIVE]) coleco.keypad[0] = 5;
+		else if (k == option.config_buttons[CONFIG_BUTTON_SIX]) coleco.keypad[0] = 6;
+		else if (k == option.config_buttons[CONFIG_BUTTON_SEVEN]) coleco.keypad[0] = 7;
+		else if (k == option.config_buttons[CONFIG_BUTTON_EIGHT]) coleco.keypad[0] = 8;
+		else if (k == option.config_buttons[CONFIG_BUTTON_NINE]) coleco.keypad[0] = 9;
+		else if (k == option.config_buttons[CONFIG_BUTTON_DOLLARS]) coleco.keypad[0] = 10;
+		else if (k == option.config_buttons[CONFIG_BUTTON_ASTERISK]) coleco.keypad[0] = 11;
 	}
 	
-	switch(k)
+	if (k == option.config_buttons[CONFIG_BUTTON_UP])
 	{
-		case SDLK_0:
-		case SDLK_KP0:
-			coleco.keypad[0] = 0;
-		break;
-		case SDLK_1:
-		case SDLK_KP1:
-			coleco.keypad[0] = 1;
-		break;
-		case SDLK_2:
-		case SDLK_KP2:
-			coleco.keypad[0] = 2;
-		break;
-		case SDLK_3:
-		case SDLK_KP3:
-			coleco.keypad[0] = 3;
-		break;
-		case SDLK_4:
-		case SDLK_KP4:
-			coleco.keypad[0] = 4;
-		break;
-		case SDLK_5:
-		case SDLK_KP5:
-			coleco.keypad[0] = 5;
-		break;
-		case SDLK_6:
-		case SDLK_KP6:
-			coleco.keypad[0] = 6;
-		break;
-		case SDLK_7:
-		case SDLK_KP7:
-			coleco.keypad[0] = 7;
-		break;
-		case SDLK_8:
-		case SDLK_KP8:
-			coleco.keypad[0] = 8;
-		break;
-		case SDLK_9:
-		case SDLK_KP9:
-			coleco.keypad[0] = 9;
-		break;
-		case SDLK_DOLLAR:
-		case SDLK_KP_MULTIPLY:
-			coleco.keypad[0] = 10;
-		break;
-		case SDLK_ASTERISK:
-		case SDLK_KP_MINUS:
-			coleco.keypad[0] = 11;
-		break;
-		case SDLK_ESCAPE:
-			if(p)
-				selectpressed = 1;
-			else
-				selectpressed = 0;
-		break;
-		case SDLK_RETURN:
-			if(p)
-				input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
-			else
-				input.system &= (sms.console == CONSOLE_GG) ? ~INPUT_START : ~INPUT_PAUSE;
-		break;
-		case SDLK_UP:
-			if(p)
-				input.pad[0] |= INPUT_UP;
-			else
-				input.pad[0] &= ~INPUT_UP;
-		break;	
-		case SDLK_DOWN:
-			if(p)
-				input.pad[0] |= INPUT_DOWN;
-			else
-				input.pad[0] &= ~INPUT_DOWN;
-		break;
-		case SDLK_LEFT:
-			if(p)
-				input.pad[0] |= INPUT_LEFT;
-			else
-				input.pad[0] &= ~INPUT_LEFT;
-		break;	
-		case SDLK_RIGHT:
-			if(p)
-				input.pad[0] |= INPUT_RIGHT;
-			else
-				input.pad[0] &= ~INPUT_RIGHT;
-		break;
-		case SDLK_LCTRL:
-			if(p)
-				input.pad[0] |= INPUT_BUTTON2;
-			else
-				input.pad[0] &= ~INPUT_BUTTON2;
-		break;
-		case SDLK_LALT:
-			if(p)
-				input.pad[0] |= INPUT_BUTTON1;
-			else
-				input.pad[0] &= ~INPUT_BUTTON1;
-		break;	
-		default:
-		break;
+		if (p)
+			input.pad[0] |= INPUT_UP;
+		else
+			input.pad[0] &= ~INPUT_UP;
+	}
+	else if (k == option.config_buttons[CONFIG_BUTTON_LEFT])
+	{
+		if (p)
+			input.pad[0] |= INPUT_LEFT;
+		else
+			input.pad[0] &= ~INPUT_LEFT;
+	}
+	else if (k == option.config_buttons[CONFIG_BUTTON_RIGHT])
+	{
+		if (p)
+			input.pad[0] |= INPUT_RIGHT;
+		else
+			input.pad[0] &= ~INPUT_RIGHT;
+	}
+	else if (k == option.config_buttons[CONFIG_BUTTON_DOWN])
+	{
+		if (p)
+			input.pad[0] |= INPUT_DOWN;
+		else
+			input.pad[0] &= ~INPUT_DOWN;
+	}
+	else if (k == option.config_buttons[CONFIG_BUTTON_BUTTON1])
+	{
+		if (p)
+			input.pad[0] |= INPUT_BUTTON1;
+		else
+			input.pad[0] &= ~INPUT_BUTTON1;
+	}
+	else if (k == option.config_buttons[CONFIG_BUTTON_BUTTON2])
+	{
+		if (p)
+			input.pad[0] |= INPUT_BUTTON2;
+		else
+			input.pad[0] &= ~INPUT_BUTTON2;
+	}
+	else if (k == option.config_buttons[CONFIG_BUTTON_START])
+	{
+		if (p)
+			input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
+		else
+			input.system &= (sms.console == CONSOLE_GG) ? ~INPUT_START : ~INPUT_PAUSE;
+	}
+	else if (k == SDLK_RCTRL || k == SDLK_ESCAPE)
+	{
+		if (p)
+			selectpressed = 1;
+		else
+			selectpressed = 0;
 	}
 	
 	if (sms.console == CONSOLE_COLECO) input.system = 0;
@@ -323,6 +291,64 @@ static void smsp_gamedata_set(char *filename)
 	
 }
 
+
+static const char* Return_Text_Button(uint32_t button)
+{
+	switch(button)
+	{
+		/* UP button */
+		case 273:
+			return "DPAD UP";
+		break;
+		/* DOWN button */
+		case 274:
+			return "DPAD DOWN";
+		break;
+		/* LEFT button */
+		case 276:
+			return "DPAD LEFT";
+		break;
+		/* RIGHT button */
+		case 275:
+			return "DPAD RIGHT";
+		break;
+		/* A button */
+		case 306:
+			return "A button";
+		break;
+		/* B button */
+		case 308:
+			return "B button";
+		break;
+		/* X button */
+		case 304:
+			return "X button";
+		break;
+		/* Y button */
+		case 32:
+			return "Y button";
+		break;
+		/* L button */
+		case 9:
+			return "Left Shoulder";
+		break;
+		/* R button */
+		case 8:
+			return "Right Shoulder";
+		break;
+		/* Start */
+		case 13:
+			return "Start button";
+		break;
+		case 27:
+			return "Select button";
+		break;
+		default:
+			return "...";
+		break;
+	}	
+}
+
 static void Input_Remapping()
 {
 	SDL_Event Event;
@@ -331,8 +357,13 @@ static void Input_Remapping()
 	int32_t currentselection = 1;
 	uint32_t exit_map = 0;
 	
-	while(!(currentselection == 7 && pressed == 1))
+	uint8_t menu_config_input = 0;
+	
+	while(!(currentselection == -2 && pressed == 1))
 	{
+		pressed = 0;
+		SDL_FillRect( backbuffer, NULL, 0 );
+		
         while (SDL_PollEvent(&Event))
         {
             if (Event.type == SDL_KEYDOWN)
@@ -341,26 +372,57 @@ static void Input_Remapping()
                 {
                     case SDLK_UP:
                         currentselection--;
-                        if (currentselection == 7)
+                        if (currentselection < 1)
                         {
-							currentselection = 0;
+							currentselection = 1;
 						}
                         break;
                     case SDLK_DOWN:
                         currentselection++;
-                        if (currentselection == 0)
+                        switch(menu_config_input)
                         {
-							currentselection = 7;
+							case 0:
+								if (currentselection > 7)
+									currentselection = 7;
+							break;
+							case 1:
+								if (currentselection > 11)
+									currentselection = 11;
+							break;
 						}
                         break;
+                    case SDLK_LEFT:
+						currentselection -= 8;
+						if (currentselection < 1) currentselection = 1;
+                    break;
+                    case SDLK_RIGHT:
+						if (menu_config_input == 1)
+						{
+							currentselection += 8;
+							if (currentselection > 11) currentselection = 10;
+						}
+                    break;
                     case SDLK_LCTRL:
                     case SDLK_RETURN:
                         pressed = 1;
 					break;
+                    case SDLK_TAB:
+                        menu_config_input = 0;
+                        currentselection = 1;
+					break;
+                    case SDLK_BACKSPACE:
+                        if (sms.console == CONSOLE_COLECO) 
+                        {
+							menu_config_input = 1;
+						}
+						currentselection = 1;
+					break;
                     case SDLK_LALT:
-						/* Let's just haxxx and force exit that way*/
                         pressed = 1;
-                        currentselection = 7;
+                        currentselection = -2;
+					break;
+                    case SDLK_ESCAPE:
+						option.config_buttons[currentselection - 1] = 0;
 					break;
 					default:
 					break;
@@ -372,56 +434,110 @@ static void Input_Remapping()
         {
             switch(currentselection)
             {
-				case 7:
+				case -2:
 					/* Exits */
 				break;
                 default:
 					SDL_FillRect( backbuffer, NULL, 0 );
+					print_string("Press button for mapping", TextWhite, TextBlue, 24, 64, backbuffer->pixels);
+					bitmap_scale(0,0,240,160,sdl_screen->w,sdl_screen->h,240,0,(uint16_t* restrict)backbuffer->pixels,(uint16_t* restrict)sdl_screen->pixels);
+					SDL_Flip(sdl_screen);
+					exit_map = 0;
 					while( !exit_map )
 					{
 						while (SDL_PollEvent(&Event))
 						{
-							if (Event.type == SDL_KEYDOWN) option.config_buttons[currentselection - 1] = Event.key.keysym.sym;
+							if (Event.type == SDL_KEYDOWN)
+							{
+								option.config_buttons[currentselection - 1] = Event.key.keysym.sym;
+								exit_map = 1;
+							}
 						}
 					}
 				break;
             }
         }
+
+		print_string("[A] : Map, [B] : Exit", TextWhite, TextBlue, 20, 8, backbuffer->pixels);
 		
-		print_string("Input remapping", TextWhite, 0, 105, 10, backbuffer->pixels);
-		
-		snprintf(text, sizeof(text), "UP : %d\n", option.config_buttons[0]);
-		if (currentselection == 1) print_string(text, TextRed, 0, 5, 25, backbuffer->pixels);
-		else print_string(text, TextWhite, 0, 5, 25, backbuffer->pixels);
-		
-		snprintf(text, sizeof(text), "DOWN : %d\n", option.config_buttons[1]);
-		if (currentselection == 2) print_string(text, TextRed, 0, 5, 45, backbuffer->pixels);
-		else print_string(text, TextWhite, 0, 5, 45, backbuffer->pixels);
-		
-		snprintf(text, sizeof(text), "LEFT : %d\n", option.config_buttons[2]);
-		if (currentselection == 3) print_string(text, TextRed, 0, 5, 65, backbuffer->pixels);
-		else print_string(text, TextWhite, 0, 5, 65, backbuffer->pixels);
-		
-		snprintf(text, sizeof(text), "RIGHT : %d\n", option.config_buttons[3]);
-		if (currentselection == 4) print_string(text, TextRed, 0, 5, 85, backbuffer->pixels);
-		else print_string(text, TextWhite, 0, 5, 85, backbuffer->pixels);
-		
-		snprintf(text, sizeof(text), "A : %d\n", option.config_buttons[4]);
-		if (currentselection == 5) print_string(text, TextRed, 0, 5, 105, backbuffer->pixels);
-		else print_string(text, TextWhite, 0, 5, 105, backbuffer->pixels);
-		
-		snprintf(text, sizeof(text), "B : %d\n", option.config_buttons[5]);
-		if (currentselection == 6) print_string(text, TextRed, 0, 5, 125, backbuffer->pixels);
-		else print_string(text, TextWhite, 0, 5, 125, backbuffer->pixels);
-		
-		snprintf(text, sizeof(text), "START : %d\n", option.config_buttons[6]);
-		if (currentselection == 6) print_string(text, TextRed, 0, 5, 145, backbuffer->pixels);
-		else print_string(text, TextWhite, 0, 5, 145, backbuffer->pixels);
-		
-		if (currentselection == 7) print_string("Exit", TextRed, 0, 5, 205, backbuffer->pixels);
-		else print_string("Exit", TextWhite, 0, 5, 205, backbuffer->pixels);
-		
-		bitmap_scale(0,0,320,240,sdl_screen->w,sdl_screen->h,320,0,(uint16_t* restrict)backbuffer->pixels,(uint16_t* restrict)sdl_screen->pixels);
+		if (menu_config_input == 0)
+		{
+			snprintf(text, sizeof(text), "UP : %s\n", Return_Text_Button(option.config_buttons[0]));
+			if (currentselection == 1) print_string(text, TextRed, 0, 5, 25, backbuffer->pixels);
+			else print_string(text, TextWhite, 0, 5, 25, backbuffer->pixels);
+			
+			snprintf(text, sizeof(text), "DOWN : %s\n", Return_Text_Button(option.config_buttons[1]));
+			if (currentselection == 2) print_string(text, TextRed, 0, 5, 45, backbuffer->pixels);
+			else print_string(text, TextWhite, 0, 5, 45, backbuffer->pixels);
+			
+			snprintf(text, sizeof(text), "LEFT : %s\n", Return_Text_Button(option.config_buttons[2]));
+			if (currentselection == 3) print_string(text, TextRed, 0, 5, 65, backbuffer->pixels);
+			else print_string(text, TextWhite, 0, 5, 65, backbuffer->pixels);
+			
+			snprintf(text, sizeof(text), "RIGHT : %s\n", Return_Text_Button(option.config_buttons[3]));
+			if (currentselection == 4) print_string(text, TextRed, 0, 5, 85, backbuffer->pixels);
+			else print_string(text, TextWhite, 0, 5, 85, backbuffer->pixels);
+			
+			snprintf(text, sizeof(text), "A : %s\n", Return_Text_Button(option.config_buttons[4]));
+			if (currentselection == 5) print_string(text, TextRed, 0, 5, 105, backbuffer->pixels);
+			else print_string(text, TextWhite, 0, 5, 105, backbuffer->pixels);
+			
+			snprintf(text, sizeof(text), "B : %s\n", Return_Text_Button(option.config_buttons[5]));
+			if (currentselection == 6) print_string(text, TextRed, 0, 5, 125, backbuffer->pixels);
+			else print_string(text, TextWhite, 0, 5, 125, backbuffer->pixels);
+			
+			snprintf(text, sizeof(text), "START : %s\n", Return_Text_Button(option.config_buttons[6]));
+			if (currentselection == 7) print_string(text, TextRed, 0, 5, 145, backbuffer->pixels);
+			else print_string(text, TextWhite, 0, 5, 145, backbuffer->pixels);
+		}
+		else if (menu_config_input == 1)
+		{
+			snprintf(text, sizeof(text), "[*] : %s\n", Return_Text_Button(option.config_buttons[7]));
+			if (currentselection == 1) print_string(text, TextRed, 0, 5, 25, backbuffer->pixels);
+			else print_string(text, TextWhite, 0, 5, 25, backbuffer->pixels);
+			
+			snprintf(text, sizeof(text), "[#] : %s\n", Return_Text_Button(option.config_buttons[8]));
+			if (currentselection == 2) print_string(text, TextRed, 0, 5, 45, backbuffer->pixels);
+			else print_string(text, TextWhite, 0, 5, 45, backbuffer->pixels);
+			
+			snprintf(text, sizeof(text), "[1] : %s\n", Return_Text_Button(option.config_buttons[9]));
+			if (currentselection == 3) print_string(text, TextRed, 0, 5, 65, backbuffer->pixels);
+			else print_string(text, TextWhite, 0, 5, 65, backbuffer->pixels);
+			
+			snprintf(text, sizeof(text), "[2] : %s\n", Return_Text_Button(option.config_buttons[10]));
+			if (currentselection == 4) print_string(text, TextRed, 0, 5, 85, backbuffer->pixels);
+			else print_string(text, TextWhite, 0, 5, 85, backbuffer->pixels);
+			
+			snprintf(text, sizeof(text), "[3] : %s\n", Return_Text_Button(option.config_buttons[11]));
+			if (currentselection == 5) print_string(text, TextRed, 0, 5, 105, backbuffer->pixels);
+			else print_string(text, TextWhite, 0, 5, 105, backbuffer->pixels);
+			
+			snprintf(text, sizeof(text), "[4] : %s\n", Return_Text_Button(option.config_buttons[12]));
+			if (currentselection == 6) print_string(text, TextRed, 0, 5, 125, backbuffer->pixels);
+			else print_string(text, TextWhite, 0, 5, 125, backbuffer->pixels);
+			
+			snprintf(text, sizeof(text), "[5] : %s\n", Return_Text_Button(option.config_buttons[13]));
+			if (currentselection == 7) print_string(text, TextRed, 0, 5, 145, backbuffer->pixels);
+			else print_string(text, TextWhite, 0, 5, 145, backbuffer->pixels);
+			
+			snprintf(text, sizeof(text), "[6] : %s\n", Return_Text_Button(option.config_buttons[14]));
+			if (currentselection == 8) print_string(text, TextRed, 0, 5, 145, backbuffer->pixels);
+			else print_string(text, TextWhite, 0, 5, 145, backbuffer->pixels);
+			
+			snprintf(text, sizeof(text), "[7] : %s\n", Return_Text_Button(option.config_buttons[15]));
+			if (currentselection == 9) print_string(text, TextRed, 0, 145, 25, backbuffer->pixels);
+			else print_string(text, TextWhite, 0, 145, 25, backbuffer->pixels);
+			
+			snprintf(text, sizeof(text), "[8] : %s\n", Return_Text_Button(option.config_buttons[16]));
+			if (currentselection == 10) print_string(text, TextRed, 0, 145, 45, backbuffer->pixels);
+			else print_string(text, TextWhite, 0, 145, 45, backbuffer->pixels);
+			
+			snprintf(text, sizeof(text), "[9] : %s\n", Return_Text_Button(option.config_buttons[17]));
+			if (currentselection == 11) print_string(text, TextRed, 0, 145, 65, backbuffer->pixels);
+			else print_string(text, TextWhite, 0, 145, 65, backbuffer->pixels);
+		}
+			
+		bitmap_scale(0,0,240,160,sdl_screen->w,sdl_screen->h,240,0,(uint16_t* restrict)backbuffer->pixels,(uint16_t* restrict)sdl_screen->pixels);
 		SDL_Flip(sdl_screen);
 	}
 	
@@ -435,7 +551,7 @@ void Menu()
     SDL_Rect dstRect;
     SDL_Event Event;
     
-    while (((currentselection != 1) && (currentselection != 6)) || (!pressed))
+    while (((currentselection != 1) && (currentselection != 7)) || (!pressed))
     {
         pressed = 0;
  		SDL_FillRect( backbuffer, NULL, 0 );
@@ -486,8 +602,11 @@ void Menu()
 		if (currentselection == 5) print_string(text, TextBlue, 0, 5, 90, backbuffer->pixels);
 		else print_string(text, TextWhite, 0, 5, 90, backbuffer->pixels);
 		
-		if (currentselection == 6) print_string("Quit", TextBlue, 0, 5, 105, backbuffer->pixels);
-		else print_string("Quit", TextWhite, 0, 5, 105, backbuffer->pixels);
+		if (currentselection == 6) print_string("Input remapping", TextBlue, 0, 5, 105, backbuffer->pixels);
+		else print_string("Input remapping", TextWhite, 0, 5, 105, backbuffer->pixels);
+		
+		if (currentselection == 7) print_string("Quit", TextBlue, 0, 5, 125, backbuffer->pixels);
+		else print_string("Quit", TextWhite, 0, 5, 125, backbuffer->pixels);
 		
 		print_string("By gameblabla, ekeeke", TextWhite, 0, 5, 145, backbuffer->pixels);
 
@@ -500,11 +619,11 @@ void Menu()
                     case SDLK_UP:
                         currentselection--;
                         if (currentselection == 0)
-                            currentselection = 6;
+                            currentselection = 7;
                         break;
                     case SDLK_DOWN:
                         currentselection++;
-                        if (currentselection == 7)
+                        if (currentselection == 8)
                             currentselection = 1;
                         break;
                     case SDLK_LCTRL:
@@ -566,6 +685,9 @@ void Menu()
         {
             switch(currentselection)
             {
+				case 6:
+					Input_Remapping();
+				break;
 				case 5:
 					option.soundlevel++;
 					if (option.soundlevel > 4)
@@ -600,13 +722,14 @@ void Menu()
     SDL_Flip(sdl_screen);
     #endif
     
-    if (currentselection == 6)
+    if (currentselection == 7)
         quit = 1;
 }
 
 
 static void config_load()
 {
+	uint_fast8_t i;
 	char config_path[256];
 	snprintf(config_path, sizeof(config_path), "%s/config.cfg", home_path);
 	FILE* fp;
@@ -616,6 +739,24 @@ static void config_load()
 	{
 		fread(&option, sizeof(option), sizeof(int8_t), fp);
 		fclose(fp);
+	}
+	else
+	{
+		/* Default mapping for the Bittboy in case loading configuration file fails */
+		option.config_buttons[CONFIG_BUTTON_UP] = 273;
+		option.config_buttons[CONFIG_BUTTON_DOWN] = 274;
+		option.config_buttons[CONFIG_BUTTON_LEFT] = 276;
+		option.config_buttons[CONFIG_BUTTON_RIGHT] = 275;
+		
+		option.config_buttons[CONFIG_BUTTON_BUTTON1] = 306;
+		option.config_buttons[CONFIG_BUTTON_BUTTON2] = 308;
+		
+		option.config_buttons[CONFIG_BUTTON_START] = 13;
+		
+		for (i = 7; i < 19; i++)
+		{
+			option.config_buttons[i] = 0;
+		}
 	}
 }
 
@@ -702,6 +843,8 @@ int main (int argc, char *argv[])
 		Cleanup();
 		return 0;
 	}
+	SDL_FillRect(sdl_screen, NULL, 0);
+	SDL_Flip(sdl_screen);
 	
 	backbuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, 0, 0, 0, 0);
 	
