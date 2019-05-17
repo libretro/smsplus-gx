@@ -330,11 +330,11 @@ static const char* Return_Text_Button(uint32_t button)
 		break;
 		/* L button */
 		case 9:
-			return "Left Shoulder";
+			return "L Shoulder";
 		break;
 		/* R button */
 		case 8:
-			return "Right Shoulder";
+			return "R Shoulder";
 		break;
 		/* Start */
 		case 13:
@@ -449,7 +449,7 @@ static void Input_Remapping()
 						{
 							if (Event.type == SDL_KEYDOWN)
 							{
-								option.config_buttons[currentselection - 1] = Event.key.keysym.sym;
+								option.config_buttons[(currentselection - 1) + (menu_config_input ? 7 : 0) ] = Event.key.keysym.sym;
 								exit_map = 1;
 							}
 						}
