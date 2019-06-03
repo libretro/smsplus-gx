@@ -395,9 +395,16 @@ void render_line(int32_t line)
 			/* Draw sprites */
 			render_obj(line);
 
+			/* This can take some CPU time. Some targets like the Retromini RS-90 code will crop this section
+			 * as to make sure it fits on the screen and to avoid less artifacts from downscaling.
+			 * This can be useful for other targets as well but adding a test case
+			 * to check this might make it more expensive so best to do this only for the RS-90.
+			 * */
+#ifndef NOBLANKING_LEFTCOLUM
 			/* Blank leftmost column of display */
 			if((vdp.reg[0] & 0x20) && (IS_SMS || IS_MD))
 				memset(linebuf, BACKDROP_COLOR, 8);
+#endif
 		}
 		else
 		{

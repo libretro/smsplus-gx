@@ -102,7 +102,7 @@ void Sound_Init()
 	buf_read_pos = 0;
 	buf_write_pos = 0;
 
-	aspec.format   = AUDIO_S16SYS;
+	aspec.format   = AUDIO_S16;
 	aspec.freq     = SOUND_FREQUENCY;
 	aspec.channels = 2;
 	aspec.samples  = SOUND_SAMPLES_SIZE;

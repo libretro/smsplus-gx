@@ -412,7 +412,6 @@ static const char* Return_Volume(uint32_t vol)
 	}	
 }
 
-
 static void Input_Remapping()
 {
 	SDL_Event Event;
@@ -497,8 +496,11 @@ static void Input_Remapping()
 						{
 							if (Event.type == SDL_KEYDOWN)
 							{
-								option.config_buttons[currentselection - 1] = Event.key.keysym.sym;
-								exit_map = 1;
+								if (Event.key.keysym.sym != SDLK_RCTRL)
+								{
+									option.config_buttons[currentselection - 1] = Event.key.keysym.sym;
+									exit_map = 1;
+								}
 							}
 						}
 					}
@@ -591,7 +593,6 @@ static void Input_Remapping()
 	}
 	
 }
-
 
 static void Menu()
 {
@@ -823,6 +824,7 @@ static void Menu()
 
 static void config_load()
 {
+	uint_fast8_t i;
 	char config_path[256];
 	snprintf(config_path, sizeof(config_path), "%s/config.cfg", home_path);
 	FILE* fp;
@@ -832,6 +834,24 @@ static void config_load()
 	{
 		fread(&option, sizeof(option), sizeof(int8_t), fp);
 		fclose(fp);
+	}
+	else
+	{
+		/* Default mapping for the Bittboy in case loading configuration file fails */
+		option.config_buttons[CONFIG_BUTTON_UP] = 273;
+		option.config_buttons[CONFIG_BUTTON_DOWN] = 274;
+		option.config_buttons[CONFIG_BUTTON_LEFT] = 276;
+		option.config_buttons[CONFIG_BUTTON_RIGHT] = 275;
+		
+		option.config_buttons[CONFIG_BUTTON_BUTTON1] = 306;
+		option.config_buttons[CONFIG_BUTTON_BUTTON2] = 308;
+		
+		option.config_buttons[CONFIG_BUTTON_START] = 13;
+		
+		for (i = 7; i < 19; i++)
+		{
+			option.config_buttons[i] = 0;
+		}
 	}
 }
 
@@ -907,7 +927,8 @@ int main (int argc, char *argv[])
 	if (option.console != 3 && option.fullscreen > 1) option.fullscreen = 1;
 	
 	// Load ROM
-	if(!load_rom(argv[1])) {
+	if(!load_rom(argv[1])) 
+	{
 		fprintf(stderr, "Error: Failed to load %s.\n", argv[1]);
 		Cleanup();
 		return 0;
