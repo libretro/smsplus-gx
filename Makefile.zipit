@@ -24,7 +24,7 @@ OBJS		= $(OBJ_C) $(OBJ_CP)
 
 CFLAGS		= -Ofast -fsingle-precision-constant -fno-PIC -flto
 CFLAGS		+= -falign-functions=1 -falign-jumps=1 -falign-loops=1 -falign-labels=1
-CFLAGS		+= -DLSB_FIRST -std=gnu99 -DALIGN_DWORD
+CFLAGS		+= -DLSB_FIRST -std=gnu99 -DALIGN_DWORD -DZIPIT_PORT
 CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/scalers -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
 
 SRCDIR		+= ./source/text/fb

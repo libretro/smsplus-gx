@@ -20,6 +20,11 @@ void Sound_Init(void)
 	/* Open PCM device for playback. */
 	int32_t rc = snd_pcm_open(&handle, "default", SND_PCM_STREAM_PLAYBACK, 0);
 
+#ifdef ZIPIT_PORT
+	if (rc < 0)
+		rc = snd_pcm_open(&handle, "plughw:Z2,0,0", SND_PCM_STREAM_PLAYBACK, 0);
+#endif
+
 	if (rc < 0)
 		rc = snd_pcm_open(&handle, "plughw:0,0,0", SND_PCM_STREAM_PLAYBACK, 0);
 
