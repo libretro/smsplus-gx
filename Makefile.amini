@@ -10,7 +10,7 @@ SOUND_ENGINE = maxim_sn76489
 # Possible choices : z80 (accurate but proprietary), eighty (EightyZ80's core, GPLv2)
 Z80_CORE = z80
 SCALE2X_UPSCALER = 1
-PROFILE = 0
+PROFILE = APPLY
 ZIP_SUPPORT = 1
 
 SRCDIR		= ./source ./source/cpu_cores/$(Z80_CORE) ./source/sound ./source/unzip

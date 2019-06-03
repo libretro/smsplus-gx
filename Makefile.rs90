@@ -21,8 +21,8 @@ OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
 OBJ_CP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CP)))
 OBJS		= $(OBJ_C) $(OBJ_CP)
 
-CFLAGS		= -Ofast -mplt -fdata-sections -ffunction-sections -mno-fp-exceptions -mno-check-zero-division -mframe-header-opt -fsingle-precision-constant -fno-common -mips32 -flto -fwhole-program
-CFLAGS		+= -DALIGN_DWORD
+CFLAGS		= -Ofast -fno-PIC -mno-abicalls -fdata-sections -ffunction-sections -mno-fp-exceptions -mno-check-zero-division -mframe-header-opt -fsingle-precision-constant -fno-common -mips32 -flto -fwhole-program
+CFLAGS		+= -DALIGN_DWORD -DNOBLANKING_LEFTCOLUM
 CFLAGS		+= -DLSB_FIRST -std=gnu99
 CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/scalers -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
 
@@ -30,7 +30,7 @@ SRCDIR		+= ./source/text/fb
 CFLAGS		+= -Isource/text/fb
 
 ifeq ($(PROFILE), YES)
-CFLAGS 		+= -fprofile-generate=/home/retrofw/profile
+CFLAGS 		+= -fprofile-generate=/media/data/local/home
 else ifeq ($(PROFILE), APPLY)
 CFLAGS		+= -fprofile-use
 endif
@@ -49,7 +49,7 @@ CFLAGS		+= -Isource/scale2x
 SRCDIR		+= ./source/scale2x
 endif
 
-LDFLAGS     = -lc -lgcc -lSDL -lasound -no-pie -Wl,--as-needed -Wl,--gc-sections -flto -fwhole-program -s
+LDFLAGS     = -nodefaultlibs -lc -lgcc -lSDL -no-pie -Wl,--as-needed -Wl,--gc-sections -flto -fwhole-program -s
 
 ifeq ($(SOUND_OUTPUT), portaudio)
 LDFLAGS		+= -lportaudio
