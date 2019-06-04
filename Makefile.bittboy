@@ -1,8 +1,8 @@
-PRGNAME     = sms_sdl
+PRGNAME     = smsplusgx
 CC			= /opt/bittboy-toolchain/bin/arm-miyoo-linux-musleabi-gcc
 
 # Possible choices : rs97, k3s (PAP K3S), sdl, amini, fbdev
-PORT = fbdev
+PORT = bittboy
 # Possible choices : alsa, pulse (pulseaudio), oss, sdl12 (SDL 1.2 sound output), portaudio, libao
 SOUND_OUTPUT = alsa
 # Possible choices : crabemu_sn76489 (less accurate, GPLv2), maxim_sn76489 (somewhat problematic license but good accuracy)
@@ -52,7 +52,7 @@ CFLAGS		+= -Isource/scale2x
 SRCDIR		+= ./source/scale2x
 endif
 
-LDFLAGS     = -nodefaultlibs -lc -lgcc -no-pie -Wl,--as-needed -Wl,--gc-sections -s -flto
+LDFLAGS     = -nodefaultlibs -lc -lgcc -lSDL -no-pie -Wl,--as-needed -Wl,--gc-sections -s -flto
 
 ifeq ($(SOUND_OUTPUT), portaudio)
 LDFLAGS		+= -lportaudio
