@@ -36,6 +36,7 @@ Here's a list of affected games :
 -  Halley Wars
 -  MLBPA Baseball
 -  Power Drive (unreleased prototype)
+-  James Pond 3 (Overworld level text)
 
 MAME has an implementation of LCD persistence here (first appeared in MESS 0.135) :
 
@@ -85,10 +86,6 @@ http://www.smspower.org/Development/DallyeoraPiguWang-SMS
 
 Uses R register and Korean mapper. (Filesize is also not a power of 2)
 Sounds like a problem.
-
--  James Pond 3 - Operation Starfi5h (Game Gear)
-
-http://www.smspower.org/Development/JamesPond3-GG
 
 -  Rainbow Islands
 
