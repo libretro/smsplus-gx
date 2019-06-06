@@ -789,6 +789,10 @@ static void Menu()
 				break;
                 case 4 :
                     option.fullscreen++;
+					if (option.fullscreen == 2 && sms.console != CONSOLE_GG)
+					{
+						option.fullscreen++;
+					}
                     if (option.fullscreen > upscalers_available)
                         option.fullscreen = 0;
                     break;
