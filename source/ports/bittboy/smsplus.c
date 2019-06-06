@@ -342,15 +342,15 @@ static const char* Return_Text_Button(uint32_t button)
 		break;
 		/* B button */
 		case 308:
-			return "B button";
+			return "TA button";
 		break;
 		/* X button */
 		case 304:
-			return "TA button";
+			return "TB button";
 		break;
 		/* Y button */
 		case 32:
-			return "TB button";
+			return "B button";
 		break;
 		/* L button */
 		case 9:
@@ -511,7 +511,7 @@ static void Input_Remapping()
 		print_string("Input remapping", TextWhite, 0, 100, 10, backbuffer->pixels);
 		
 		print_string("Press [A] to map to a button", TextWhite, TextBlue, 50, 210, backbuffer->pixels);
-		print_string("Press [B] to Exit", TextWhite, TextBlue, 85, 225, backbuffer->pixels);
+		print_string("Press [TA] to Exit", TextWhite, TextBlue, 85, 225, backbuffer->pixels);
 		
 		snprintf(text, sizeof(text), "  UP  : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_UP]));
 		if (currentselection == 1) print_string(text, TextRed, 0, 5, 25+2, backbuffer->pixels);
@@ -789,6 +789,10 @@ static void Menu()
 				break;
                 case 4 :
                     option.fullscreen++;
+					if (option.fullscreen == 2 && sms.console != CONSOLE_GG)
+					{
+						option.fullscreen++;
+					}
                     if (option.fullscreen > upscalers_available)
                         option.fullscreen = 0;
                     break;
