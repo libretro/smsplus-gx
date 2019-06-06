@@ -811,13 +811,13 @@ int main (int argc, char *argv[])
 	option.fullscreen = 1;
 	option.fm = 1;
 	option.spritelimit = 1;
-	option.country = 0;
 	option.tms_pal = 2;
 	option.nosound = 0;
 	option.soundlevel = 2;
 	
 	config_load();
 	
+	option.country = 0;
 	option.console = 0;
 	
 	snprintf(option.game_name, sizeof(option.game_name), "%s", basename(argv[1]));

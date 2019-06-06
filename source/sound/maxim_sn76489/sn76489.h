@@ -2,7 +2,7 @@
 #ifndef SN76489_H_
 #define SN76489_H_
 
-#define MAX_SN76489     4
+#define MAX_SN76489     1
 
 /*
     More testing is needed to find and confirm feedback patterns for

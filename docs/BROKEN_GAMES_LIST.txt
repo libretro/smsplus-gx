@@ -79,16 +79,6 @@ https://github.com/OpenEmu/CrabEmu-Core/blob/a25c7277cd14f9e32647e1b9e1a45621fb0
 Problematic games (To be checked & tested)
 =================================
 
--   Alibaba and 40 Thieves / Block Hole 
-
-http://www.smspower.org/Development/AlibabaAnd40Thieves-SMS
-Looks like it will need more research.
-
--  California Games II
-
-http://www.smspower.org/Development/CaliforniaGamesII-SMS
-Sonic's Edusoft had a similar issue with it expecting VDP Register 1 to be set to 0xE0, which is what the BIOS sets it to.
-
 -  Dallyeora Pigu Wang
 
 http://www.smspower.org/Development/DallyeoraPiguWang-SMS
@@ -99,15 +89,6 @@ Sounds like a problem.
 -  James Pond 3 - Operation Starfi5h (Game Gear)
 
 http://www.smspower.org/Development/JamesPond3-GG
-
-- Madou Monogatari 2 (Game Gear)
-
-Marat Fayzullin mentionned this in the changelog of his MasterGear emulator.
-"Fixed Madou Monogatari 2 (GG) by setting VDP[6]=0xFF on reset."
-
-This is a very obscure hardware behaviour, i haven't seen this documented anywhere.
-SMS Plus GX works without the fix in place. Saving/loading also works.
-Maybe it's an unrelated issue on his side ?
 
 -  Rainbow Islands
 

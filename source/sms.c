@@ -191,7 +191,18 @@ void sms_reset(void)
   /* clear SMS context */
   memset(dummy_write,data_bus_pullup, sizeof(dummy_write));
   memset(dummy_read,data_bus_pullup, sizeof(dummy_read));
-  memset(sms.wram,0, sizeof(sms.wram));
+  /* The joys of uninitiliazed memory ! The Japanese and Korean BIOS do not properly clear the memory and some games like Alibaba and 40 Thieves relies on this.
+   * Without said fix, Alibaba will flicker (or it seems that it constantly resets ?). See the thread about this behaviour here :
+   * https://www.smspower.org/forums/13333-UninitializedMemoryPatterns */
+  if (sms.territory == TERRITORY_DOMESTIC && sms.console == CONSOLE_SMS)
+  {
+	  memset(sms.wram, 0xF0, sizeof(sms.wram));
+  }
+  else
+  {
+	  memset(sms.wram, 0, sizeof(sms.wram));
+  }
+
   sms.paused    = 0x00;
   sms.save      = 0x00;
   sms.fm_detect = 0x00;

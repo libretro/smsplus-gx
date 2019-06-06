@@ -133,6 +133,7 @@ uint32_t SMSPLUS_sound_init(void)
 	/* Set up SN76489 emulation */
 	#ifdef MAXIM_PSG
     SN76489_Init(0, snd.psg_clock, snd.sample_rate);
+    SN76489_Config(0, MUTE_ALLON, BOOST_ON, VOL_FULL, (sms.console < CONSOLE_SMS) ? FB_SC3000 : FB_SEGAVDP);
     #else
 	sn76489_init(&psg_sn, (float)snd.psg_clock, (float)snd.sample_rate, 
 	(sms.console < CONSOLE_SMS) ? SN76489_NOISE_BITS_SG1000 : SN76489_NOISE_BITS_SMS, 

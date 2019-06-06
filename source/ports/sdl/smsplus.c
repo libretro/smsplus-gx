@@ -41,48 +41,67 @@ static const uint32_t upscalers_available = 1
 
 static void video_update(void)
 {
-	SDL_LockSurface(sdl_screen);
-	switch(option.fullscreen)
+	uint32_t dst_x, dst_y, dst_w, dst_h, hide_left;
+	if (SDL_LockSurface(sdl_screen) == 0)
 	{
-		// native res
-        case 0:
-		if(sms.console == CONSOLE_GG) 
-			bitmap_scale(48,0,160,144,160,144,256,HOST_WIDTH_RESOLUTION-160,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-160)/2+(HOST_HEIGHT_RESOLUTION-144)/2*HOST_WIDTH_RESOLUTION);
-		else 
-			bitmap_scale(0,0,
-			256,vdp.height,
-			256,vdp.height,
-			256, HOST_WIDTH_RESOLUTION-256,
-			(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-256)/2+(HOST_HEIGHT_RESOLUTION-vdp.height)/2*HOST_WIDTH_RESOLUTION);
-		break;
-		// Standard fullscreen
-		case 1:
-		if(sms.console == CONSOLE_GG) 
-			upscale_160x144_to_320x240((uint32_t* restrict)sdl_screen->pixels, (uint32_t* restrict)sms_bitmap->pixels+24);
-		else 
-			upscale_SMS_to_320x240((uint32_t* restrict)sdl_screen->pixels, (uint32_t* restrict)sms_bitmap->pixels, vdp.height);
-		break;
-		case 2:
-#ifdef SCALE2X_UPSCALER
-		if(sms.console == CONSOLE_GG) 
+		switch(option.fullscreen)
 		{
-			dst_x = 96;
-			dst_w = 320;
-			dst_h = 144*2;
+			// native res
+			case 0:
+			if(sms.console == CONSOLE_GG) 
+				bitmap_scale(48,0,160,144,160*3,144*3,256,sdl_screen->w-160*3,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(sdl_screen->w-160*3)/2+(sdl_screen->h-144*3)/2*sdl_screen->w);
+			else 
+			{
+				hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
+				dst_x = hide_left ? 8 : 0;
+				dst_w = (hide_left ? 248 : 256);
+				bitmap_scale(dst_x,0,
+				dst_w,vdp.height,
+				dst_w*2,vdp.height*2,
+				256, sdl_screen->w-dst_w*2,
+				(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(sdl_screen->w-(dst_w*2))/2+(sdl_screen->h-(vdp.height*2))/2*sdl_screen->w);
+			}
+			break;
+			// Standard fullscreen
+			case 1:
+			if(sms.console == CONSOLE_GG) 
+			{
+				dst_x = 48;
+				dst_w = 160;
+				dst_h = 144;
+			}
+			else
+			{
+				hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
+				dst_x = hide_left ? 8 : 0;
+				dst_w = (hide_left ? 248 : 256);
+				dst_h = vdp.height;
+			}
+			bitmap_scale(dst_x,0,dst_w,dst_h,sdl_screen->w,sdl_screen->h,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
+			break;
+			case 2:
+			case 3:
+			#ifdef SCALE2X_UPSCALER
+			if(sms.console == CONSOLE_GG) 
+			{
+				dst_x = 96;
+				dst_w = 320;
+				dst_h = 144*2;
+			}
+			else
+			{
+				hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
+				dst_x = hide_left ? 16 : 0;
+				dst_w = (hide_left ? 248 : 256)*2;
+				dst_h = vdp.height*2;
+			}
+			scale2x(sms_bitmap->pixels, scale2x_buf->pixels, 512, 1024, 256, 240);
+			bitmap_scale(dst_x,0,dst_w,dst_h,sdl_screen->w,sdl_screen->h,512,0,(uint16_t* restrict)scale2x_buf->pixels,(uint16_t* restrict)sdl_screen->pixels);
+			#endif
+			break;
 		}
-		else
-		{
-			uint32_t hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
-			dst_x = hide_left ? 16 : 0;
-			dst_w = (hide_left ? 248 : 256)*2;
-			dst_h = vdp.height*2;
-		}
-		scale2x(sms_bitmap->pixels, scale2x_buf->pixels, 512, 1024, 256, 240);
-		bitmap_scale(dst_x,0,dst_w,dst_h,HOST_WIDTH_RESOLUTION,HOST_HEIGHT_RESOLUTION,512,0,(uint16_t* restrict)scale2x_buf->pixels,(uint16_t* restrict)sdl_screen->pixels);
-#endif
-		break;
+		SDL_UnlockSurface(sdl_screen);
 	}
-	SDL_UnlockSurface(sdl_screen);	
 	SDL_Flip(sdl_screen);
 }
 
@@ -278,7 +297,7 @@ static void bios_init()
 		fseek(fd, 0, SEEK_SET);
 		if (size < 0x4000) size = 0x4000;
 		fread(bios.rom, size, 1, fd);
-		bios.enabled = 2;  
+		bios.enabled = 2;
 		bios.pages = size / 0x4000;
 		fclose(fd);
 	}
@@ -616,13 +635,13 @@ int main (int argc, char *argv[])
 	option.fullscreen = 1;
 	option.fm = 1;
 	option.spritelimit = 1;
-	option.country = 0;
 	option.tms_pal = 2;
 	option.nosound = 0;
 	option.soundlevel = 2;
 	
 	config_load();
 	
+	option.country = 0;
 	option.console = 0;
 	
 	strcpy(option.game_name, argv[1]);
