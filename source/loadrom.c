@@ -22,7 +22,7 @@
 
 #include "shared.h"
 
-#define GAME_DATABASE_CNT 97
+#define GAME_DATABASE_CNT 99
 
 typedef struct
 {
@@ -169,6 +169,12 @@ static rominfo_t game_list[GAME_DATABASE_CNT] =
 	"Super Kick Off [SMS-GG]"},
 	{0xBD1CC7DF, 0, DEVICE_PAD2B, MAPPER_SEGA, DISPLAY_NTSC, TERRITORY_DOMESTIC, CONSOLE_GGMS,
 	"Super Tetris (KR)"},
+	
+	/* Games requiring uninitialized work RAM due to Japanese BIOS not clearing memory. */
+	{0x08BF3DE3, 0, DEVICE_PAD2B, MAPPER_NONE, DISPLAY_NTSC, TERRITORY_DOMESTIC, CONSOLE_SMS,
+	"Alibaba and 40 Thieves"},
+	{0x643B6B76, 0, DEVICE_PAD2B, MAPPER_NONE, DISPLAY_NTSC, TERRITORY_DOMESTIC, CONSOLE_SMS,
+	"Block Hole"},
 
 	/* Games requiring 3D Glasses */
 	{0xFBF96C81, 1, DEVICE_PAD2B, MAPPER_SEGA, DISPLAY_NTSC, TERRITORY_EXPORT, CONSOLE_SMS2,
