@@ -1,3 +1,9 @@
+/*
+ * Alsa output sound code.
+ * License : MIT
+ * See docs/MIT_license.txt for more information.
+*/
+
 #include <stdio.h>
 #include <stdint.h>
 #include <alsa/asoundlib.h>

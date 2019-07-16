@@ -1,3 +1,9 @@
+/*
+ * Portaudio output sound code.
+ * License : MIT
+ * See docs/MIT_license.txt for more information.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
