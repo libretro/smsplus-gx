@@ -65,14 +65,11 @@ uint32_t SMSPLUS_sound_init(void)
 		fmbuf = malloc(FM_GetContextSize());
 		if (!fmbuf) return 0;
 		FM_GetContext(fmbuf);
-	}
-
-	/* If we are reinitializing, shut down sound emulation */
-	if (snd.enabled)
-	{
+		
+		/* If we are reinitializing, shut down sound emulation */
 		SMSPLUS_sound_shutdown();
 	}
-
+	
 	/* Disable sound until initialization is complete */
 	snd.enabled = 0;
 
