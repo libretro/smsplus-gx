@@ -64,18 +64,6 @@ Do we really want to implement this bug though ???
 
 https://github.com/mamedev/mame/commit/33c5196a429d0afa801caac3ad24a76bf0ac273d#diff-cafb9b1c2517c95f421c776c3ec74e56
 
--  Support for 4PAK Mapper
-
-Mostly similar to Codemasters's writemap function except for 8000-0xBFFF range.
-
-Write xx to 3FFE: map bank (xx)&maxbankmask to memory slot in 0000-3FFF region
-Write yy to 7FFF: map bank (yy)&maxbankmask to memory slot in 4000-7FFF region
-Write zz to BFFF: map bank ((xx&0x30)+(zz))&maxbankmask to memory slot in 8000-BFFF region
-
-Implementations :
-https://github.com/ocornut/meka/blob/e0f6d9eb89217c4a083fe09b71900c5fa9321abf/meka/srcs/mappers.c#L402
-https://github.com/OpenEmu/CrabEmu-Core/blob/a25c7277cd14f9e32647e1b9e1a45621fb051f13/consoles/sms/mapper-4PAA.c
-
 
 Problematic games (To be checked & tested)
 =================================
