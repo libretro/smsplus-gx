@@ -438,8 +438,7 @@ static void Input_Remapping()
                         {
 							if (sms.console == CONSOLE_COLECO)
 							{
-								if (currentselection > 8) currentselection = 18;
-								else currentselection = 9;
+								currentselection = 18;
 							}
 							else currentselection = 7;
 						}
