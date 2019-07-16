@@ -431,7 +431,7 @@ static void Input_Remapping()
 {
 	SDL_Event Event;
 	char text[50];
-	uint32_t pressed = 0;
+	uint32_t pressed;
 	int32_t currentselection = 1;
 	int32_t exit_input = 0;
 	uint32_t exit_map = 0;
@@ -453,8 +453,7 @@ static void Input_Remapping()
                         {
 							if (sms.console == CONSOLE_COLECO)
 							{
-								if (currentselection > 8) currentselection = 18;
-								else currentselection = 9;
+								currentselection = 18;
 							}
 							else currentselection = 7;
 						}
