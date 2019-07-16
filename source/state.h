@@ -29,7 +29,7 @@
 #define STATE_HEADER    "SST\0"     /* State file header */
 
 /* Function prototypes */
-extern uint32_t system_save_state(FILE *mem);
-extern void system_load_state(FILE *mem);
+extern uint32_t system_save_state(FILE *fd);
+extern void system_load_state(FILE *fd);
 
 #endif /* _STATE_H_ */
