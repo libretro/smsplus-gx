@@ -49,7 +49,7 @@ void upscale_160x144_to_320x240(uint32_t* restrict dst, uint32_t* restrict src)
 {
     uint32_t midh = 240 / 2;
     uint32_t Eh = 0;
-    uint32_t source = 0;
+    uint32_t source;
     uint32_t dh = 0;
     uint32_t i, j;
 
@@ -116,7 +116,7 @@ void upscale_SMS_to_320x240(uint32_t* restrict dst, uint32_t* restrict src, uint
 {
     uint32_t midh = 240 / 2;
     uint32_t Eh = 0;
-    uint32_t source = 0;
+    uint32_t source;
     uint32_t dh = 0;
     uint32_t y, x;
 
@@ -164,7 +164,7 @@ void upscale_SMS_to_320x240(uint32_t* restrict dst, uint32_t* restrict src, uint
 void upscale_160x144_to_320x272_for_480x272(uint32_t* restrict dst, uint32_t* restrict src)
 {
     uint32_t Eh = 0;
-    uint32_t source = 0;
+    uint32_t source;
     uint32_t dh = 0;
     uint32_t i, j;
 
@@ -211,7 +211,7 @@ void upscale_160x144_to_320x272_for_480x272(uint32_t* restrict dst, uint32_t* re
 void upscale_160x144_to_480x272(uint32_t* restrict dst, uint32_t* restrict src)
 {
     uint32_t Eh = 0;
-    uint32_t source = 0;
+    uint32_t source;
     uint32_t dh = 0;
     uint32_t i, j;
 
@@ -258,7 +258,7 @@ void upscale_160x144_to_480x272(uint32_t* restrict dst, uint32_t* restrict src)
 void upscale_256xXXX_to_384x272_for_480x272(uint32_t* restrict dst, uint32_t* restrict src, uint32_t height)
 {
     uint32_t Eh = 0;
-    uint32_t source = 0;
+    uint32_t source;
     uint32_t dh = 0;
     uint32_t y, x;
 
@@ -298,7 +298,7 @@ void upscale_256xXXX_to_384x272_for_480x272(uint32_t* restrict dst, uint32_t* re
 void upscale_256xXXX_to_480x272(uint32_t* restrict dst, uint32_t* restrict src, uint32_t height)
 {
     uint32_t Eh = 0;
-    uint32_t source = 0;
+    uint32_t source;
     uint32_t dh = 0;
     uint32_t y, x;
 
@@ -361,7 +361,7 @@ void upscale_256xXXX_to_480x272(uint32_t* restrict dst, uint32_t* restrict src, 
 void upscale_160x144_to_320x320_for_480x320(uint32_t* restrict dst, uint32_t* restrict src)
 {
     uint32_t Eh = 0;
-    uint32_t source = 0;
+    uint32_t source;
     uint32_t dh = 0;
     uint32_t i, j;
 
@@ -407,7 +407,7 @@ void upscale_160x144_to_320x320_for_480x320(uint32_t* restrict dst, uint32_t* re
 void upscale_160x144_to_480x320(uint32_t* restrict dst, uint32_t* restrict src)
 {
     uint32_t Eh = 0;
-    uint32_t source = 0;
+    uint32_t source;
     uint32_t dh = 0;
     uint32_t i, j;
 
@@ -454,7 +454,7 @@ void upscale_160x144_to_480x320(uint32_t* restrict dst, uint32_t* restrict src)
 void upscale_256xXXX_to_384x320_for_480x320(uint32_t* restrict dst, uint32_t* restrict src, uint32_t height)
 {
     uint32_t Eh = 0;
-    uint32_t source = 0;
+    uint32_t source;
     uint32_t dh = 0;
     uint32_t y, x;
 
@@ -494,7 +494,7 @@ void upscale_256xXXX_to_384x320_for_480x320(uint32_t* restrict dst, uint32_t* re
 void upscale_256xXXX_to_480x320(uint32_t* restrict dst, uint32_t* restrict src, uint32_t height)
 {
     uint32_t Eh = 0;
-    uint32_t source = 0;
+    uint32_t source;
     uint32_t dh = 0;
     uint32_t y, x;
 
