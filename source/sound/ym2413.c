@@ -51,6 +51,14 @@ to do:
 
 */
 
+/*
+ * See git commit history for more information.
+ * - Gameblabla
+ * March 13th 2019 : Partial revert due to CrabZ80. The switching to C99 datatypes and floats had been done again.
+ * March 7th 2019 : Switch doubles to floats for performance. (it could sound less accurate though) Also some clean up done to it.
+ * February 19nd 2019 : Minor inline fix.
+*/
+
 #include "ym2413.h"
 
 #include <stdlib.h>

@@ -21,6 +21,17 @@
  *   VDP rendering core
  *
  ******************************************************************************/
+/*
+ * See git commit history for more information.
+ * - Gameblabla
+ * June 3rd 2019 : Added NOBLANKING_LEFTCOLUM for platforms like the RS-90.
+ * March 15th 2019 : Correct the brightness level in the Master system palette. It doesn't look dark anymore.
+ * March 14th 2019 : Fix PAL code as it would cause issues with Fantastic Dizzy.
+ * March 13th 2019 : Minor fixes as part of the CrabZ80's revert. (mostly whitepacing)
+ * March 11th 2019 : Fixed scrolling issues with Gauntlet. Fixed PAL issues too.
+ * December 7th 2018 : LIGHTGUN define and some whitepacing.
+ * October 12th 2018 : Whitepacing and minor fixes.
+*/
 
 #include "shared.h"
 /*** Vertical Counter Tables ***/

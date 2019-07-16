@@ -19,6 +19,16 @@
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  ******************************************************************************/
+/*
+ * See git commit history for more information.
+ * - Gameblabla
+ * March 15th 2019 : Minor changes.
+ * March 14th 2019 : Use fwrite instead of fputc. Also fix an issue with fread which could cause issues.
+ * March 13th 2019 : Bring it back again due to regressions. Also i parsed some random shit by accident so i fixed it again.
+ * March 9th 2019 : Decomment CrabZ80 related code and removing extra externs.
+ * March 7th 2019 : Comment out CrabZ80 related code.
+ * Feb 2nd 2019 : Sound function names were changed, fix accordingly.
+*/
 
 #include "shared.h"
 

@@ -21,6 +21,14 @@
  *   Sega Master System manager
  *
  ******************************************************************************/
+/*
+ * See git commit history for more information.
+ * - Gameblabla
+ * March 13th 2019 : Minor fixes as part of the CrabZ80's revert. (mostly whitepacing but the TMS code was also broken to some extent)
+ * March 7th 2019 : Some whitepacing and changing variables to c99 datatypes.
+ * Feb 19th 2019 : Minor whitepacing fix.
+ * August 12th 2018 : Minor fixes. (mostly changing variables to c99 datatypes and whitepacing)
+*/
 
 #include "shared.h"
 

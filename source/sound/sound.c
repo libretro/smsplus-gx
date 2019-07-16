@@ -21,7 +21,16 @@
  *   Sound emulation.
  *
  ******************************************************************************/
-
+/*
+ * See git commit history for more information.
+ * - Gameblabla
+ * July 16th 2019 : Remove extra if condition.
+ * June 6th 2019 : Correctly set the PSG parameters for SG-1000 and Colecovision.
+ * March 13th 2019 : Partial revert due to CrabZ80. The switching to C99 datatypes had been done again.
+ * March 7th 2019 : Minor changes to sound.c. (Some trimming down, more switching to C99 datatypes and more.
+ * February 2nd 2019 : Change the names of some sound functions.
+ * October 12th 2019 : Switching some variables in functions to c99 datatypes.
+*/
 #include "shared.h"
 #include "config.h"
 

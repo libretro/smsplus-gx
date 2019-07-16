@@ -21,6 +21,16 @@
  *  Video Display Processor (VDP) emulation.
  *
  ******************************************************************************/
+/*
+ * See git commit history for more information.
+ * - Gameblabla
+ * March 15th 2019 : Fix yet more issues with datatypes in vdp.c
+ * March 14th 2019 : Fix issues as reported by Clang. (in vdp_write)
+ * March 13th 2019 : Minor fixes as part of the CrabZ80's revert. (mostly whitepacing)
+ * March 11th 2019 : Fixed scrolling issues with Gauntlet. Fixed PAL issues too.
+ * March 9th 2019 : Set VDP register to 0xE0 after multiple testings against BIOSes. Fixes Sonic's Edusoft and i think California Games 2.
+ * March 7th 2019 : Whitepacing and minor fixes.
+*/
 
 #include "shared.h"
 #include "hvc.h"

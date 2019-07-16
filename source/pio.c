@@ -21,6 +21,13 @@
  *   I/O chip and peripheral emulation
  *
  ******************************************************************************/
+/*
+ * See git commit history for more information.
+ * - Gameblabla
+ * March 15th 2019 : Fix some clang warnings.
+ * March 13th 2019 : Partial revert due to CrabZ80. The switching to C99 datatypes had been done again.
+ * March 7th 2019 : Clean up, plus switching more variables to c99 datatypes.
+*/
 
 #include "shared.h"
 #include <math.h>

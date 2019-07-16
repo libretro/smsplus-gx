@@ -20,6 +20,13 @@
  *
  ******************************************************************************/
 
+/*
+ * See git commit history for more information.
+ * - Gameblabla
+ * March 13th 2019 : Minor fixes as part of the CrabZ80's revert. (mostly whitepacing but the TMS code was also broken to some extent)
+ * March 7th 2019 : Some whitepacing and changing variables to c99 datatypes.
+*/
+
 #include "shared.h"
 
 int32_t text_counter;               /* Text offset counter */

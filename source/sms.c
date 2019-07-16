@@ -21,6 +21,15 @@
  *   Sega Master System console emulation
  *
  ******************************************************************************/
+/*
+ * See git commit history for more information.
+ * - Gameblabla
+ * July 16th 2019 : Add 4PAK support.
+ * March 13th 2019 : Reverted previous changes (partially) due to regressions.
+ * March 7th 2019 : Removing CrabZ80's core.
+ * Feb 19th 2019 : Minor fix to sms_irq function.
+ * June 6th 2019 : Japanese BIOS does not clear BIOS, fix that.
+*/
 
 #include "shared.h"
 

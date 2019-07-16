@@ -19,6 +19,16 @@
  *   ROM File Loading support
  *
  ******************************************************************************/
+ 
+/*
+ * See git commit history for more information.
+ * - Gameblabla
+ * July 16th 2019 : Add 4PAK support to the list. It also makes use of PAL mode.
+ * June 6th 2019 : Add Blockhole & Alibaba to the list as they rely on the Japanese BIOS and its uninitiliazed memory.
+ * March 14th 2019 : Add NOZIP for building without zip support.
+ * March 11th 2019 : Fantastic Dizzy should run in PAL mode to avoid issues.
+ * August 12th 2018 : Add Bad Apple to the list. (plus minor fixes)
+*/
 
 #include "shared.h"
 
