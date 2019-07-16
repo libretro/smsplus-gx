@@ -91,6 +91,34 @@ static void writemem_mapper_korea(uint16_t offset, uint8_t data)
 	cpu_writemap[offset >> 10][offset & 0x03FF] = data;
 }
 
+/*
+	Mostly similar to Codemasters's writemap function except for 8000-0xBFFF range.
+	Write xx to 3FFE: map bank (xx)&maxbankmask to memory slot in 0000-3FFF region
+	Write yy to 7FFF: map bank (yy)&maxbankmask to memory slot in 4000-7FFF region
+	Write zz to BFFF: map bank ((xx&0x30)+(zz))&maxbankmask to memory slot in 8000-BFFF region
+*/
+static void writemem_mapper_4pak(uint16_t offset, uint8_t data)
+{
+	if (offset == 0x3FFE)
+	{
+		mapper_16k_w(1,data);
+		return;
+	}
+	if (offset == 0x7FFF)
+	{
+		mapper_16k_w(2,data);
+		return;
+	}
+	/* https://github.com/OpenEmu/CrabEmu-Core/blob/a25c7277cd14f9e32647e1b9e1a45621fb051f13/consoles/sms/mapper-4PAA.c#91 
+	 * I could not figure this bit out but it looks like xx was just in fact paging register 1. */
+	if (offset == 0xBFFF)
+	{
+		mapper_16k_w(3, (slot.fcr[1] & 0x30) + data);
+		return;
+	}
+	cpu_writemap[offset >> 10][offset & 0x03FF] = data;
+}
+
 
 void mapper_reset(void)
 {
@@ -107,6 +135,9 @@ void mapper_reset(void)
 		break;
 		case MAPPER_KOREA_MSX:
 			cpu_writemem16 = writemem_mapper_korea_msx;
+		break;
+		case MAPPER_4PAK:
+			cpu_writemem16 = writemem_mapper_4pak;
 		break;
 		default:
 			cpu_writemem16 = writemem_mapper_sega;
@@ -472,8 +503,8 @@ void mapper_16k_w(uint16_t address, uint8_t data)
 		}
 		break;
 		case 1: /* cartridge ROM bank (16k) at $0000-$3FFF */
-		/* first 1k is not fixed (CODEMASTER mapper) */
-		if (slot.mapper == MAPPER_CODIES)
+		/* first 1k is not fixed (CODEMASTER and 4PAK mapper) */
+		if (slot.mapper == MAPPER_CODIES || slot.mapper == MAPPER_4PAK)
 		{
 			cpu_readmap[0] = &slot.rom[(page << 14)];
 		}

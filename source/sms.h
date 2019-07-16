@@ -39,7 +39,8 @@ enum {
 	MAPPER_SEGA       = 1,
 	MAPPER_CODIES     = 2,
 	MAPPER_KOREA      = 3,
-	MAPPER_KOREA_MSX  = 4
+	MAPPER_KOREA_MSX  = 4,
+	MAPPER_4PAK		  = 5
 };
 
 enum {

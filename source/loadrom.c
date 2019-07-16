@@ -22,7 +22,7 @@
 
 #include "shared.h"
 
-#define GAME_DATABASE_CNT 99
+#define GAME_DATABASE_CNT 100
 
 typedef struct
 {
@@ -175,6 +175,10 @@ static rominfo_t game_list[GAME_DATABASE_CNT] =
 	"Alibaba and 40 Thieves"},
 	{0x643B6B76, 0, DEVICE_PAD2B, MAPPER_NONE, DISPLAY_NTSC, TERRITORY_DOMESTIC, CONSOLE_SMS,
 	"Block Hole"},
+	
+	/* 4-PAK mapper for Australian exclusive */
+	{0xA67F2A5C, 0, DEVICE_PAD2B, MAPPER_4PAK, DISPLAY_PAL, TERRITORY_EXPORT, CONSOLE_SMS2,
+	"4 PAK All Action"},
 
 	/* Games requiring 3D Glasses */
 	{0xFBF96C81, 1, DEVICE_PAD2B, MAPPER_SEGA, DISPLAY_NTSC, TERRITORY_EXPORT, CONSOLE_SMS2,
