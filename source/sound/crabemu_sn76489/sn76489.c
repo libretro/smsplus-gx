@@ -71,8 +71,8 @@ uint32_t sn76489_reset(sn76489_t *psg, float clock, float sample_rate, uint16_t 
 
     psg->output_channels = 0xFF; /* All Channels, both sides */
 
-    memset(psg->channel_masks[0], 0xFFFFFFFF, 4 * sizeof(uint32_t));
-    memset(psg->channel_masks[1], 0xFFFFFFFF, 4 * sizeof(uint32_t));
+    memset(psg->channel_masks[0], 0xFF, 4 * sizeof(uint32_t));
+    memset(psg->channel_masks[1], 0xFF, 4 * sizeof(uint32_t));
 
     psg->clocks_per_sample = clock / 16.0f / sample_rate;
 
