@@ -1,6 +1,7 @@
-
 #ifndef FILEIO_H_
 #define FILEIO_H_
+
+#include <stdint.h>
 
 /* Function prototypes */
 uint8_t *loadFromZipByName(char *archive, const char *filename, uint32_t *filesize);
