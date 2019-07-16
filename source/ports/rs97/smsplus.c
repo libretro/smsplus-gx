@@ -393,10 +393,10 @@ void Menu()
 		if (currentselection == 6) print_string("Quit", TextRed, 0, 5, 145, sdl_screen->pixels);
 		else print_string("Quit", TextWhite, 0, 5, 145, sdl_screen->pixels);
 		
-		print_string("Based on SMS Plus by Charles Mcdonald", TextWhite, 0, 5, 175, sdl_screen->pixels);
-		print_string("Fork of SMS Plus GX by gameblabla", TextWhite, 0, 5, 190, sdl_screen->pixels);
-		print_string("Scaler : Alekmaul", TextWhite, 0, 5, 205, sdl_screen->pixels);
-		print_string("Text drawing : n2DLib", TextWhite, 0, 5, 220, sdl_screen->pixels);
+		print_string("Build " __DATE__ ", " __TIME__, TextWhite, 0, 5, 175, sdl_screen->pixels);
+		print_string("Based on SMS Plus by Charles Mcdonald", TextWhite, 0, 5, 195, sdl_screen->pixels);
+		print_string("Fork of SMS Plus GX by gameblabla", TextWhite, 0, 5, 210, sdl_screen->pixels);
+		print_string("Extra code from Alekmaul, n2DLib", TextWhite, 0, 5, 225, sdl_screen->pixels);
 
         while (SDL_PollEvent(&Event))
         {
