@@ -109,7 +109,7 @@ void system_load_state(FILE* fd)
     free(buf);
     #endif
 
-	if ((sms.console != CONSOLE_COLECO) && (sms.console != CONSOLE_SG1000))
+	if ((sms.console != CONSOLE_COLECO) && (sms.console != CONSOLE_SG1000) && (sms.console != CONSOLE_SORDM5))
 	{
 		/* Cartridge by default */
 		slot.rom    = cart.rom;

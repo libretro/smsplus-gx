@@ -686,8 +686,10 @@ static void Menu()
 		if (currentselection == 7) print_string("Quit", TextRed, 0, 5, 165, backbuffer->pixels);
 		else print_string("Quit", TextWhite, 0, 5, 165, backbuffer->pixels);
 
-		print_string("SMS Plus GX Fork by gameblabla", TextWhite, 0, 5, 205, backbuffer->pixels);
-		print_string("Credits: C.Mcdonalds, Alekmaul, n2DLib", TextWhite, 0, 5, 225, backbuffer->pixels);
+		print_string("Build " __DATE__ ", " __TIME__, TextWhite, 0, 5, 175, sdl_screen->pixels);
+		print_string("Based on SMS Plus by Charles Mcdonald", TextWhite, 0, 5, 195, sdl_screen->pixels);
+		print_string("Fork of SMS Plus GX by gameblabla", TextWhite, 0, 5, 210, sdl_screen->pixels);
+		print_string("Extra code from Alekmaul, n2DLib", TextWhite, 0, 5, 225, sdl_screen->pixels);
 
         while (SDL_PollEvent(&Event))
         {
@@ -938,7 +940,7 @@ int main (int argc, char *argv[])
 	}
 	
 	SDL_Init(SDL_INIT_VIDEO);
-	sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_HWSURFACE);
+	sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
 	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 240, 16, 0, 0, 0, 0);
 	backbuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, 0, 0, 0, 0);
 	SDL_ShowCursor(0);

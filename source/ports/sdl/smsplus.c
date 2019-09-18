@@ -311,6 +311,16 @@ static void bios_init()
 		fread(coleco.rom, 0x2000, 1, fd);
 		fclose(fd);
 	}
+	
+	snprintf(bios_path, sizeof(bios_path), "%s%s", gdata.biosdir, "BIOS_sordm5.bin");
+	
+	fd = fopen(bios_path, "rb");
+	if(fd)
+	{
+		/* Seek to end of file, and get size */
+		fread(coleco.rom, 0x2000, 1, fd);
+		fclose(fd);
+	}
 }
 
 static void smsp_gamedata_set(char *filename) 
@@ -650,7 +660,9 @@ int main (int argc, char *argv[])
 	if (strcmp(strrchr(argv[1], '.'), ".col") == 0) option.console = 6;
 	// Sometimes Game Gear games are not properly detected, force them accordingly
 	else if (strcmp(strrchr(argv[1], '.'), ".gg") == 0) option.console = 3;
-
+	// Force M5
+	else if (strcmp(strrchr(argv[1], '.'), ".m5") == 0) option.console = 7;
+	
 	// Load ROM
 	if(!load_rom(argv[1])) {
 		fprintf(stderr, "Error: Failed to load %s.\n", argv[1]);

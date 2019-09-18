@@ -419,7 +419,6 @@ void Menu()
         gfx_font_print_center(final_screen,sdl_screen->h-40-gfx_font_height(font),font,"AMINI port by gameblabla");
         gfx_font_print_center(final_screen,sdl_screen->h-30-gfx_font_height(font),font,"See full credits on github:");
         gfx_font_print_center(final_screen,sdl_screen->h-20-gfx_font_height(font),font,"https://github.com/gameblabla/sms_sdl");
-		
 
 
 		for(uint8_t i = 0; i < 2; i++)

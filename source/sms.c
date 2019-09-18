@@ -169,6 +169,12 @@ void sms_init(void)
 			cpu_readport16 = coleco_port_r;
 			data_bus_pullup = 0xFF;
 		break;
+		
+		case CONSOLE_SORDM5:
+			cpu_writeport16 = sordm5_port_w;
+			cpu_readport16 = sordm5_port_r;
+			data_bus_pullup = 0xFF;
+		break;
 
 		case CONSOLE_SG1000:
 		case CONSOLE_SC3000:
@@ -297,7 +303,29 @@ void sms_reset(void)
       break;
     }
 
-    case CONSOLE_SG1000:
+    case CONSOLE_SORDM5:
+      /* $0000-$1FFF mapped to internal ROM (8K) */
+      for(i = 0x00; i < 0x08; i++)
+      {
+        cpu_readmap[i]  = &coleco.rom[i << 10];
+        cpu_writemap[i] = dummy_write;
+      }
+    
+      /* $2000-$6FFF mapped to cartridge ROM (max. 32K) */
+      for(i = 0x08; i < 0x19; i++)
+      {
+        cpu_readmap[i]  = &cart.rom[i << 10];
+        cpu_writemap[i] = dummy_write;
+      }
+      
+      /* enable internal RAM at $7000-$7FFF (4k internal RAM) */
+      for(i = 0x19; i < 0x21; i++)
+      {
+          cpu_readmap[i] = &sms.wram[(i & 0x07) << 10];
+          cpu_writemap[i] = &sms.wram[(i & 0x07) << 10];
+      }
+      printf("Sord M5 mode\n");
+    break;
     case CONSOLE_SC3000:
     case CONSOLE_SF7000:
     {

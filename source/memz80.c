@@ -435,3 +435,42 @@ uint8_t  coleco_port_r(uint16_t port)
 			return 0xff;
 	}
 }
+
+/*--------------------------------------------------------------------------*/
+/* Sord M5 port handlers                                         */
+/*--------------------------------------------------------------------------*/
+void sordm5_port_w(uint16_t port, uint8_t data)
+{
+	/* A7 is used as enable input */
+	/* A6 & A5 are used to decode the address */
+	switch(port & 0xE0)
+	{
+		case 0x80:
+		return;
+		case 0xa0:
+			tms_write(port,data);
+		return;
+		case 0xc0:
+		return;
+		case 0xe0:
+			psg_write(data);
+		return;
+		default:
+		return;
+	}
+}
+
+uint8_t sordm5_port_r(uint16_t port)
+{
+	/* A7 is used as enable input */
+	/* A6 & A5 are used to decode the address */
+	switch(port & 0xE0)
+	{
+		case 0xa0:
+			return vdp_read(port);
+		case 0xe0:
+			return 0xff;
+		default:
+			return 0xff;
+	}
+}
