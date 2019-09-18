@@ -46,7 +46,9 @@ extern uint8_t tms_port_r(uint16_t port);
 extern void coleco_port_w(uint16_t port, uint8_t data);
 extern uint8_t coleco_port_r(uint16_t port);
 
+#ifdef SORDM5_EMU
 extern void sordm5_port_w(uint16_t port, uint8_t data);
 extern uint8_t sordm5_port_r(uint16_t port);
+#endif
 
 #endif /* _MEMZ80_H_ */

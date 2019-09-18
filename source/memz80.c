@@ -439,6 +439,7 @@ uint8_t  coleco_port_r(uint16_t port)
 /*--------------------------------------------------------------------------*/
 /* Sord M5 port handlers                                         */
 /*--------------------------------------------------------------------------*/
+#ifdef SORDM5_EMU
 void sordm5_port_w(uint16_t port, uint8_t data)
 {
 	/* A7 is used as enable input */
@@ -474,3 +475,4 @@ uint8_t sordm5_port_r(uint16_t port)
 			return 0xff;
 	}
 }
+#endif

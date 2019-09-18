@@ -374,10 +374,12 @@ static void set_config()
 			sms.console = CONSOLE_COLECO;
 			cart.mapper = MAPPER_NONE;
 		break;
+		#ifdef SORDM5_EMU
 		case 7:
 			sms.console = CONSOLE_SORDM5;
 			cart.mapper = MAPPER_NONE;
 		break;
+		#endif
 	}
   
 	switch(option.country)
