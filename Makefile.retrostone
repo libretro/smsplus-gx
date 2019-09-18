@@ -4,13 +4,13 @@ CC			= /opt/retrostone-toolchain/bin/arm-buildroot-linux-musleabihf-gcc
 # Possible choices : rs97, k3s (PAP K3S), sdl, amini, fbdev
 PORT = retrostone
 # Possible choices : alsa, pulse (pulseaudio), oss, sdl12 (SDL 1.2 sound output), portaudio, libao
-SOUND_OUTPUT = tinyalsa
+SOUND_OUTPUT = alsa
 # Possible choices : crabemu_sn76489 (less accurate, GPLv2), maxim_sn76489 (somewhat problematic license but good accuracy)
 SOUND_ENGINE = maxim_sn76489
 # Possible choices : z80 (accurate but proprietary), eighty (EightyZ80's core, GPLv2)
 Z80_CORE = z80
 SCALE2X_UPSCALER = 1
-PROFILE = 0
+PROFILE = APPLY
 ZIP_SUPPORT = 1
 
 SRCDIR		= ./source ./source/cpu_cores/$(Z80_CORE) ./source/sound ./source/unzip

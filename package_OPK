@@ -2,7 +2,7 @@
 
 mkdir -p opk
 cp ./sms_sdl opk/sms_sdl
-cp ./sms_sdl.png opk/icon.png
+cp ./sms_sdl.png opk/sms.png
 cp ./docs/license opk/COPYING
 
 # https://unix.stackexchange.com/questions/219268/how-to-add-new-lines-when-using-echo
@@ -21,12 +21,12 @@ Type=Application
 Name=SMS Plus GX
 Comment=SMS/GG/SG emulator
 Exec=sms_sdl %f
-Icon=icon
+Icon=sms
 Terminal=false
 Type=Application
 Categories=emulators;
-X-OD-NeedsDownscaling=false' > opk/default.rs90.desktop
+X-OD-NeedsDownscaling=false' > opk/default."$1".desktop
 
-mksquashfs ./opk smsplus_rs90.opk -all-root -noappend -no-exports -no-xattrs
+mksquashfs ./opk smsplus_"$1".opk -all-root -noappend -no-exports -no-xattrs
 
 rm -r opk

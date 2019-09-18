@@ -1,5 +1,5 @@
-PRGNAME     = smsplusgx
-CC			= /opt/bittboy-toolchain/bin/arm-miyoo-linux-musleabi-gcc
+PRGNAME     = sms_sdl
+CC			= /opt/bittboy-toolchain/bin/arm-buildroot-linux-musleabi-gcc
 
 # Possible choices : rs97, k3s (PAP K3S), sdl, amini, fbdev
 PORT = bittboy
@@ -10,7 +10,7 @@ SOUND_ENGINE = maxim_sn76489
 # Possible choices : z80 (accurate but proprietary), eighty (EightyZ80's core, GPLv2)
 Z80_CORE = z80
 SCALE2X_UPSCALER = 1
-PROFILE = 0
+PROFILE = APPLY
 ZIP_SUPPORT = 1
 
 SRCDIR		= ./source ./source/cpu_cores/$(Z80_CORE) ./source/sound ./source/unzip
@@ -22,7 +22,7 @@ OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
 OBJ_CP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CP)))
 OBJS		= $(OBJ_C) $(OBJ_CP)
 
-CFLAGS		= -O2 -fdata-sections -ffunction-sections -fsingle-precision-constant -fno-PIC -flto
+CFLAGS		= -Ofast -fdata-sections -ffunction-sections -fsingle-precision-constant -fno-PIC -flto -march=armv5te -mtune=arm926ej-s
 # SMS Plus GX suffers from alignment issues so setting these to 1 helps.
 CFLAGS		+= -falign-functions=1 -falign-jumps=1 -falign-loops=1 -falign-labels=1
 CFLAGS		+= -DALIGN_DWORD
@@ -33,7 +33,7 @@ SRCDIR		+= ./source/text/fb
 CFLAGS		+= -Isource/text/fb
 
 ifeq ($(PROFILE), YES)
-CFLAGS 		+= -fprofile-generate=/home/retrofw/profile
+CFLAGS 		+= -fprofile-generate=/mnt/profile
 else ifeq ($(PROFILE), APPLY)
 CFLAGS		+= -fprofile-use -fbranch-probabilities
 endif

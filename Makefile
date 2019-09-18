@@ -1,8 +1,8 @@
 PRGNAME     = sms.elf
-CC			= clang
+CC			= gcc
 
 # Possible choices : rs97, k3s (PAP K3S), sdl, amini, fbdev
-PORT = sdl
+PORT = amini
 # Possible choices : alsa, pulse (pulseaudio), oss, sdl12 (SDL 1.2 sound output), portaudio, libao
 SOUND_OUTPUT = alsa
 # Possible choices : crabemu_sn76489 (less accurate, GPLv2), maxim_sn76489 (somewhat problematic license but good accuracy)
@@ -22,12 +22,12 @@ OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
 OBJ_CP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CP)))
 OBJS		= $(OBJ_C) $(OBJ_CP)
 
-CFLAGS		= -O0 -g -Weverything
+CFLAGS		= -O0 -g3 -Wextra -Wall
 CFLAGS		+= -DLSB_FIRST -std=gnu99 -DALIGN_DWORD
 CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/scalers -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
 
-SRCDIR		+= ./source/text/fb
-CFLAGS		+= -Isource/text/fb
+SRCDIR		+= ./source/text/sdl
+CFLAGS		+= -Isource/text/sdl
 
 ifeq ($(PROFILE), YES)
 CFLAGS 		+= -fprofile-generate=/home/retrofw/profile
@@ -49,7 +49,7 @@ CFLAGS		+= -Isource/scale2x
 SRCDIR		+= ./source/scale2x
 endif
 
-LDFLAGS     = -nodefaultlibs -lc -lgcc -lm -lSDL -no-pie -Wl,--as-needed -Wl,--gc-sections -s -flto
+LDFLAGS     = -nodefaultlibs -lc -lgcc -lm -lSDL -no-pie -Wl,--as-needed -Wl,--gc-sections -flto
 
 ifeq ($(SOUND_OUTPUT), portaudio)
 LDFLAGS		+= -lportaudio
