@@ -169,13 +169,13 @@ void sms_init(void)
 			cpu_readport16 = coleco_port_r;
 			data_bus_pullup = 0xFF;
 		break;
-		
+		#ifdef SORDM5_EMU
 		case CONSOLE_SORDM5:
 			cpu_writeport16 = sordm5_port_w;
 			cpu_readport16 = sordm5_port_r;
 			data_bus_pullup = 0xFF;
 		break;
-
+		#endif
 		case CONSOLE_SG1000:
 		case CONSOLE_SC3000:
 		case CONSOLE_SF7000:
@@ -303,6 +303,7 @@ void sms_reset(void)
       break;
     }
 
+	#ifdef SORDM5_EMU
     case CONSOLE_SORDM5:
       /* $0000-$1FFF mapped to internal ROM (8K) */
       for(i = 0x00; i < 0x08; i++)
@@ -326,6 +327,7 @@ void sms_reset(void)
       }
       printf("Sord M5 mode\n");
     break;
+    #endif
     case CONSOLE_SC3000:
     case CONSOLE_SF7000:
     {
