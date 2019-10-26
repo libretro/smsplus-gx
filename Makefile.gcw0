@@ -2,7 +2,7 @@ PRGNAME     = sms_sdl
 CC			= /opt/gcw0-toolchain/usr/bin/mipsel-linux-gcc
 
 # Possible choices : rs97, k3s (PAP K3S), sdl, amini, fbdev
-PORT = rs97
+PORT = gcw0
 # Possible choices : alsa, pulse (pulseaudio), oss, sdl12 (SDL 1.2 sound output), portaudio, libao
 SOUND_OUTPUT = alsa
 # Possible choices : crabemu_sn76489 (less accurate, GPLv2), maxim_sn76489 (somewhat problematic license but good accuracy)
@@ -26,7 +26,7 @@ CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-fp-exceptions -mno-che
 # SMS Plus GX suffers from alignment issues so setting these to 1 helps.
 CFLAGS		+= -falign-functions=1 -falign-jumps=1 -falign-loops=1 -falign-labels=1
 CFLAGS		+= -fipa-pta -fsection-anchors -fdelete-dead-exceptions
-CFLAGS		+= -DALIGN_DWORD
+CFLAGS		+= -DALIGN_DWORD -DNOBLANKING_LEFTCOLUM
 CFLAGS		+= -DLSB_FIRST -std=gnu99
 CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/scalers -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
 
@@ -53,7 +53,7 @@ CFLAGS		+= -Isource/scale2x
 SRCDIR		+= ./source/scale2x
 endif
 
-LDFLAGS     = -lc -lgcc -lSDL -lm -Wl,--as-needed -Wl,--gc-sections -flto
+LDFLAGS     = -nodefaultlibs -lc -lgcc -lSDL -lm -Wl,--as-needed -Wl,--gc-sections -flto
 
 ifeq ($(SOUND_OUTPUT), portaudio)
 LDFLAGS		+= -lportaudio
