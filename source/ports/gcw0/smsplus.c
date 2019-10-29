@@ -29,6 +29,7 @@ static SDL_Surface *backbuffer;
 extern SDL_Surface *font;
 extern SDL_Surface *bigfontred;
 extern SDL_Surface *bigfontwhite;
+static SDL_Surface* miniscreen;
 
 static uint8_t selectpressed = 0;
 static uint8_t save_slot = 0;
@@ -52,11 +53,42 @@ static uint_fast8_t dpad_input[4] = {0, 0, 0, 0};
 
 uint32_t update_window_size(uint32_t w, uint32_t h);
 
+static const char *KEEP_ASPECT_FILENAME = "/sys/devices/platform/jz-lcd.0/keep_aspect_ratio";
+
+static inline uint_fast8_t get_keep_aspect_ratio()
+{
+	FILE *f = fopen(KEEP_ASPECT_FILENAME, "rb");
+	if (!f) return false;
+	char c;
+	fread(&c, 1, 1, f);
+	fclose(f);
+	return c == 'Y';
+}
+
+static inline void set_keep_aspect_ratio(uint_fast8_t n)
+{
+	FILE *f = fopen(KEEP_ASPECT_FILENAME, "wb");
+	if (!f) return;
+	char c = n ? 'Y' : 'N';
+	fwrite(&c, 1, 1, f);
+	fclose(f);
+}
+
+static void Clear_video()
+{
+	SDL_FillRect(sdl_screen, NULL, 0);
+	SDL_Flip(sdl_screen);
+	SDL_FillRect(sdl_screen, NULL, 0);
+	SDL_Flip(sdl_screen);
+	#ifdef SDL_TRIPLEBUF
+	SDL_FillRect(sdl_screen, NULL, 0);
+	SDL_Flip(sdl_screen);
+	#endif
+}
+
 static void video_update()
 {
-#ifdef SCALE2X_UPSCALER
 	SDL_Rect dst;
-#endif
 	width_hold = (vdp.reg[0] & 0x20) ? 248 : 256;
 	width_remove = (vdp.reg[0] & 0x20) ? 8 : 0;
 
@@ -79,16 +111,26 @@ static void video_update()
 		width_remember = width_hold;
 	}
 
-	SDL_LockSurface(sdl_screen);
 	switch(option.fullscreen) 
 	{
 		// Native
         case 0: 
         case 1:
-		if(sms.console == CONSOLE_GG) 
-			bitmap_scale(48,0,160,144,160,144,256,sdl_screen->w-160,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(sdl_screen->w-160)/2+(sdl_screen->h-144)/2*sdl_screen->w);
-		else 
-			bitmap_scale(width_remove,0,width_hold,vdp.height,sdl_screen->w,sdl_screen->h,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
+			if(sms.console == CONSOLE_GG) 
+			{
+				dst.x = 48;
+				dst.w = 160;
+				dst.h = 144;
+			}
+			else
+			{
+				dst.x = width_remove;
+				dst.y = 0;
+				dst.w = width_hold;
+				dst.h = vdp.height;
+			}
+			dst.y = 0;
+			SDL_BlitSurface(sms_bitmap,&dst,sdl_screen,NULL);
 		break;
 		// Hqx
 		case 2:
@@ -98,7 +140,7 @@ static void video_update()
 			dst.x = 96;
 			dst.y = 0;
 			dst.w = 320;
-			dst.h = 144*2;
+			dst.h = 288;
 		}
 		else
 		{
@@ -107,12 +149,13 @@ static void video_update()
 			dst.w = width_hold*2;
 			dst.h = vdp.height*2;
 		}
+		if (SDL_MUSTLOCK(scale2x_buf)) SDL_LockSurface(scale2x_buf);
 		scale2x(sms_bitmap->pixels, scale2x_buf->pixels, 512, 1024, 256, 240);
-		bitmap_scale(dst.x,0,dst.w,dst.h,sdl_screen->w,sdl_screen->h,512,0,scale2x_buf->pixels,sdl_screen->pixels);
+		if (SDL_MUSTLOCK(scale2x_buf)) SDL_UnlockSurface(scale2x_buf);
+		SDL_BlitSurface(scale2x_buf,&dst,sdl_screen,NULL);
 #endif
 		break;
 	}
-	SDL_UnlockSurface(sdl_screen);	
 	SDL_Flip(sdl_screen);
 }
 
@@ -324,7 +367,7 @@ static void smsp_gamedata_set(char *filename)
 	snprintf(home_path, sizeof(home_path), "%s/.smsplus/", getenv("HOME"));
 	
 	if (mkdir(home_path, 0755) && errno != EEXIST) {
-		fprintf(stderr, "Failed to create %s: %s\n", home_path, errno);
+		fprintf(stderr, "Failed to create %s: %d\n", home_path, errno);
 	}
 	
 	// Set the game name
@@ -341,7 +384,7 @@ static void smsp_gamedata_set(char *filename)
 	// Set up the sram directory
 	snprintf(gdata.sramdir, sizeof(gdata.sramdir), "%ssram/", home_path);
 	if (mkdir(gdata.sramdir, 0755) && errno != EEXIST) {
-		fprintf(stderr, "Failed to create %s: %s\n", gdata.sramdir, errno);
+		fprintf(stderr, "Failed to create %s: %d\n", gdata.sramdir, errno);
 	}
 	
 	// Set up the sram file
@@ -350,19 +393,19 @@ static void smsp_gamedata_set(char *filename)
 	// Set up the state directory
 	snprintf(gdata.stdir, sizeof(gdata.stdir), "%sstate/", home_path);
 	if (mkdir(gdata.stdir, 0755) && errno != EEXIST) {
-		fprintf(stderr, "Failed to create %s: %s\n", gdata.stdir, errno);
+		fprintf(stderr, "Failed to create %s: %d\n", gdata.stdir, errno);
 	}
 	
 	// Set up the screenshot directory
 	snprintf(gdata.scrdir, sizeof(gdata.scrdir), "%sscreenshots/", home_path);
 	if (mkdir(gdata.scrdir, 0755) && errno != EEXIST) {
-		fprintf(stderr, "Failed to create %s: %s\n", gdata.scrdir, errno);
+		fprintf(stderr, "Failed to create %s: %d\n", gdata.scrdir, errno);
 	}
 	
 	// Set up the sram directory
 	snprintf(gdata.biosdir, sizeof(gdata.biosdir), "%sbios/", home_path);
 	if (mkdir(gdata.biosdir, 0755) && errno != EEXIST) {
-		fprintf(stderr, "Failed to create %s: %s\n", gdata.sramdir, errno);
+		fprintf(stderr, "Failed to create %s: %d\n", gdata.sramdir, errno);
 	}
 	
 }
@@ -649,31 +692,24 @@ static void Menu()
 	char text[50];
     int16_t pressed = 0;
     int16_t currentselection = 1;
-    uint16_t miniscreenwidth = 160;
-    uint16_t miniscreenheight = 144;
-    SDL_Rect dstRect;
     SDL_Event Event;
     
-    SDL_Surface* miniscreen = SDL_CreateRGBSurface(SDL_SWSURFACE, sdl_screen->w, sdl_screen->h, 16, sdl_screen->format->Rmask, sdl_screen->format->Gmask, sdl_screen->format->Bmask, sdl_screen->format->Amask);
-
-    SDL_LockSurface(miniscreen);
+	if (SDL_MUSTLOCK(miniscreen)) SDL_LockSurface(miniscreen);
     if(IS_GG)
         bitmap_scale(48,0,160,144,sdl_screen->w,sdl_screen->h,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)miniscreen->pixels);
     else
-        bitmap_scale(0,0,256,192,sdl_screen->w,sdl_screen->h,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)miniscreen->pixels);
-        
-    SDL_UnlockSurface(miniscreen);
+        bitmap_scale(width_remove,0,width_hold,vdp.height,sdl_screen->w,sdl_screen->h,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)miniscreen->pixels);  
+    if (SDL_MUSTLOCK(miniscreen)) SDL_UnlockSurface(miniscreen);
     
-    SDL_SetAlpha(miniscreen, SDL_SRCALPHA, 92);
+    SDL_SetAlpha(miniscreen, SDL_SRCALPHA, 128);
     
     while (((currentselection != 1) && (currentselection != 7)) || (!pressed))
     {
         pressed = 0;
  		SDL_FillRect( backbuffer, NULL, 0 );
-		
-        dstRect.x = sdl_screen->w-5-miniscreenwidth;
-        dstRect.y = 28;
         SDL_BlitSurface(miniscreen,NULL,backbuffer,NULL);
+        
+		if (SDL_MUSTLOCK(backbuffer)) SDL_LockSurface(backbuffer);
 
 		print_string("SMS PLUS GX", TextWhite, 0, 105, 15, backbuffer->pixels);
 		
@@ -690,7 +726,6 @@ static void Menu()
 		if (currentselection == 3) print_string(text, TextRed, 0, 5, 85, backbuffer->pixels);
 		else print_string(text, TextWhite, 0, 5, 85, backbuffer->pixels);
 		
-
         if (currentselection == 4)
         {
 			switch(option.fullscreen)
@@ -736,6 +771,8 @@ static void Menu()
 		print_string("Build " __DATE__ ", " __TIME__, TextWhite, 0, 5, 195, backbuffer->pixels);
 		print_string("Based on SMS Plus by Charles Mcdonald", TextWhite, 0, 5, 210, backbuffer->pixels);
 		print_string("Fork of SMS Plus GX by gameblabla", TextWhite, 0, 5, 225, backbuffer->pixels);
+		
+		if (SDL_MUSTLOCK(backbuffer)) SDL_UnlockSurface(backbuffer);
 
         while (SDL_PollEvent(&Event))
         {
@@ -781,7 +818,7 @@ static void Menu()
 							break;
 							case 5:
 								option.soundlevel--;
-								if (option.soundlevel < 0)
+								if (option.soundlevel > 4)
 									option.soundlevel = 4;
 							break;
                         }
@@ -797,10 +834,6 @@ static void Menu()
 							break;
                             case 4:
                                 option.fullscreen++;
-								if (option.fullscreen == 2 && sms.console != CONSOLE_GG)
-								{
-									option.fullscreen++;
-								}
                                 if (option.fullscreen > upscalers_available)
                                     option.fullscreen = 0;
 							break;
@@ -836,10 +869,6 @@ static void Menu()
 				break;
                 case 4 :
                     option.fullscreen++;
-					if (option.fullscreen == 2 && sms.console != CONSOLE_GG)
-					{
-						option.fullscreen++;
-					}
                     if (option.fullscreen > upscalers_available)
                         option.fullscreen = 0;
                     break;
@@ -860,14 +889,7 @@ static void Menu()
 		SDL_Flip(sdl_screen);
     }
     
-    SDL_FillRect(sdl_screen, NULL, 0);
-    SDL_Flip(sdl_screen);
-    #ifdef SDL_TRIPLEBUF
-    SDL_FillRect(sdl_screen, NULL, 0);
-    SDL_Flip(sdl_screen);
-    #endif
-    
-    if (miniscreen) SDL_FreeSurface(miniscreen);
+	Clear_video();
     
     if (currentselection == 7)
         quit = 1;
@@ -941,6 +963,7 @@ static void Cleanup(void)
 	if (sdl_screen) SDL_FreeSurface(sdl_screen);
 	if (backbuffer) SDL_FreeSurface(backbuffer);
 	if (sms_bitmap) SDL_FreeSurface(sms_bitmap);
+	if (miniscreen) SDL_FreeSurface(miniscreen);
 	
 	if (bios.rom) free(bios.rom);
 	
@@ -981,9 +1004,9 @@ uint32_t update_window_size(uint32_t w, uint32_t h)
 static void Force_IPU_Mode()
 {
 	if (option.fullscreen == 0)
-		system("echo 1 > /sys/devices/platform/jz-lcd.0/keep_aspect_ratio");
+		set_keep_aspect_ratio(1);
 	else if (option.fullscreen == 1)
-		system("echo 0 > /sys/devices/platform/jz-lcd.0/keep_aspect_ratio");	
+		set_keep_aspect_ratio(0);
 }
 
 
@@ -1043,6 +1066,7 @@ int main (int argc, char *argv[])
 	
 	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 240, 16, 0, 0, 0, 0);
 	backbuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, 0, 0, 0, 0);
+	miniscreen = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, 0, 0, 0, 0);
 	SDL_ShowCursor(0);
 	
 	sdl_joy[0] = SDL_JoystickOpen(0);
@@ -1086,21 +1110,14 @@ int main (int argc, char *argv[])
 		// Execute frame(s)
 		system_frame(0);
 		
-		// Refresh video data
-		video_update();
-		
-		// Output audio
-		Sound_Update();
-
 		if (selectpressed == 1)
 		{
 			update_window_size(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION);
             Menu();
-            SDL_FillRect(sdl_screen, NULL, 0);
+			Clear_video();
             input.system &= (IS_GG) ? ~INPUT_START : ~INPUT_PAUSE;
             selectpressed = 0;
             forcerefresh = 1;
-            
 			Force_IPU_Mode();
 		}
 		
@@ -1172,13 +1189,19 @@ int main (int argc, char *argv[])
 				break;
 			}
 		}
+		
+		// Refresh video data
+		video_update();
+		
+		// Output audio
+		Sound_Update();
 	}
 	
 	config_save();
 	Cleanup();
 	
 	/* Change it back to Normal */
-	system("echo 1 > /sys/devices/platform/jz-lcd.0/keep_aspect_ratio");
+	set_keep_aspect_ratio(1);
 	
 	return 0;
 }
