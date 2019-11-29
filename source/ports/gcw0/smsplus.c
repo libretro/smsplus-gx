@@ -26,16 +26,16 @@ static char home_path[256];
 static SDL_Surface* sdl_screen, *scale2x_buf;
 static SDL_Surface *sms_bitmap;
 static SDL_Surface *backbuffer;
+static SDL_Surface* miniscreen;
 extern SDL_Surface *font;
 extern SDL_Surface *bigfontred;
 extern SDL_Surface *bigfontwhite;
-static SDL_Surface* miniscreen;
 
 static uint8_t selectpressed = 0;
 static uint8_t save_slot = 0;
 static uint8_t quit = 0;
 
-static const int8_t upscalers_available = 1
+static const int8_t upscalers_available = 2
 #ifdef SCALE2X_UPSCALER
 +1
 #endif
@@ -45,13 +45,9 @@ static uint32_t width_hold = 256;
 static uint32_t width_remember = 256;
 static uint32_t width_remove = 0;
 static uint_fast8_t remember_res_height;
-
 static uint_fast8_t scale2x_res = 1;
 static uint_fast8_t forcerefresh = 0;
-
 static uint_fast8_t dpad_input[4] = {0, 0, 0, 0};
-
-uint32_t update_window_size(uint32_t w, uint32_t h);
 
 static const char *KEEP_ASPECT_FILENAME = "/sys/devices/platform/jz-lcd.0/keep_aspect_ratio";
 
@@ -88,74 +84,74 @@ static void Clear_video()
 
 static void video_update()
 {
+	uint32_t dst_x, dst_y, dst_w, dst_h, hide_left;
 	SDL_Rect dst;
-	width_hold = (vdp.reg[0] & 0x20) ? 248 : 256;
-	width_remove = (vdp.reg[0] & 0x20) ? 8 : 0;
 
-	if (remember_res_height != vdp.height || width_remember != width_hold || forcerefresh == 1)
-	{
-		remember_res_height = vdp.height;
-		
-		if (option.fullscreen == 2) scale2x_res = 2;
-		else scale2x_res = 1;
-		
-		if(sms.console == CONSOLE_GG) 
-		{
-			update_window_size(160*scale2x_res, 144*scale2x_res);
-		}
-		else
-		{
-			update_window_size(width_hold*scale2x_res, vdp.height*scale2x_res);
-		}
-		forcerefresh = 0;
-		width_remember = width_hold;
-	}
-
+	SDL_LockSurface(sdl_screen);
 	switch(option.fullscreen) 
 	{
 		// Native
         case 0: 
-        case 1:
-			if(sms.console == CONSOLE_GG) 
-			{
-				dst.x = 48;
-				dst.w = 160;
-				dst.h = 144;
-			}
-			else
-			{
-				dst.x = width_remove;
-				dst.y = 0;
-				dst.w = width_hold;
-				dst.h = vdp.height;
-			}
+		if(sms.console == CONSOLE_GG) 
+			bitmap_scale(48,0,160,144,160,144,256,HOST_WIDTH_RESOLUTION-160,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-160)/2+(HOST_HEIGHT_RESOLUTION-144)/2*HOST_WIDTH_RESOLUTION);
+		else
+		{
+				hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
+				dst_x = hide_left ? 8 : 0;
+				dst_w = (hide_left ? 248 : 256);
+				bitmap_scale(dst_x,0,
+				dst_w,vdp.height,
+				dst_w,vdp.height,
+				256, sdl_screen->w-dst_w,
+				(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(sdl_screen->w-(dst_w))/2+(sdl_screen->h-(vdp.height))/2*sdl_screen->w);
+		}
+		break;
+		// Fullscreen
+		case 1:
+		if(sms.console == CONSOLE_GG) 
+		{
+			dst.x = 48;
 			dst.y = 0;
-			SDL_BlitSurface(sms_bitmap,&dst,sdl_screen,NULL);
+			dst.w = 160;
+			dst.h = 144;
+		}
+		else
+		{
+			hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
+			dst.x = hide_left ? 8 : 0;
+			dst.y = 0;
+			dst.w = (hide_left ? 248 : 256);
+			dst.h = vdp.height;
+		}
+		SDL_SoftStretch(sms_bitmap, &dst, sdl_screen, NULL);
+		break;
+		case 2:
+			bitmap_scale(48,0,160,144,267,240,256,HOST_WIDTH_RESOLUTION-267,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-267)/2+(HOST_HEIGHT_RESOLUTION-240)/2*HOST_WIDTH_RESOLUTION);
 		break;
 		// Hqx
-		case 2:
+		case 3:
 #ifdef SCALE2X_UPSCALER
 		if(sms.console == CONSOLE_GG) 
 		{
 			dst.x = 96;
 			dst.y = 0;
 			dst.w = 320;
-			dst.h = 288;
+			dst.h = 144*2;
 		}
 		else
 		{
-			dst.x = width_remove*2;
+			uint32_t hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
+			dst.x = hide_left ? 16 : 0;
 			dst.y = 0;
-			dst.w = width_hold*2;
+			dst.w = (hide_left ? 248 : 256)*2;
 			dst.h = vdp.height*2;
 		}
-		if (SDL_MUSTLOCK(scale2x_buf)) SDL_LockSurface(scale2x_buf);
 		scale2x(sms_bitmap->pixels, scale2x_buf->pixels, 512, 1024, 256, 240);
-		if (SDL_MUSTLOCK(scale2x_buf)) SDL_UnlockSurface(scale2x_buf);
-		SDL_BlitSurface(scale2x_buf,&dst,sdl_screen,NULL);
+		bitmap_scale(dst.x,0,dst.w,dst.h,HOST_WIDTH_RESOLUTION,HOST_HEIGHT_RESOLUTION,512,0,scale2x_buf->pixels,sdl_screen->pixels);
 #endif
 		break;
 	}
+	SDL_UnlockSurface(sdl_screen);	
 	SDL_Flip(sdl_screen);
 }
 
@@ -519,6 +515,7 @@ static void Input_Remapping()
 	{
 		pressed = 0;
 		SDL_FillRect( backbuffer, NULL, 0 );
+		SDL_BlitSurface(miniscreen,NULL,backbuffer, NULL);
 		
         while (SDL_PollEvent(&Event))
         {
@@ -579,6 +576,7 @@ static void Input_Remapping()
             {
                 default:
 					SDL_FillRect( backbuffer, NULL, 0 );
+					SDL_BlitSurface(miniscreen,NULL,backbuffer, NULL);
 					print_string("Please press button for mapping", TextWhite, TextBlue, 37, 108, backbuffer->pixels);
 					bitmap_scale(0,0,320,240,sdl_screen->w,sdl_screen->h,320,0,(uint16_t* restrict)backbuffer->pixels,(uint16_t* restrict)sdl_screen->pixels);
 					SDL_Flip(sdl_screen);
@@ -692,24 +690,34 @@ static void Menu()
 	char text[50];
     int16_t pressed = 0;
     int16_t currentselection = 1;
+    uint16_t miniscreenwidth = 160;
+    uint16_t miniscreenheight = 144;
+    SDL_Rect dstRect;
     SDL_Event Event;
     
-	if (SDL_MUSTLOCK(miniscreen)) SDL_LockSurface(miniscreen);
-    if(IS_GG)
-        bitmap_scale(48,0,160,144,sdl_screen->w,sdl_screen->h,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)miniscreen->pixels);
-    else
-        bitmap_scale(width_remove,0,width_hold,vdp.height,sdl_screen->w,sdl_screen->h,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)miniscreen->pixels);  
-    if (SDL_MUSTLOCK(miniscreen)) SDL_UnlockSurface(miniscreen);
-    
-    SDL_SetAlpha(miniscreen, SDL_SRCALPHA, 128);
-    
+	if(sms.console == CONSOLE_GG) 
+	{
+		dstRect.x = 48;
+		dstRect.y = 0;
+		dstRect.w = 160;
+		dstRect.h = 144;
+	}
+	else
+	{
+		dstRect.x = (vdp.reg[0] & 0x20) ? 8 : 0;
+		dstRect.y = 0;
+		dstRect.w = ((vdp.reg[0] & 0x20) ? 248 : 256);
+		dstRect.h = vdp.height;
+	}
+	SDL_FillRect( miniscreen, NULL, 0 );
+	SDL_SoftStretch(sms_bitmap, &dstRect, miniscreen, NULL);
+	SDL_SetAlpha(miniscreen, SDL_SRCALPHA, 92);
+
     while (((currentselection != 1) && (currentselection != 7)) || (!pressed))
     {
         pressed = 0;
- 		SDL_FillRect( backbuffer, NULL, 0 );
-        SDL_BlitSurface(miniscreen,NULL,backbuffer,NULL);
-        
-		if (SDL_MUSTLOCK(backbuffer)) SDL_LockSurface(backbuffer);
+        SDL_FillRect( backbuffer, NULL, 0 );
+        SDL_BlitSurface(miniscreen,NULL,backbuffer, NULL);
 
 		print_string("SMS PLUS GX", TextWhite, 0, 105, 15, backbuffer->pixels);
 		
@@ -726,17 +734,21 @@ static void Menu()
 		if (currentselection == 3) print_string(text, TextRed, 0, 5, 85, backbuffer->pixels);
 		else print_string(text, TextWhite, 0, 5, 85, backbuffer->pixels);
 		
+
         if (currentselection == 4)
         {
 			switch(option.fullscreen)
 			{
 				case 0:
-					print_string("Scaling : Fit", TextRed, 0, 5, 105, backbuffer->pixels);
+					print_string("Scaling : Native", TextRed, 0, 5, 105, backbuffer->pixels);
 				break;
 				case 1:
-					print_string("Scaling : Fullscreen", TextRed, 0, 5, 105, backbuffer->pixels);
+					print_string("Scaling : Stretched", TextRed, 0, 5, 105, backbuffer->pixels);
 				break;
 				case 2:
+					print_string("Scaling : 1.5X", TextRed, 0, 5, 105, backbuffer->pixels);
+				break;
+				case 3:
 					print_string("Scaling : EPX/Scale2x", TextRed, 0, 5, 105, backbuffer->pixels);
 				break;
 			}
@@ -746,12 +758,15 @@ static void Menu()
 			switch(option.fullscreen)
 			{
 				case 0:
-					print_string("Scaling : Fit", TextWhite, 0, 5, 105, backbuffer->pixels);
+					print_string("Scaling : Native", TextWhite, 0, 5, 105, backbuffer->pixels);
 				break;
 				case 1:
-					print_string("Scaling : Fullscreen", TextWhite, 0, 5, 105, backbuffer->pixels);
+					print_string("Scaling : Stretched", TextWhite, 0, 5, 105, backbuffer->pixels);
 				break;
 				case 2:
+					print_string("Scaling : 1.5X", TextWhite, 0, 5, 105, backbuffer->pixels);
+				break;
+				case 3:
 					print_string("Scaling : EPX/Scale2x", TextWhite, 0, 5, 105, backbuffer->pixels);
 				break;
 			}
@@ -768,11 +783,10 @@ static void Menu()
 		if (currentselection == 7) print_string("Quit", TextRed, 0, 5, 165, backbuffer->pixels);
 		else print_string("Quit", TextWhite, 0, 5, 165, backbuffer->pixels);
 
-		print_string("Build " __DATE__ ", " __TIME__, TextWhite, 0, 5, 195, backbuffer->pixels);
-		print_string("Based on SMS Plus by Charles Mcdonald", TextWhite, 0, 5, 210, backbuffer->pixels);
-		print_string("Fork of SMS Plus GX by gameblabla", TextWhite, 0, 5, 225, backbuffer->pixels);
-		
-		if (SDL_MUSTLOCK(backbuffer)) SDL_UnlockSurface(backbuffer);
+		print_string("Build " __DATE__ ", " __TIME__, TextWhite, 0, 5, 180, backbuffer->pixels);
+		print_string("Based on SMS Plus by Charles Mcdonald", TextWhite, 0, 5, 195, backbuffer->pixels);
+		print_string("Fork of SMS Plus GX by gameblabla", TextWhite, 0, 5, 210, backbuffer->pixels);
+		print_string("Extra code from Alekmaul, n2DLib", TextWhite, 0, 5, 225, backbuffer->pixels);
 
         while (SDL_PollEvent(&Event))
         {
@@ -809,16 +823,16 @@ static void Menu()
 							break;
                             case 4:
 							option.fullscreen--;
+							if (option.fullscreen < 0)
+								option.fullscreen = upscalers_available;
 							if (option.fullscreen == 2 && sms.console != CONSOLE_GG)
 							{
 								option.fullscreen--;
 							}
-							if (option.fullscreen < 0)
-								option.fullscreen = upscalers_available;
 							break;
 							case 5:
 								option.soundlevel--;
-								if (option.soundlevel > 4)
+								if (option.soundlevel < 0)
 									option.soundlevel = 4;
 							break;
                         }
@@ -834,6 +848,10 @@ static void Menu()
 							break;
                             case 4:
                                 option.fullscreen++;
+								if (option.fullscreen == 2 && sms.console != CONSOLE_GG)
+								{
+									option.fullscreen++;
+								}
                                 if (option.fullscreen > upscalers_available)
                                     option.fullscreen = 0;
 							break;
@@ -869,6 +887,10 @@ static void Menu()
 				break;
                 case 4 :
                     option.fullscreen++;
+					if (option.fullscreen == 2 && sms.console != CONSOLE_GG)
+					{
+						option.fullscreen++;
+					}
                     if (option.fullscreen > upscalers_available)
                         option.fullscreen = 0;
                     break;
@@ -889,8 +911,13 @@ static void Menu()
 		SDL_Flip(sdl_screen);
     }
     
-	Clear_video();
-    
+    SDL_FillRect(sdl_screen, NULL, 0);
+    SDL_Flip(sdl_screen);
+    #ifdef SDL_TRIPLEBUF
+    SDL_FillRect(sdl_screen, NULL, 0);
+    SDL_Flip(sdl_screen);
+    #endif
+
     if (currentselection == 7)
         quit = 1;
 }
@@ -977,38 +1004,6 @@ static void Cleanup(void)
 	system_shutdown();	
 }
 
-uint32_t update_window_size(uint32_t w, uint32_t h)
-{
-	if (sdl_screen)
-	{
-		if (SDL_MUSTLOCK(sdl_screen))
-		SDL_UnlockSurface(sdl_screen);
-	}
-
-	sdl_screen = SDL_SetVideoMode(w, h, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
-			
-	if (!sdl_screen)
-	{
-		printf("SDL_SetVideoMode error\n");
-		return 1;
-	}
-
-	if (SDL_MUSTLOCK(sdl_screen))
-		SDL_LockSurface(sdl_screen);
-	
-	if (vdp.height == 0) remember_res_height = 240;
-	
-	return 0;
-}
-
-static void Force_IPU_Mode()
-{
-	if (option.fullscreen == 0)
-		set_keep_aspect_ratio(1);
-	else if (option.fullscreen == 1)
-		set_keep_aspect_ratio(0);
-}
-
 
 int main (int argc, char *argv[]) 
 {
@@ -1055,22 +1050,17 @@ int main (int argc, char *argv[])
 		return 0;
 	}
 	
-	SDL_Init(SDL_INIT_VIDEO);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE);
 	
-	if (update_window_size(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION) == 1)
-	{
-		fprintf(stderr, "Error: Failed to init video window\n");
-		Cleanup();
-		return 0;
-	}
+	SDL_WM_SetCaption("SMS Plus GX Super", "SMS Plus GX Super");
 	
+	sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_HWSURFACE);
 	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 240, 16, 0, 0, 0, 0);
 	backbuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, 0, 0, 0, 0);
 	miniscreen = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, 0, 0, 0, 0);
 	SDL_ShowCursor(0);
 	
 	sdl_joy[0] = SDL_JoystickOpen(0);
-	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
 	SDL_JoystickEventState(SDL_ENABLE);
 	
 	Sound_Init();
@@ -1102,23 +1092,25 @@ int main (int argc, char *argv[])
 	// Initialize all systems and power on
 	system_poweron();
 	
-	Force_IPU_Mode();
-	
 	// Loop until the user closes the window
 	while (!quit) 
 	{
 		// Execute frame(s)
 		system_frame(0);
 		
+		// Refresh video data
+		video_update();
+		
+		// Output audio
+		Sound_Update();
+		
 		if (selectpressed == 1)
 		{
-			update_window_size(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION);
             Menu();
 			Clear_video();
             input.system &= (IS_GG) ? ~INPUT_START : ~INPUT_PAUSE;
             selectpressed = 0;
             forcerefresh = 1;
-			Force_IPU_Mode();
 		}
 		
 		if (SDL_PollEvent(&event)) 
@@ -1189,19 +1181,10 @@ int main (int argc, char *argv[])
 				break;
 			}
 		}
-		
-		// Refresh video data
-		video_update();
-		
-		// Output audio
-		Sound_Update();
 	}
 	
 	config_save();
 	Cleanup();
-	
-	/* Change it back to Normal */
-	set_keep_aspect_ratio(1);
 	
 	return 0;
 }
