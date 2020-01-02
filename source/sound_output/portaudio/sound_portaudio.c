@@ -15,8 +15,6 @@
 PaStream *apu_stream;
 static int16_t buffer_snd[SOUND_FREQUENCY * 2];
 
-#define NONBLOCKING_AUDIO
-
 #ifdef NONBLOCKING_AUDIO
 static int patestCallback( const void *inputBuffer, void *outputBuffer,
                            unsigned long framesPerBuffer,

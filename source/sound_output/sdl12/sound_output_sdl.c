@@ -145,7 +145,7 @@ void Sound_Update()
 	}
 	
 	SDL_LockAudio();
-	sdl_write_buffer(buffer_snd, (SOUND_FREQUENCY / snd.fps));
+	sdl_write_buffer((int16_t*)buffer_snd, (SOUND_FREQUENCY / snd.fps));
 	SDL_UnlockAudio();
 }
 

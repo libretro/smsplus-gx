@@ -128,10 +128,7 @@ void Sound_Init(void)
 void Sound_Update(void)
 {
 	uint32_t i;
-	uint32_t len = SOUND_FREQUENCY / snd.fps;
-	long ret;
-
-	if (!handle) return;
+	long len = (SOUND_FREQUENCY / snd.fps), ret;
 
 	for (i = 0; i < (4 * len); i++) 
 	{
@@ -150,26 +147,10 @@ void Sound_Update(void)
 
 void Sound_Close(void)
 {
-	uint32_t i;
-	uint32_t len = SOUND_FREQUENCY / snd.fps;
-	long ret;
-	
 	if (handle)
 	{
-		/* Write Silence to Audio device */
-		for (i = 0; i < (4 * len); i++) 
-		{
-			buffer_snd[i * 2] = buffer_snd[i * 2 + 1] = 0;
-		}
-		ret = snd_pcm_writei(handle, buffer_snd, len);
-		while(ret != len) 
-		{
-			if (ret < 0) snd_pcm_prepare( handle );
-			else len -= ret;
-			ret = snd_pcm_writei(handle, buffer_snd, len);
-		}
-
-		snd_pcm_drain(handle);
+		snd_pcm_drop(handle);
 		snd_pcm_close(handle);
+		snd_config_update_free_global();
 	}
 }
