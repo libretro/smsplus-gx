@@ -21,7 +21,7 @@ t_config option;
 static char home_path[256];
 
 static SDL_Surface* sdl_screen, *scale2x_buf;
-static SDL_Surface *sms_bitmap;
+SDL_Surface *sms_bitmap;
 static SDL_Surface *backbuffer;
 extern SDL_Surface *font;
 extern SDL_Surface *bigfontred;

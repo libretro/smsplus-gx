@@ -832,9 +832,13 @@ static void remap_8_to_16(int32_t line)
 	int32_t i;
 	uint16_t *p = (uint16_t *)&bitmap.data[(line * bitmap.pitch)];
 	int32_t width = (bitmap.viewport.w)+2 * bitmap.viewport.x;
+	
+	LOCK_VIDEO
 
 	for(i = 0; i < width; i++)
 	{
 		p[i] = pixel[ internal_buffer[i] & PIXEL_MASK ];
 	}
+	
+	UNLOCK_VIDEO
 }

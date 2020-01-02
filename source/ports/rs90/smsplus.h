@@ -1,6 +1,8 @@
 #ifndef SMSPLUS_H
 #define SMSPLUS_H
 
+#include <SDL/SDL.h>
+
 #define HOST_WIDTH_RESOLUTION 240
 #define HOST_HEIGHT_RESOLUTION 160
 
@@ -32,6 +34,11 @@
 #define CONFIG_BUTTON_SEVEN 15
 #define CONFIG_BUTTON_EIGHT 16
 #define CONFIG_BUTTON_NINE 17
+
+extern SDL_Surface* sms_bitmap;
+
+#define LOCK_VIDEO SDL_LockSurface(sms_bitmap);
+#define UNLOCK_VIDEO SDL_UnlockSurface(sms_bitmap);
 
 typedef struct {
 	char gamename[256];

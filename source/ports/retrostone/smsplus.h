@@ -4,6 +4,7 @@
 #include <SDL/SDL.h>
 
 extern SDL_Surface* sdl_screen;
+extern SDL_Surface* sms_bitmap;
 
 #define HOST_WIDTH_RESOLUTION 320
 #define HOST_HEIGHT_RESOLUTION 240
@@ -15,7 +16,6 @@ extern SDL_Surface* sdl_screen;
 #define VIDEO_HEIGHT_SMS 192
 #define VIDEO_WIDTH_GG 160
 #define VIDEO_HEIGHT_GG 144
-
 
 /* Input defines for custom remapping */
 #define CONFIG_BUTTON_UP 0
@@ -40,6 +40,9 @@ extern SDL_Surface* sdl_screen;
 #define CONFIG_BUTTON_NINE 18
 
 //#define VSYNC_SUPPORTED 1
+
+#define LOCK_VIDEO SDL_LockSurface(sms_bitmap);
+#define UNLOCK_VIDEO SDL_UnlockSurface(sms_bitmap);
 
 typedef struct {
 	char gamename[256];

@@ -21,7 +21,8 @@ static gamedata_t gdata;
 t_config option;
 
 SDL_Surface* sdl_screen;
-static SDL_Surface* img_background, *sms_bitmap;
+SDL_Surface *sms_bitmap;
+static SDL_Surface* img_background;
 uint32_t countedFrames = 0;
 uint32_t start;
 

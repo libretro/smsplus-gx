@@ -17,7 +17,7 @@ static gamedata_t gdata;
 t_config option;
 
 static SDL_Surface* sdl_screen, *backbuffer;
-static SDL_Surface *sms_bitmap;
+SDL_Surface *sms_bitmap;
 
 static char home_path[256];
 

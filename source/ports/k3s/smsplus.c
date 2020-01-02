@@ -20,8 +20,9 @@ static gamedata_t gdata;
 
 t_config option;
 SDL_Surface* sdl_screen;
-static SDL_Surface *img_background, *scale2x_buf, *sms_bitmap;
+static SDL_Surface *img_background, *scale2x_buf;
 static char home_path[256];
+SDL_Surface *sms_bitmap;
 
 static SDL_Joystick* joystick[2];
 

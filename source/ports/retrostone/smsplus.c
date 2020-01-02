@@ -22,7 +22,7 @@ static char home_path[256];
 
 SDL_Surface* sdl_screen;
 static SDL_Surface *scale2x_buf;
-static SDL_Surface *sms_bitmap;
+SDL_Surface *sms_bitmap;
 static SDL_Surface *backbuffer;
 extern SDL_Surface *font;
 extern SDL_Surface *bigfontred;

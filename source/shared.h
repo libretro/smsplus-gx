@@ -49,6 +49,9 @@
 #include "z80_wrap.h"
 #include "sound_output.h"
 
+/* For lock and unlocking screen surface */
+#include "smsplus.h"
+
 #ifndef NOZIP_SUPPORT
 #include "miniz.h"
 #include "fileio.h"
