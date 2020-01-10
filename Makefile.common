@@ -1,0 +1,37 @@
+SOURCES_CXX :=
+SOURCES_C   :=
+
+DEPS_DIR     	  := $(CORE_DIR)/deps
+LIBRETRO_COMM_DIR := $(CORE_DIR)/libretro-common
+MEDNAFEN_DIR := $(CORE_DIR)/mednafen
+CORE_EMU_DIR := $(MEDNAFEN_DIR)/pce_fast
+CDROM_DIR         := $(MEDNAFEN_DIR)/cdrom
+
+INCFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/scalers -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
+
+SRCDIR		= ./source ./source/cpu_cores/$(Z80_CORE) ./source/sound ./source/unzip
+SRCDIR		+= ./source/scalers ./source/ports/$(PORT) ./source/sound/$(SOUND_ENGINE) ./source/sound_output/$(SOUND_OUTPUT)
+VPATH		= $(SRCDIR)
+
+ifeq ($(PROFILE), YES)
+CFLAGS 		+= -fprofile-generate=/home/retrofw/profile
+else ifeq ($(PROFILE), APPLY)
+CFLAGS		+= -fprofile-use -fbranch-probabilities
+endif
+
+ifeq ($(SOUND_ENGINE), maxim_sn76489)
+CFLAGS 		+= -DMAXIM_PSG
+endif
+
+ifeq ($(ZIP_SUPPORT), 0)
+CFLAGS 		+= -DNOZIP_SUPPORT
+endif
+
+ifeq ($(SCALE2X_UPSCALER), 1)
+CFLAGS 		+= -DSCALE2X_UPSCALER
+CFLAGS		+= -Isource/scale2x
+SRCDIR		+= ./source/scale2x
+endif
+
+SOURCES_C		+= $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.c))
+SOURCES_CXX		+= $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.cpp))

@@ -14,7 +14,6 @@ source/nonfree/
 sms_sdl
 *.out
 log.txt
-Makefile
-Makefile.*
 ./sms_sdl
 *.ipk
+*.so
