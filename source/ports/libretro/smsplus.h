@@ -11,10 +11,6 @@
 #define VIDEO_WIDTH_GG 160
 #define VIDEO_HEIGHT_GG 144
 
-//#define VSYNC_SUPPORTED 1
-
-//extern SDL_Surface* sms_bitmap;
-
 #define LOCK_VIDEO
 #define UNLOCK_VIDEO
 
