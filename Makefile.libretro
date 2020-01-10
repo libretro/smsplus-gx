@@ -50,7 +50,7 @@ SCALE2X_UPSCALER = 0
 PROFILE = 0
 ZIP_SUPPORT = 0
 
-TARGET_NAME := sms_plus
+TARGET_NAME := sms_plus_gx
 
 arch = intel
 ifeq ($(shell uname -p),powerpc)
@@ -418,6 +418,12 @@ endif
 
 include Makefile.common
 
+FLAGS += -DALIGN_DWORD
+
+ifneq ($(MSB_FIRST),1)
+FLAGS += -DLSB_FIRST
+endif
+
 ifneq (,$(findstring msvc,$(platform)))
 WARNINGS :=
 else
@@ -433,7 +439,7 @@ endif
 
 GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
 ifneq ($(GIT_VERSION)," unknown")
-	CXXFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
+	FLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
 endif
 
 ifeq ($(NO_GCC),1)
