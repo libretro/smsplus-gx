@@ -1,17 +1,10 @@
 SOURCES_CXX :=
 SOURCES_C   :=
 
-DEPS_DIR     	  := $(CORE_DIR)/deps
-LIBRETRO_COMM_DIR := $(CORE_DIR)/libretro-common
-MEDNAFEN_DIR := $(CORE_DIR)/mednafen
-CORE_EMU_DIR := $(MEDNAFEN_DIR)/pce_fast
-CDROM_DIR         := $(MEDNAFEN_DIR)/cdrom
-
 INCFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/scalers -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
 
-SRCDIR		= ./source ./source/cpu_cores/$(Z80_CORE) ./source/sound ./source/unzip
+SRCDIR		:= ./source ./source/cpu_cores/$(Z80_CORE) ./source/sound ./source/unzip
 SRCDIR		+= ./source/scalers ./source/ports/$(PORT) ./source/sound/$(SOUND_ENGINE) ./source/sound_output/$(SOUND_OUTPUT)
-VPATH		= $(SRCDIR)
 
 ifeq ($(PROFILE), YES)
 CFLAGS 		+= -fprofile-generate=/home/retrofw/profile

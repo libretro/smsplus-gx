@@ -457,6 +457,11 @@ else
    FLAGS += -O2 -DNDEBUG $(EXTRA_GCC_FLAGS)
 endif
 
+ifneq ($(SANITIZER),)
+FLAGS += -fsanitize=$(SANITIZER)
+LDFLAGS += -fsanitize=$(SANITIZER)
+endif
+
 LDFLAGS += $(fpic) $(SHARED)
 FLAGS += $(fpic) $(NEW_GCC_FLAGS) $(INCFLAGS) $(INCFLAGS_PLATFORM)
 
