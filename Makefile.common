@@ -37,4 +37,5 @@ endif
 
 SOURCES_C += \
     ./source/sound_output/libretro/sound_output_libretro.c \
+    ./source/ports/libretro/libretro_state.c \
     ./source/ports/libretro/smsplus_libretro.c

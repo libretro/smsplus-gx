@@ -13,6 +13,7 @@
 
 #include <libretro.h>
 #include <streams/memory_stream.h>
+#include <libretro_state.h>
 
 #ifdef _MSC_VER
 #include "msvc_compat.h"
@@ -42,6 +43,7 @@ static retro_input_state_t input_state_cb;
 retro_audio_sample_batch_t audio_batch_cb;
 
 static unsigned libretro_supports_bitmasks;
+static unsigned libretro_serialize_size;
 static unsigned width;
 static unsigned height;
 
@@ -486,6 +488,8 @@ bool retro_load_game(const struct retro_game_info *info)
    // Initialize all systems and power on
    system_poweron();
 
+   libretro_serialize_size = 0;
+
    return 1;
 }
 
@@ -602,17 +606,38 @@ void retro_set_video_refresh(retro_video_refresh_t cb)
 
 size_t retro_serialize_size(void)
 {
-   return 0;
+   if (libretro_serialize_size == 0)
+   {
+      /* Something arbitrarily big.*/
+      uint8_t *buffer = (uint8_t*)malloc(1000000);
+      memstream_set_buffer(buffer, 1000000);
+
+      system_save_state_mem();
+      libretro_serialize_size = memstream_get_last_size();
+      free(buffer);
+   }
+
+   return libretro_serialize_size;
 }
 
 bool retro_serialize(void *data, size_t size)
 {
-   return 0;
+   if (size != libretro_serialize_size)
+      return 0;
+   
+   memstream_set_buffer((uint8_t*)data, size);
+   system_save_state_mem();
+   return 1;
 }
 
 bool retro_unserialize(const void *data, size_t size)
 {
-   return 0;
+   if (size != libretro_serialize_size)
+      return 0;
+
+   memstream_set_buffer((uint8_t*)data, size);
+   system_load_state_mem();
+   return 1;
 }
 
 void *retro_get_memory_data(unsigned type)
