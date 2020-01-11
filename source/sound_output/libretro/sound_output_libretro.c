@@ -20,13 +20,15 @@ void Sound_Init()
 void Sound_Update()
 {
 	int32_t i;
-	for (i = 0; i < (4 * (SOUND_FREQUENCY / snd.fps)); i++) 
+	long len = (SOUND_FREQUENCY / snd.fps);
+
+	for (i = 0; i < len; i++)
 	{
 		buffer_snd[i * 2] = snd.output[1][i] * option.soundlevel;
 		buffer_snd[i * 2 + 1] = snd.output[0][i] * option.soundlevel;
 	}
 
-	audio_batch_cb((const int16_t*)buffer_snd, (size_t) (SOUND_FREQUENCY / snd.fps));
+	audio_batch_cb((const int16_t*)buffer_snd, (size_t) len);
 }
 
 void Sound_Close()
