@@ -108,34 +108,9 @@ void smsp_state(uint8_t slot_number, uint8_t mode)
 
 void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode)
 {
-   // Set up save file name
-   FILE *fd;
-   switch(mode)
-   {
-      case SRAM_SAVE:
-         if(sms.save)
-         {
-            fd = fopen(gdata.sramfile, "wb");
-            if (fd)
-            {
-               fwrite(sram, 0x8000, 1, fd);
-               fclose(fd);
-            }
-         }
-         break;
-
-      case SRAM_LOAD:
-         fd = fopen(gdata.sramfile, "rb");
-         if (fd)
-         {
-            sms.save = 1;
-            fread(sram, 0x8000, 1, fd);
-            fclose(fd);
-         }
-         else
-            memset(sram, 0x00, 0x8000);
-         break;
-   }
+   (void)sram;
+   (void)slot_number;
+   (void)mode;
 }
 
 static uint32_t sdl_controls_update_input(int k, int32_t p)
@@ -645,6 +620,8 @@ void *retro_get_memory_data(unsigned type)
    {
       case RETRO_MEMORY_SYSTEM_RAM:
          return sms.wram;
+      case RETRO_MEMORY_SAVE_RAM:
+         return cart.sram;
    }
 
    return NULL;
@@ -656,6 +633,8 @@ size_t retro_get_memory_size(unsigned type)
    {
       case RETRO_MEMORY_SYSTEM_RAM:
          return 0x2000;
+      case RETRO_MEMORY_SAVE_RAM:
+         return 0x8000;
    }
 
    return 0;
