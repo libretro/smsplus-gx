@@ -9,7 +9,6 @@
 *.bin
 *.opk
 core
-include/
 source/nonfree/
 sms_sdl
 *.out
