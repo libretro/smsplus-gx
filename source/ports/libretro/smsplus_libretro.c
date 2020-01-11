@@ -641,11 +641,23 @@ bool retro_unserialize(const void *data, size_t size)
 
 void *retro_get_memory_data(unsigned type)
 {
+   switch (type)
+   {
+      case RETRO_MEMORY_SYSTEM_RAM:
+         return sms.wram;
+   }
+
    return NULL;
 }
 
 size_t retro_get_memory_size(unsigned type)
 {
+   switch (type)
+   {
+      case RETRO_MEMORY_SYSTEM_RAM:
+         return 0x2000;
+   }
+
    return 0;
 }
 
