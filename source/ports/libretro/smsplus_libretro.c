@@ -12,6 +12,7 @@
 #include <stdarg.h>
 
 #include <libretro.h>
+#include <streams/memory_stream.h>
 
 #ifdef _MSC_VER
 #include "msvc_compat.h"
@@ -500,7 +501,7 @@ void retro_run(void)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       check_variables();
-   
+
    input_poll_cb();
 
    input.pad[0] = 0;

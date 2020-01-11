@@ -1,10 +1,11 @@
 SOURCES_CXX :=
 SOURCES_C   :=
 
-INCFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/scalers -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
+INCFLAGS		+= -Isource/ports/libretro -Isource/ports/libretro/libretro-common/include
+INCFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/scalers -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
 
 SRCDIR		:= ./source ./source/cpu_cores/$(Z80_CORE) ./source/sound ./source/unzip
-SRCDIR		+= ./source/scalers ./source/ports/$(PORT) ./source/sound/$(SOUND_ENGINE) ./source/sound_output/$(SOUND_OUTPUT)
+SRCDIR		+= ./source/scalers ./source/sound/$(SOUND_ENGINE)
 
 ifeq ($(PROFILE), YES)
 CFLAGS 		+= -fprofile-generate=/home/retrofw/profile
@@ -28,3 +29,12 @@ endif
 
 SOURCES_C		+= $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.c))
 SOURCES_CXX		+= $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.cpp))
+
+ifeq ($(STATIC_LINKING),1)
+else
+SOURCES_C       += ./source/ports/libretro/libretro-common/streams/memory_stream.c
+endif
+
+SOURCES_C += \
+    ./source/sound_output/libretro/sound_output_libretro.c \
+    ./source/ports/libretro/smsplus_libretro.c
