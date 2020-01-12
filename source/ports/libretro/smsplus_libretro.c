@@ -287,8 +287,6 @@ bool retro_load_game(const struct retro_game_info *info)
    option.country = 0;
    option.console = 0;
 
-   strcpy(option.game_name, info->path);
-
    // Load ROM
    if (!load_rom_mem((const char*)info->data, info->size))
    {
@@ -296,8 +294,6 @@ bool retro_load_game(const struct retro_game_info *info)
       Cleanup();
       return 0;
    }
-
-   strcpy(option.game_name, info->path);
 
    width =  (sms.console == CONSOLE_GG) ? VIDEO_WIDTH_GG  : VIDEO_WIDTH_SMS;
    height = (sms.console == CONSOLE_GG) ? VIDEO_HEIGHT_GG : VIDEO_HEIGHT_SMS;
