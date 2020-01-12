@@ -1,93 +1,27 @@
+#include <streams/memory_stream.h>
+
 #include "libretro_state.h"
 #include "shared.h"
 
-static uint8_t state[0x10000];
-static uint32_t bufferptr;
 #ifndef MAXIM_PSG
 extern sn76489_t psg_sn;
 #endif
 
-typedef struct
+static uint64_t state_write(void *in_data, size_t size, size_t n_elem, memstream_t *stream)
 {
-   uint8_t *buf;
-   size_t size;
-   size_t max_size;
-} memstream_t;
-
-typedef memstream_t memstream;
-
-static void memstream_update_pos(memstream *fp)
-{
-   if (fp && fp->size > fp->max_size)
-      fp->max_size = fp->size;
-}
-
-static void *memstream_open(const uint8_t *name)
-{
-   memstream *fp;
-
-   if (name == NULL)
-      return NULL;
-
-   fp = (memstream *)calloc(1, sizeof(*fp));
-   if (fp == NULL)
-      return NULL;
-
-   fp->buf = (char *)name;
-   fp->size = 0;
-   fp->max_size = 0;
-
-   return fp;
-}
-
-static void memstream_close(void *file)
-{
-   memstream *fp = (memstream *)file;
-
-   if (!fp)
-      return;
-
-   free(fp);
-}
-
-static int64_t state_write(void *in_data, size_t size, size_t n_elem, void *stream)
-{
-   memstream *fp = (memstream *)stream;
-   int64_t len = size * n_elem;
-
-   memcpy(fp->buf + fp->size, in_data, len);
-   fp->size += len;
-   memstream_update_pos(fp);
-
-   return len;
-}
-
-static int state_read(void *in_data, size_t size, size_t n_elem, void *stream)
-{
-   memstream *fp = (memstream *)stream;
    uint64_t len = size * n_elem;
-
-   if (fp == NULL || in_data == NULL)
-      return 0;
-
-   memcpy(in_data, fp->buf + fp->size, len);
-   fp->size += len;
-   memstream_update_pos(fp);
-
-   return 1;
+   return memstream_write(stream, in_data, len);
 }
 
-static uint32_t system_save_state_mem_size(void)
+static uint64_t state_read(void *in_data, size_t size, size_t n_elem, memstream_t *stream)
 {
-   return (64 * 1024);
+   uint64_t len = size * n_elem;
+   return memstream_read(stream, in_data, len);
 }
 
-uint32_t system_save_state_mem(void* data, size_t size)
+uint32_t system_save_state_mem(void)
 {
-   void *fd = memstream_open(data);
-
-   if (!fd)
-      return 1;
+   memstream_t *fd = memstream_open(1);
 
    /* Save VDP context */
    state_write(&vdp, sizeof(vdp_t), sizeof(int8_t), fd);
@@ -117,13 +51,11 @@ uint32_t system_save_state_mem(void* data, size_t size)
    return 0;
 }
 
-void system_load_state_mem(const void* data, size_t size)
+void system_load_state_mem(void)
 {
    uint8_t *buf;
-   void *fd = memstream_open(data);
-
-   if (!fd)
-      return 1;
+   uint32_t i;
+   memstream_t *fd = memstream_open(0);
 
    /* Initialize everything */
    system_reset();
@@ -164,8 +96,6 @@ void system_load_state_mem(const void* data, size_t size)
    free(buf);
    #endif
 
-   memstream_close(fd);
-
    if ((sms.console != CONSOLE_COLECO) && (sms.console != CONSOLE_SG1000) && (sms.console != CONSOLE_SORDM5))
    {
       /* Cartridge by default */
@@ -195,13 +125,15 @@ void system_load_state_mem(const void* data, size_t size)
 
    /* Force full pattern cache update */
    bg_list_index = 0x200;
-   for(uint16_t i = 0; i < 0x200; i++)
+   for(i = 0; i < 0x200; i++)
    {
       bg_name_list[i] = i;
       bg_name_dirty[i] = 255;
    }
 
    /* Restore palette */
-   for(uint32_t i = 0; i < PALETTE_SIZE; i++)
+   for(i = 0; i < PALETTE_SIZE; i++)
       palette_sync(i);
+
+   memstream_close(fd);
 }
