@@ -483,3 +483,34 @@ uint32_t load_rom (char *filename)
 
 	return 1;
 }
+
+uint32_t load_rom_mem (const char *data, size_t size)
+{
+	if(cart.rom)
+	{
+		free(cart.rom);
+		cart.rom = NULL;
+	}
+
+	cart.size = size;
+	if (cart.size < 0x4000) cart.size = 0x4000;
+	cart.rom = malloc(cart.size);
+	memcpy (cart.rom, data, size);
+
+	/* Take care of image header, if present */
+	if ((cart.size / 512) & 1)
+	{
+		cart.size -= 512;
+		memcpy (cart.rom, cart.rom + 512, cart.size);
+	}
+
+	/* 16k pages */
+	cart.pages = cart.size / 0x4000;
+
+	cart.crc = crc32 (0, cart.rom, cart.size);
+	cart.loaded = 1;
+
+	set_config();
+
+	return 1;
+}
