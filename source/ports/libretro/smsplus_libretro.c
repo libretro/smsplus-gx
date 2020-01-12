@@ -289,16 +289,6 @@ bool retro_load_game(const struct retro_game_info *info)
 
    strcpy(option.game_name, info->path);
 
-   // Force Colecovision mode if extension is .col
-   if (strcmp(strrchr(info->path, '.'), ".col") == 0)
-      option.console = 6;
-   // Sometimes Game Gear games are not properly detected, force them accordingly
-   else if (strcmp(strrchr(info->path, '.'), ".gg") == 0)
-      option.console = 3;
-   // Force M5
-   else if (strcmp(strrchr(info->path, '.'), ".m5") == 0)
-      option.console = 7;
-
    // Load ROM
    if (!load_rom_mem((const char*)info->data, info->size))
    {
