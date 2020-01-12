@@ -300,7 +300,7 @@ bool retro_load_game(const struct retro_game_info *info)
       option.console = 7;
 
    // Load ROM
-   if (!load_rom(info->path))
+   if (!load_rom_mem((const char*)info->data, info->size))
    {
       fprintf(stderr, "Error: Failed to load %s.\n", info->path);
       Cleanup();
@@ -354,7 +354,6 @@ void retro_unload_game(void)
 
 void retro_run(void)
 {
-   unsigned i = 0;
    bool updated = false;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
@@ -382,7 +381,7 @@ void retro_get_system_info(struct retro_system_info *info)
    memset(info, 0, sizeof(*info));
    info->library_name = APP_NAME;
    info->library_version = APP_VERSION GIT_VERSION;
-   info->need_fullpath = true;
+   info->need_fullpath = false;
    info->valid_extensions = "sms|bin|rom|col|gg";
    info->block_extract = false;
 }
