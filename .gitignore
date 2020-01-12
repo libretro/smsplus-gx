@@ -16,3 +16,4 @@ log.txt
 ./sms_sdl
 *.ipk
 *.so
+.vscode

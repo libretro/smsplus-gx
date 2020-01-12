@@ -545,12 +545,12 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 {
    memset(info, 0, sizeof(*info));
 
-   info->timing.fps = 60.0;
-   info->timing.sample_rate = 44100.0;
-   info->geometry.base_width = 256;
-   info->geometry.base_height = 192;
-   info->geometry.max_width = 256;
-   info->geometry.max_height = 192;
+   info->timing.fps            = 60.0;
+   info->timing.sample_rate    = 44100.0;
+   info->geometry.base_width   = width;
+   info->geometry.base_height  = height;
+   info->geometry.max_width    = width;
+   info->geometry.max_height   = height;
    info->geometry.aspect_ratio = 4.0 / 3.0;
 }
 
