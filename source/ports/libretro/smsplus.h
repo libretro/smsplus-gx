@@ -1,8 +1,6 @@
 #ifndef SMSPLUS_H
 #define SMSPLUS_H
 
-//#include <SDL/SDL.h>
-
 #define HOST_WIDTH_RESOLUTION 640
 #define HOST_HEIGHT_RESOLUTION 480
 
@@ -20,7 +18,7 @@ typedef struct {
 	char sramfile[256];
 	char stdir[256];
 	char scrdir[256];
-	char biosdir[256];
+	char biosdir[512];
 } gamedata_t;
 
 void smsp_state(uint8_t slot_number, uint8_t mode);

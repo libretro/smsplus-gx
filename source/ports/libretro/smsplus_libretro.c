@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <libgen.h>
 #include <errno.h>
-#include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
 
@@ -46,6 +45,14 @@ static unsigned libretro_supports_bitmasks;
 static unsigned libretro_serialize_size;
 static unsigned width;
 static unsigned height;
+
+#ifdef _WIN32
+#define path_default_slash() "\\"
+#define path_default_slash_c() '\\'
+#else
+#define path_default_slash() "/"
+#define path_default_slash_c() '/'
+#endif
 
 #define MAX_BUTTONS 6
 
@@ -174,10 +181,7 @@ static void smsp_gamedata_set(char *filename)
    }
 
    // Set up the bios directory
-   snprintf(gdata.biosdir, sizeof(gdata.biosdir), "%s/", retro_system_directory);
-   if (mkdir(gdata.biosdir, 0755) && errno != EEXIST) {
-      fprintf(stderr, "Failed to create %s: %d\n", gdata.sramdir, errno);
-   }
+   snprintf(gdata.biosdir, sizeof(gdata.biosdir), "%s%c", retro_system_directory, path_default_slash_c());
 }
 
 static void Cleanup(void)
