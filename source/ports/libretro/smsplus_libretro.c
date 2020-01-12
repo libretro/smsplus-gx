@@ -47,13 +47,15 @@ static unsigned libretro_serialize_size;
 static unsigned width;
 static unsigned height;
 
+#define MAX_BUTTONS 6
+
 typedef struct
 {
    unsigned retro;
    unsigned sms;
 } sms_input_t;
 
-static sms_input_t binds[6] =
+static sms_input_t binds[MAX_BUTTONS] =
 {
    { RETRO_DEVICE_ID_JOYPAD_UP,    INPUT_UP },
    { RETRO_DEVICE_ID_JOYPAD_DOWN,  INPUT_DOWN },
@@ -67,7 +69,8 @@ static void video_update(void)
 {
    uint16_t *videobuf = NULL;
    uint32_t dst_x = 0;
-   uint32_t dst_width = width;
+   unsigned dst_width = width;
+   const size_t pitch = 512;
 
    switch (sms.console)
    {
@@ -76,37 +79,18 @@ static void video_update(void)
          break;
       default:
          dst_x = (vdp.reg[0] & 0x20) ? 8 : 0;
-         dst_width -= dst_x;
+         dst_width = width - dst_x;
          break;
    }
 
-   video_cb(sms_bitmap + dst_x, dst_width, height, 512);
+   videobuf = sms_bitmap + dst_x;
+   video_cb(videobuf, dst_width, height, pitch);
 }
 
 void smsp_state(uint8_t slot_number, uint8_t mode)
 {
-   // Save and Load States
-   char stpath[PATH_MAX];
-   snprintf(stpath, sizeof(stpath), "%s%s.st%d", gdata.stdir, gdata.gamename, slot_number);
-   FILE *fd;
-
-   switch(mode) {
-      case 0:
-         fd = fopen(stpath, "wb");
-         if (fd) {
-            system_save_state(fd);
-            fclose(fd);
-         }
-         break;
-
-      case 1:
-         fd = fopen(stpath, "rb");
-         if (fd) {
-            system_load_state(fd);
-            fclose(fd);
-         }
-         break;
-   }
+   (void)slot_number;
+   (void)mode;
 }
 
 void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode)
@@ -117,116 +101,22 @@ void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode)
 }
 
 static uint32_t sdl_controls_update_input(int k, int32_t p)
-{
-   /*if (sms.console == CONSOLE_COLECO)
-    {
-      coleco.keypad[0] = 0xff;
-      coleco.keypad[1] = 0xff;
-   }
+{   
+   unsigned i;
 
-   switch(k)
-   {
-      case SDLK_0:
-      case SDLK_KP0:
-         coleco.keypad[0] = 0;
-      break;
-      case SDLK_1:
-      case SDLK_KP1:
-         coleco.keypad[0] = 1;
-      break;
-      case SDLK_2:
-      case SDLK_KP2:
-         coleco.keypad[0] = 2;
-      break;
-      case SDLK_3:
-      case SDLK_KP3:
-         coleco.keypad[0] = 3;
-      break;
-      case SDLK_4:
-      case SDLK_KP4:
-         coleco.keypad[0] = 4;
-      break;
-      case SDLK_5:
-      case SDLK_KP5:
-         coleco.keypad[0] = 5;
-      break;
-      case SDLK_6:
-      case SDLK_KP6:
-         coleco.keypad[0] = 6;
-      break;
-      case SDLK_7:
-      case SDLK_KP7:
-         coleco.keypad[0] = 7;
-      break;
-      case SDLK_8:
-      case SDLK_KP8:
-         coleco.keypad[0] = 8;
-      break;
-      case SDLK_9:
-      case SDLK_KP9:
-         coleco.keypad[0] = 9;
-      break;
-      case SDLK_DOLLAR:
-      case SDLK_KP_MULTIPLY:
-         coleco.keypad[0] = 10;
-      break;
-      case SDLK_ASTERISK:
-      case SDLK_KP_MINUS:
-         coleco.keypad[0] = 11;
-      break;
-      case SDLK_ESCAPE:
-         if(p)
-            selectpressed = 1;
-         else
-            selectpressed = 0;
-      break;
-      case SDLK_RETURN:
-         if(p)
-            input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
-         else
-            input.system &= (sms.console == CONSOLE_GG) ? ~INPUT_START : ~INPUT_PAUSE;
-      break;
-      case SDLK_UP:
-         if(p)
-            input.pad[0] |= INPUT_UP;
-         else
-            input.pad[0] &= ~INPUT_UP;
-      break;
-      case SDLK_DOWN:
-         if(p)
-            input.pad[0] |= INPUT_DOWN;
-         else
-            input.pad[0] &= ~INPUT_DOWN;
-      break;
-      case SDLK_LEFT:
-         if(p)
-            input.pad[0] |= INPUT_LEFT;
-         else
-            input.pad[0] &= ~INPUT_LEFT;
-      break;
-      case SDLK_RIGHT:
-         if(p)
-            input.pad[0] |= INPUT_RIGHT;
-         else
-            input.pad[0] &= ~INPUT_RIGHT;
-      break;
-      case SDLK_LCTRL:
-         if(p)
-            input.pad[0] |= INPUT_BUTTON1;
-         else
-            input.pad[0] &= ~INPUT_BUTTON1;
-      break;
-      case SDLK_LALT:
-         if(p)
-            input.pad[0] |= INPUT_BUTTON2;
-         else
-            input.pad[0] &= ~INPUT_BUTTON2;
-      break;
-      default:
-      break;
-   }
+   (void)k;
+   (void)p;
+ 
+   input_poll_cb();
 
-   if (sms.console == CONSOLE_COLECO) input.system = 0;*/
+   input.pad[0] = 0;
+   input.system = 0;
+
+   for (i = 0; i < MAX_BUTTONS; i++)
+      input.pad[0] |= (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, binds[i].retro)) ? binds[i].sms : 0;
+
+   if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
+      input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
 
    return 1;
 }
@@ -251,8 +141,9 @@ static void bios_init()
       if (size < 0x4000) size = 0x4000;
       fread(bios.rom, size, 1, fd);
       bios.enabled = 2;
-      bios.pages = size / 0x4000;
+      bios.pages = size / 0x4000;      
       fclose(fd);
+      log_cb(RETRO_LOG_INFO, "bios loaded:      %s\n", bios_path);
    }
 
    snprintf(bios_path, sizeof(bios_path), "%s%s", gdata.biosdir, "BIOS.col");
@@ -263,16 +154,7 @@ static void bios_init()
       /* Seek to end of file, and get size */
       fread(coleco.rom, 0x2000, 1, fd);
       fclose(fd);
-   }
-
-   snprintf(bios_path, sizeof(bios_path), "%s%s", gdata.biosdir, "BIOS_sordm5.bin");
-
-   fd = fopen(bios_path, "rb");
-   if(fd)
-   {
-      /* Seek to end of file, and get size */
-      fread(coleco.rom, 0x2000, 1, fd);
-      fclose(fd);
+      log_cb(RETRO_LOG_INFO, "bios loaded:      %s\n", bios_path);
    }
 }
 
@@ -291,42 +173,11 @@ static void smsp_gamedata_set(char *filename)
       }
    }
 
-   log_cb(RETRO_LOG_INFO, "gamename: %s\n", gdata.gamename);
-
-   // Set up the sram directory
-   snprintf(gdata.sramdir, sizeof(gdata.sramdir), "%s/", retro_save_directory);
-   if (mkdir(gdata.sramdir, 0755) && errno != EEXIST) {
-      fprintf(stderr, "Failed to create %s: %d\n", gdata.sramdir, errno);
-   }
-
-   log_cb(RETRO_LOG_INFO, "sram directory: %s\n", gdata.sramdir);
-
-   // Set up the sram file
-   snprintf(gdata.sramfile, sizeof(gdata.sramfile), "%s%s.sav", gdata.sramdir, gdata.gamename);
-
-   // Set up the state directory
-   snprintf(gdata.stdir, sizeof(gdata.stdir), "%s/", retro_save_directory);
-   if (mkdir(gdata.stdir, 0755) && errno != EEXIST) {
-      fprintf(stderr, "Failed to create %s: %d\n", gdata.stdir, errno);
-   }
-
-   log_cb(RETRO_LOG_INFO, "state directory: %s\n", gdata.stdir);
-
-   // Set up the screenshot directory
-   snprintf(gdata.scrdir, sizeof(gdata.scrdir), "%s/", retro_save_directory);
-   if (mkdir(gdata.scrdir, 0755) && errno != EEXIST) {
-      fprintf(stderr, "Failed to create %s: %d\n", gdata.scrdir, errno);
-   }
-
-   log_cb(RETRO_LOG_INFO, "screenshot directory: %s\n", gdata.scrdir);
-
-   // Set up the sram directory
+   // Set up the bios directory
    snprintf(gdata.biosdir, sizeof(gdata.biosdir), "%s/", retro_system_directory);
    if (mkdir(gdata.biosdir, 0755) && errno != EEXIST) {
       fprintf(stderr, "Failed to create %s: %d\n", gdata.sramdir, errno);
    }
-
-   log_cb(RETRO_LOG_INFO, "bios directory: %s\n", gdata.biosdir);
 }
 
 static void Cleanup(void)
@@ -367,13 +218,9 @@ void retro_init(void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
       sprintf(retro_system_directory, "%s", dir);
 
-   log_cb(RETRO_LOG_INFO, "system directory: %s\n", retro_system_directory);
-
    dir = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir)
       sprintf(retro_save_directory, "%s", dir);
-
-   log_cb(RETRO_LOG_INFO, "save directory: %s\n", retro_save_directory);
 
    enum retro_pixel_format rgb565 = RETRO_PIXEL_FORMAT_RGB565;
    if (environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565) && log_cb)
@@ -463,7 +310,10 @@ bool retro_load_game(const struct retro_game_info *info)
 
    sms_bitmap = (uint16_t*)malloc(VIDEO_WIDTH_SMS * VIDEO_HEIGHT_SMS * sizeof(uint16_t));
 
-   fprintf(stdout, "CRC : %08X\n", cart.crc);
+   log_cb(RETRO_LOG_INFO, "CRC :             0x%08X\n", cart.crc);
+   log_cb(RETRO_LOG_INFO, "gamename:         %s\n", gdata.gamename);
+   log_cb(RETRO_LOG_INFO, "system directory: %s\n", retro_system_directory);
+   log_cb(RETRO_LOG_INFO, "save directory:   %s\n", retro_save_directory);
 
    // Set parameters for internal bitmap
    bitmap.width = VIDEO_WIDTH_SMS;
@@ -506,16 +356,8 @@ void retro_run(void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       check_variables();
 
-   input_poll_cb();
-
-   input.pad[0] = 0;
-   input.system = 0;
-
-   for (i = 0; i < 6; i++)
-      input.pad[0] |= (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, binds[i].retro)) ? binds[i].sms : 0;
-
-   if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
-      input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
+   /* Read input */
+   sdl_controls_update_input(0, 0);
 
    /* Execute frame(s) */
    system_frame(0);
@@ -556,6 +398,8 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
 void retro_deinit()
 {
+   libretro_serialize_size = 0;
+   libretro_supports_bitmasks = 0;
 }
 
 unsigned retro_get_region(void)
