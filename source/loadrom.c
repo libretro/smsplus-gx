@@ -463,8 +463,6 @@ uint32_t load_rom (char *filename)
 		}
 		fread(cart.rom, cart.size, 1, fd);
 
-		printf("ROM loaded successfully %s.\n", filename);
-
 		fclose(fd);
 	}
 
