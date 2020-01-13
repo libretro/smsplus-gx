@@ -144,6 +144,10 @@ static uint32_t sdl_controls_update_input(int k, int32_t p)
 {
    (void)k;
    (void)p;
+<<<<<<< HEAD
+=======
+   return 0;
+>>>>>>> Add support for input bitmasks
 }
 
 static void bios_init()
