@@ -1,6 +1,5 @@
 DEBUG = 0
 FRONTEND_SUPPORTS_RGB565 = 1
-V=1
 
 ifneq ($(V),1)
    Q := @
@@ -38,16 +37,15 @@ else ifneq (,$(findstring rpi,$(platform)))
    override platform += unix
 endif
 
-# Possible choices : rs97, k3s (PAP K3S), sdl, amini, fbdev
-PORT = libretro
-# Possible choices : alsa, pulse (pulseaudio), oss, sdl12 (SDL 1.2 sound output), portaudio, libao
-SOUND_OUTPUT = libretro
-# Possible choices : crabemu_sn76489 (less accurate, GPLv2), maxim_sn76489 (somewhat problematic license but good accuracy)
+# Possible choices :
+# crabemu_sn76489 - (less accurate, GPLv2),
+# maxim_sn76489   - (somewhat problematic license but good accuracy)
 SOUND_ENGINE = maxim_sn76489
-# Possible choices : z80 (accurate but proprietary), eighty (EightyZ80's core, GPLv2)
+
+# Possible choices :
+# z80    - (accurate but proprietary),
+# eighty - (EightyZ80's core, GPLv2)
 Z80_CORE = z80
-SCALE2X_UPSCALER = 0
-PROFILE = 0
 ZIP_SUPPORT = 0
 
 TARGET_NAME := sms_plus_gx
@@ -418,12 +416,6 @@ endif
 
 include Makefile.common
 
-FLAGS += -DALIGN_DWORD
-
-ifneq ($(MSB_FIRST),1)
-FLAGS += -DLSB_FIRST
-endif
-
 ifneq (,$(findstring msvc,$(platform)))
 WARNINGS :=
 else
@@ -466,12 +458,6 @@ LDFLAGS += $(fpic) $(SHARED)
 FLAGS += $(fpic) $(NEW_GCC_FLAGS) $(INCFLAGS) $(INCFLAGS_PLATFORM)
 
 FLAGS += $(ENDIANNESS_DEFINES) -DSIZEOF_DOUBLE=8 $(WARNINGS) -DPSS_STYLE=1 -DMPC_FIXED_POINT $(CORE_DEFINE) -DSTDC_HEADERS -D__STDC_LIMIT_MACROS -D__LIBRETRO__ -D_LOW_ACCURACY_ $(EXTRA_INCLUDES) $(SOUND_DEFINE)
-
-ifneq (,$(findstring msvc,$(platform)))
-FLAGS += -DINLINE="_inline"
-else
-FLAGS += -DINLINE="inline"
-endif
 
 CXXFLAGS += $(FLAGS)
 CFLAGS += $(FLAGS)
