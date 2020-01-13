@@ -18,7 +18,6 @@
 #endif
 
 #include "shared.h"
-#include "scaler.h"
 #include "smsplus.h"
 
 static gamedata_t gdata;
