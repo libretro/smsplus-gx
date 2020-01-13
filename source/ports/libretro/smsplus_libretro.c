@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <libgen.h>
 #include <errno.h>
 #include <unistd.h>
 #include <time.h>
@@ -71,6 +70,40 @@ static sms_input_t binds[MAX_BUTTONS] =
    { RETRO_DEVICE_ID_JOYPAD_B,     INPUT_BUTTON1 },
    { RETRO_DEVICE_ID_JOYPAD_A,     INPUT_BUTTON2 }
 };
+
+
+static void get_basename(char *buf, const char *path, size_t size)
+{
+   char *base = strrchr(path, '/');
+   if (!base)
+      base = strrchr(path, '\\');
+
+   if (base)
+   {
+      snprintf(buf, size, "%s", base);
+      base = strrchr(buf, '.');
+      if (base)
+         *base = '\0';
+   }
+   else
+      buf[0] = '\0';
+}
+
+static void get_basedir(char *buf, const char *path, size_t size)
+{
+   char *base;
+   strncpy(buf, path, size - 1);
+   buf[size - 1] = '\0';
+
+   base = strrchr(buf, '/');
+   if (!base)
+      base = strrchr(buf, '\\');
+
+   if (base)
+      *base = '\0';
+   else
+      buf[0] = '\0';
+}
 
 static void video_update(void)
 {
@@ -169,18 +202,14 @@ static void smsp_gamedata_set(char *filename)
 {
    unsigned long i;
 
-   // Set the game name
-   snprintf(gdata.gamename, sizeof(gdata.gamename), "%s", basename(filename));
+   /* Set the game name */
+   get_basename(gdata.gamename, filename, sizeof(gdata.gamename));   
+      
+   /* Check and remove default slash from the beginning of the base name */
+   if (gdata.gamename[0] == path_default_slash_c())
+      snprintf(gdata.gamename, sizeof(gdata.gamename), "%s", gdata.gamename + 1);
 
-   // Strip the file extension off
-   for (i = strlen(gdata.gamename) - 1; i > 0; i--) {
-      if (gdata.gamename[i] == '.') {
-         gdata.gamename[i] = '\0';
-         break;
-      }
-   }
-
-   // Set up the bios directory
+   /* Set up the bios directory */
    snprintf(gdata.biosdir, sizeof(gdata.biosdir), "%s%c", retro_system_directory, path_default_slash_c());
 }
 
