@@ -141,24 +141,10 @@ void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode)
 }
 
 static uint32_t sdl_controls_update_input(int k, int32_t p)
-{   
-   unsigned i;
-
+{
    (void)k;
    (void)p;
- 
-   input_poll_cb();
-
-   input.pad[0] = 0;
-   input.system = 0;
-
-   for (i = 0; i < MAX_BUTTONS; i++)
-      input.pad[0] |= (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, binds[i].retro)) ? binds[i].sms : 0;
-
-   if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
-      input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
-
-   return 1;
+   return 0;
 }
 
 static void bios_init()
@@ -181,7 +167,7 @@ static void bios_init()
       if (size < 0x4000) size = 0x4000;
       fread(bios.rom, size, 1, fd);
       bios.enabled = 2;
-      bios.pages = size / 0x4000;      
+      bios.pages = size / 0x4000;
       fclose(fd);
       log_cb(RETRO_LOG_INFO, "bios loaded:      %s\n", bios_path);
    }
@@ -203,8 +189,8 @@ static void smsp_gamedata_set(char *filename)
    unsigned long i;
 
    /* Set the game name */
-   get_basename(gdata.gamename, filename, sizeof(gdata.gamename));   
-      
+   get_basename(gdata.gamename, filename, sizeof(gdata.gamename));
+
    /* Check and remove default slash from the beginning of the base name */
    if (gdata.gamename[0] == path_default_slash_c())
       snprintf(gdata.gamename, sizeof(gdata.gamename), "%s", gdata.gamename + 1);
@@ -228,6 +214,39 @@ static void Cleanup(void)
 }
 
 // Libretro implementation
+
+static void update_input(void)
+{
+   unsigned i;
+   bool startpressed = false;
+
+   input_poll_cb();
+
+   input.pad[0] = 0;
+   input.system &= (sms.console == CONSOLE_GG) ? ~INPUT_START : ~INPUT_PAUSE;
+
+   if (libretro_supports_bitmasks)
+   {
+      uint16_t ret = input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+
+      for (i = 0; i < MAX_BUTTONS; i++)
+         input.pad[0] |= (ret & (1 << binds[i].retro)) ? binds[i].sms : 0;
+
+      if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_START))
+         startpressed = true;
+   }
+   else
+   {
+      for (i = 0; i < MAX_BUTTONS; i++)
+         input.pad[0] |= (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, binds[i].retro)) ? binds[i].sms : 0;
+
+      if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
+         startpressed = true;
+   }
+
+   if (startpressed)
+      input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
+}
 
 static void check_system_specs(void)
 {
@@ -375,7 +394,7 @@ void retro_run(void)
       check_variables();
 
    /* Read input */
-   sdl_controls_update_input(0, 0);
+   update_input();
 
    /* Execute frame(s) */
    system_frame(0);
@@ -486,7 +505,7 @@ bool retro_serialize(void *data, size_t size)
 {
    if (size != libretro_serialize_size)
       return 0;
-   
+
    memstream_set_buffer((uint8_t*)data, size);
    system_save_state_mem();
    return 1;
