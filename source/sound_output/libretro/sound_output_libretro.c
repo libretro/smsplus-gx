@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <SDL/SDL.h>
 #include "smsplus.h"
 #include "sound_output.h"
 #include "shared.h"
