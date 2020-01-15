@@ -10,6 +10,7 @@
 #include <stdarg.h>
 
 #include <libretro.h>
+#include <libretro_core_options.h>
 #include <streams/memory_stream.h>
 #include <libretro_state.h>
 
@@ -19,6 +20,7 @@
 
 #include "shared.h"
 #include "smsplus.h"
+#include "ntsc/sms_ntsc.h"
 
 static gamedata_t gdata;
 
@@ -41,8 +43,12 @@ retro_audio_sample_batch_t audio_batch_cb;
 
 static unsigned libretro_supports_bitmasks;
 static unsigned libretro_serialize_size;
-static unsigned width;
-static unsigned height;
+static unsigned geometry_changed;
+
+/* blargg NTSC */
+static unsigned use_ntsc;
+static SMS_NTSC_IN_T *ntsc_screen;
+static sms_ntsc_t *sms_ntsc;
 
 #ifdef _WIN32
 #define path_default_slash() "\\"
@@ -104,26 +110,112 @@ static void get_basedir(char *buf, const char *path, size_t size)
       buf[0] = '\0';
 }
 
+static void filter_ntsc_init(void)
+{
+   if (sms_ntsc == NULL)
+      sms_ntsc = (sms_ntsc_t*)malloc(sizeof(sms_ntsc_t));
+
+   if (ntsc_screen == NULL)
+      ntsc_screen = (SMS_NTSC_IN_T*)malloc(640 * 480 * sizeof(SMS_NTSC_IN_T));
+   memset(ntsc_screen, 0, sizeof(640 * 480 * sizeof(SMS_NTSC_IN_T)));
+}
+
+static void filter_ntsc_cleanup(void)
+{
+   if (sms_ntsc)
+      free(sms_ntsc);
+   sms_ntsc = NULL;
+
+   if (ntsc_screen)
+      free(ntsc_screen);
+   ntsc_screen = NULL;
+}
+
+#define NTSC_NONE 0
+#define NTSC_MONOCHROME 1
+#define NTSC_COMPOSITE 2
+#define NTSC_SVIDEO 3
+#define NTSC_RGB 4
+
+static void filter_ntsc_set(void)
+{
+   sms_ntsc_setup_t setup;
+   switch (use_ntsc)
+   {
+      case NTSC_MONOCHROME: setup = sms_ntsc_monochrome; break;
+      case NTSC_COMPOSITE: setup = sms_ntsc_composite; break;
+      case NTSC_SVIDEO: setup = sms_ntsc_svideo; break;
+      case NTSC_RGB: setup = sms_ntsc_rgb; break;
+      default: return;
+   }
+   sms_ntsc_init(sms_ntsc, &setup);
+}
+
+void double_output_height(unsigned char* pixels, unsigned width, unsigned height, long pitch)
+{
+   int y;
+   for (y = height / 2; --y >= 0;)
+   {
+      unsigned char const *in = pixels + y * pitch;
+      unsigned char *out = pixels + y * 2 * pitch;
+      int n;
+      for (n = width; n; --n)
+      {
+         unsigned prev = *(unsigned short *)in;
+         unsigned next = *(unsigned short *)(in + pitch);
+         /* mix 16-bit rgb without losing low bits */
+         unsigned mixed = prev + next + ((prev ^ next) & 0x0821);
+         /* darken by 12% */
+         *(unsigned short *)out = prev;
+         *(unsigned short *)(out + pitch) = (mixed >> 1) - (mixed >> 4 & 0x18E3);
+         in += 2;
+         out += 2;
+      }
+   }
+}
+
+static void update_geometry(void)
+{
+   struct retro_system_av_info game;
+   retro_get_system_av_info(&game);
+   environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &game);
+}
+
+static void render_ntsc(int32_t width, int32_t height, uint32_t pitch)
+{
+   int32_t output_width            = SMS_NTSC_OUT_WIDTH(width);
+   int32_t output_height           = height << 1;
+   uint32_t output_pitch           = output_width << 1;
+   const unsigned short* in_pixels = sms_bitmap + bitmap.viewport.x;
+   unsigned char* output_pixels    = (unsigned char *)ntsc_screen;
+
+   sms_ntsc_blit(sms_ntsc, in_pixels, pitch / sizeof(uint16_t), width, height, output_pixels, output_pitch);
+   double_output_height(output_pixels, output_width, output_height, output_pitch);
+   video_cb(output_pixels, output_width, output_height, output_pitch);
+}
+
+static void render_nofilter(int32_t width, int32_t height, uint32_t pitch)
+{
+   video_cb(sms_bitmap + bitmap.viewport.x, width, height, pitch);
+}
+
 static void video_update(void)
 {
-   uint16_t *videobuf = NULL;
-   uint32_t dst_x = 0;
-   unsigned dst_width = width;
-   const size_t pitch = 512;
+   unsigned width  = bitmap.viewport.w;
+   unsigned height = bitmap.viewport.h;
+   unsigned pitch  = bitmap.pitch;
+   unsigned char *output_pixels;
 
-   switch (sms.console)
+   if (geometry_changed)
    {
-      case CONSOLE_GG:
-         dst_x = 48;
-         break;
-      default:
-         dst_x = (vdp.reg[0] & 0x20) ? 8 : 0;
-         dst_width = width - dst_x;
-         break;
+      geometry_changed = 0;
+      update_geometry();
    }
 
-   videobuf = sms_bitmap + dst_x;
-   video_cb(videobuf, dst_width, height, pitch);
+   if (!use_ntsc)
+      render_nofilter(width, height, pitch);
+   else
+      render_ntsc(width, height, pitch);
 }
 
 void smsp_state(uint8_t slot_number, uint8_t mode)
@@ -282,6 +374,7 @@ void retro_init(void)
       libretro_supports_bitmasks = 1;
 
    check_system_specs();
+   libretro_set_core_options(environ_cb);
 }
 
 void retro_reset(void)
@@ -297,6 +390,39 @@ bool retro_load_game_special(unsigned id, const struct retro_game_info *info, si
 static void check_variables(void)
 {
    struct retro_variable var = { 0 };
+
+   var.value = NULL;
+   var.key   = "sms_plus_ntsc_filter";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      unsigned old_val = use_ntsc;
+
+      if (strcmp(var.value, "monochrome") == 0)
+      {
+         use_ntsc = NTSC_MONOCHROME;
+      }
+      else if (strcmp(var.value, "composite") == 0)
+      {
+         use_ntsc = NTSC_COMPOSITE;
+      }
+      else if (strcmp(var.value, "svideo") == 0)
+      {
+         use_ntsc = NTSC_SVIDEO;
+      }
+      else if (strcmp(var.value, "rgb") == 0)
+      {
+         use_ntsc = NTSC_RGB;
+      }
+      else
+         use_ntsc = NTSC_NONE;
+
+      if (old_val != use_ntsc)
+      {
+         geometry_changed = 1;
+         filter_ntsc_set();
+      }
+   }
 }
 
 bool retro_load_game(const struct retro_game_info *info)
@@ -317,8 +443,6 @@ bool retro_load_game(const struct retro_game_info *info)
    };
 
    environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
-
-   check_variables();
 
    smsp_gamedata_set((char*)info->path);
 
@@ -342,10 +466,7 @@ bool retro_load_game(const struct retro_game_info *info)
       return 0;
    }
 
-   width =  (sms.console == CONSOLE_GG) ? VIDEO_WIDTH_GG  : VIDEO_WIDTH_SMS;
-   height = (sms.console == CONSOLE_GG) ? VIDEO_HEIGHT_GG : VIDEO_HEIGHT_SMS;
-
-   sms_bitmap = (uint16_t*)malloc(VIDEO_WIDTH_SMS * VIDEO_HEIGHT_SMS * sizeof(uint16_t));
+   sms_bitmap  = (uint16_t*)malloc(VIDEO_WIDTH_SMS * 240 * sizeof(uint16_t));
 
    log_cb(RETRO_LOG_INFO, "CRC :             0x%08X\n", cart.crc);
    log_cb(RETRO_LOG_INFO, "gamename:         %s\n", gdata.gamename);
@@ -353,16 +474,16 @@ bool retro_load_game(const struct retro_game_info *info)
    log_cb(RETRO_LOG_INFO, "save directory:   %s\n", retro_save_directory);
 
    // Set parameters for internal bitmap
-   bitmap.width = VIDEO_WIDTH_SMS;
-   bitmap.height = VIDEO_HEIGHT_SMS;
-   bitmap.depth = 16;
+   bitmap.width       = VIDEO_WIDTH_SMS;
+   bitmap.height      = 240;
+   bitmap.depth       = 16;
    bitmap.granularity = 2;
-   bitmap.data = (uint8_t *)sms_bitmap;
-   bitmap.pitch = 512;
-   bitmap.viewport.w = VIDEO_WIDTH_SMS;
-   bitmap.viewport.h = VIDEO_HEIGHT_SMS;
-   bitmap.viewport.x = 0x00;
-   bitmap.viewport.y = 0x00;
+   bitmap.data        = (uint8_t *)sms_bitmap;
+   bitmap.pitch       = VIDEO_WIDTH_SMS * sizeof(uint16_t);
+   bitmap.viewport.w  = VIDEO_WIDTH_SMS;
+   bitmap.viewport.h  = VIDEO_HEIGHT_SMS;
+   bitmap.viewport.x  = 0x00;
+   bitmap.viewport.y  = 0x00;
 
    //sms.territory = settings.misc_region;
    if (sms.console == CONSOLE_SMS || sms.console == CONSOLE_SMS2)
@@ -375,14 +496,19 @@ bool retro_load_game(const struct retro_game_info *info)
    // Initialize all systems and power on
    system_poweron();
 
+   filter_ntsc_init();
+
+   check_variables();
+
    libretro_serialize_size = 0;
+
+   geometry_changed = 1;
 
    return 1;
 }
 
 void retro_unload_game(void)
 {
-   Cleanup();
 }
 
 void retro_run(void)
@@ -425,15 +551,19 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
    info->timing.fps            = 60.0;
    info->timing.sample_rate    = 44100.0;
-   info->geometry.base_width   = width;
-   info->geometry.base_height  = height;
-   info->geometry.max_width    = width;
-   info->geometry.max_height   = height;
+   info->geometry.base_width   = !use_ntsc ? bitmap.viewport.w : SMS_NTSC_OUT_WIDTH (bitmap.viewport.w);
+   info->geometry.base_height  = bitmap.viewport.h;
+   info->geometry.max_width    = !use_ntsc ? bitmap.width : SMS_NTSC_OUT_WIDTH (bitmap.width);
+   info->geometry.max_height   = !use_ntsc ? bitmap.height : (bitmap.height << 1);
    info->geometry.aspect_ratio = 4.0 / 3.0;
 }
 
 void retro_deinit()
 {
+   Cleanup();
+
+   filter_ntsc_cleanup();
+
    libretro_serialize_size = 0;
    libretro_supports_bitmasks = 0;
 }

@@ -55,6 +55,10 @@ SOURCES_C         += \
                   $(SOURCE_DIR)/sound/sound.c \
                   $(SOURCE_DIR)/sound/ym2413.c
 
+# SMS NTSC
+INCFLAGS          += -I$(SOURCE_DIR)/ntsc
+SOURCES_C         += $(SOURCE_DIR)/ntsc/sms_ntsc.c
+
 # Libretro
 ifeq ($(STATIC_LINKING),1)
 else
