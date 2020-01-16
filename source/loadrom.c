@@ -488,15 +488,16 @@ uint32_t load_rom_mem (const char *data, size_t size)
 
 	cart.size = size;
 	if (cart.size < 0x4000) cart.size = 0x4000;
-	cart.rom = malloc(cart.size);
-	memcpy (cart.rom, data, size);
+	cart.rom = malloc(cart.size);	
 
 	/* Take care of image header, if present */
 	if ((cart.size / 512) & 1)
 	{
 		cart.size -= 512;
-		memcpy (cart.rom, cart.rom + 512, cart.size);
+		memcpy (cart.rom, data + 512, size - 512);
 	}
+	else
+		memcpy (cart.rom, data, size);	
 
 	/* 16k pages */
 	cart.pages = cart.size / 0x4000;
