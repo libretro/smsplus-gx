@@ -81,5 +81,7 @@ extern void (*cpu_writemem16)(uint16_t address, uint8_t data);
 extern void (*cpu_writeport16)(uint16_t port, uint8_t data);
 extern uint8_t (*cpu_readport16)(uint16_t port);
 
+#define zPC Z80.pc.w.l;
+
 #endif
 

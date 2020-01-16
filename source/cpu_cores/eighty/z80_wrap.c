@@ -7,7 +7,7 @@ z80_t z80;
 int32_t z80_ICount = 0;
 int32_t z80_nmipending = 0;
 int32_t z80_nmi_state = 0;
-uint32_t z80_cycle_count = 0;
+int32_t z80_cycle_count = 0;
 uint32_t z80_requested_cycles = 0;
 int32_t extra_cycles = 0;
 

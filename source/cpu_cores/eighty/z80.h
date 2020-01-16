@@ -69,6 +69,8 @@ uint32_t z80_nmi(z80_t* z80, uint32_t ts);
 
 uint32_t z80_do_opcode(z80_t* z80);
 
+#define zPC z80.pc.w;
+
 #ifdef __cplusplus
 }
 #endif
