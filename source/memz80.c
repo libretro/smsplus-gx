@@ -38,7 +38,7 @@ uint8_t data_bus_pulldown = 0x00;
 /* Read unmapped memory */
 uint8_t z80_read_unmapped(void)
 {
-	int32_t pc = Z80.pc.w.l;
+	int32_t pc = zPC;
 	uint8_t data;
 	pc = (pc - 1) & 0xFFFF;
 	data = cpu_readmap[pc >> 13][pc & 0x03FF];
