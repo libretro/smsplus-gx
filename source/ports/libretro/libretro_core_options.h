@@ -63,6 +63,17 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "disabled"
    },
+   {
+      "sms_plus_sony_decoder",
+      "Decoder Matrix",
+      "Toggle between standard and Sony decoder matrix.",
+      {
+         { "standard",  NULL },
+         { "cxa2025as", NULL },
+         { NULL,        NULL },
+      },
+      "standard"
+   },
 
    { NULL, NULL, NULL, {{0}}, NULL },
 };

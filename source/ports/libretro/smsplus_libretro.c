@@ -47,6 +47,7 @@ static unsigned geometry_changed;
 
 /* blargg NTSC */
 static unsigned use_ntsc;
+static unsigned sony_decoder;
 static SMS_NTSC_IN_T *ntsc_screen;
 static sms_ntsc_t *sms_ntsc;
 
@@ -148,6 +149,16 @@ static void filter_ntsc_set(void)
       case NTSC_RGB: setup = sms_ntsc_rgb; break;
       default: return;
    }
+
+   setup.decoder_matrix = 0;
+
+   if (sony_decoder)
+   {
+      /* Sony CXA2025AS US */
+      static float matrix[6] = { 1.630, 0.317, -0.378, -0.466, -1.089, 1.677 };
+      setup.decoder_matrix = matrix;
+   }
+
    sms_ntsc_init(sms_ntsc, &setup);
 }
 
@@ -201,7 +212,7 @@ static void render_nofilter(int32_t width, int32_t height, uint32_t pitch)
 
 static void video_update(void)
 {
-   unsigned width  = bitmap.viewport.w;
+   unsigned width  = bitmap.viewport.w;   
    unsigned height = bitmap.viewport.h;
    unsigned pitch  = bitmap.pitch;
    unsigned char *output_pixels;
@@ -391,13 +402,14 @@ static void check_variables(void)
 {
    struct retro_variable var = { 0 };
 
+   unsigned old_ntsc   = use_ntsc;
+   unsigned old_decode = sony_decoder;
+
    var.value = NULL;
    var.key   = "sms_plus_ntsc_filter";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      unsigned old_val = use_ntsc;
-
       if (strcmp(var.value, "monochrome") == 0)
       {
          use_ntsc = NTSC_MONOCHROME;
@@ -416,12 +428,20 @@ static void check_variables(void)
       }
       else
          use_ntsc = NTSC_NONE;
+   }
 
-      if (old_val != use_ntsc)
-      {
-         geometry_changed = 1;
-         filter_ntsc_set();
-      }
+   var.value = NULL;
+   var.key   = "sms_plus_sony_decoder";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      sony_decoder = (strcmp(var.value, "cxa2025as") == 0) ? 1 : 0;
+   }
+
+   if (old_ntsc != use_ntsc || old_decode != sony_decoder)
+   {
+      geometry_changed = 1;
+      filter_ntsc_set();
    }
 }
 
