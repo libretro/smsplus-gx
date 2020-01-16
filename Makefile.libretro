@@ -60,12 +60,7 @@ ifneq (,$(findstring unix,$(platform)))
    TARGET := $(TARGET_NAME)_libretro.so
    fpic := -fPIC
    SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-   ifneq (,$(findstring Haiku,$(shell uname -s)))
-   LDFLAGS += -lroot
-   CXXFLAGS += -fpermissive
-   else
-   LDFLAGS += -lrt
-   endif
+   ENDIANNESS_DEFINES += -DLSB_FIRST
 
    ifneq ($(findstring Linux,$(shell uname -s)),)
      HAVE_CDROM = 1
@@ -73,6 +68,7 @@ ifneq (,$(findstring unix,$(platform)))
 
    # Raspberry Pi
    ifneq (,$(findstring rpi,$(platform)))
+      ENDIANNESS_DEFINES += -DALIGN_DWORD -DLSB_FIRST
       FLAGS += -fomit-frame-pointer -ffast-math
       ifneq (,$(findstring rpi1,$(platform)))
          FLAGS += -DARM -marm -march=armv6j -mfpu=vfp -mfloat-abi=hard
@@ -82,14 +78,15 @@ ifneq (,$(findstring unix,$(platform)))
          FLAGS += -DARM -marm -mcpu=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
       endif
    endif
-   
+
 # Classic Platforms ####################
 # Platform affix = classic_<ISA>_<µARCH>
 # Help at https://modmyclassic.com/comp
-	
-# (armv7 a7, hard point, neon based) ### 
-# NESC, SNESC, C64 mini 
+
+# (armv7 a7, hard point, neon based) ###
+# NESC, SNESC, C64 mini
 else ifeq ($(platform), classic_armv7_a7)
+   ENDIANNESS_DEFINES += -DLSB_FIRST -DALIGN_DWORD
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
@@ -122,8 +119,10 @@ else ifeq ($(platform), osx)
    fpic := -fPIC
    SHARED := -dynamiclib
 ifeq ($(arch),ppc)
-   ENDIANNESS_DEFINES := -DMSB_FIRST -DBYTE_ORDER=BIG_ENDIAN
+   ENDIANNESS_DEFINES += -DMSB_FIRST -DWORDS_BIGENDIAN -DBYTE_ORDER=BIG_ENDIAN
    OLD_GCC := 1
+else
+   ENDIANNESS_DEFINES += -DALIGN_DWORD -DLSB_FIRST
 endif
    OSXVER = `sw_vers -productVersion | cut -d. -f 2`
    OSX_LT_MAVERICKS = `(( $(OSXVER) <= 9)) && echo "YES"`
@@ -131,10 +130,10 @@ endif
 
 # iOS
 else ifneq (,$(findstring ios,$(platform)))
-
    TARGET := $(TARGET_NAME)_libretro_ios.dylib
    fpic := -fPIC
    SHARED := -dynamiclib
+   ENDIANNESS_DEFINES += -DLSB_FIRST
 
 ifeq ($(IOSSDK),)
    IOSSDK := $(shell xcodebuild -version -sdk iphoneos Path)
@@ -162,6 +161,7 @@ else ifeq ($(platform), tvos-arm64)
    TARGET := $(TARGET_NAME)_libretro_tvos.dylib
    fpic := -fPIC
    SHARED := -dynamiclib
+   ENDIANNESS_DEFINES += -DLSB_FIRST
 
 ifeq ($(IOSSDK),)
    IOSSDK := $(shell xcodebuild -version -sdk appletvos Path)
@@ -172,6 +172,7 @@ else ifeq ($(platform), qnx)
    TARGET := $(TARGET_NAME)_libretro_qnx.so
    fpic := -fPIC
    SHARED := -lcpp -lm -shared -Wl,--no-undefined -Wl,--version-script=link.T
+   ENDIANNESS_DEFINES += -DLSB_FIRST
    CC = qcc -Vgcc_ntoarmv7le
    CXX = QCC -Vgcc_ntoarmv7le_cpp
    AR = QCC -Vgcc_ntoarmv7le
@@ -181,7 +182,7 @@ else ifeq ($(platform), qnx)
 else ifneq (,$(filter $(platform), ps3 sncps3 psl1ght))
    TARGET := $(TARGET_NAME)_libretro_ps3.a
    STATIC_LINKING = 1
-   ENDIANNESS_DEFINES := -DMSB_FIRST -DBYTE_ORDER=BIG_ENDIAN
+   ENDIANNESS_DEFINES += -DMSB_FIRST -DWORDS_BIGENDIAN -DBYTE_ORDER=BIG_ENDIAN
 
    # sncps3
    ifneq (,$(findstring sncps3,$(platform)))
@@ -215,6 +216,7 @@ else ifeq ($(platform), psp1)
    CC = psp-gcc$(EXE_EXT)
    CXX = psp-g++$(EXE_EXT)
    AR = psp-ar$(EXE_EXT)
+   ENDIANNESS_DEFINES += -DLSB_FIRST
    FLAGS += -DPSP -G0
    STATIC_LINKING = 1
    EXTRA_INCLUDES := -I$(shell psp-config --pspsdk-path)/include
@@ -226,6 +228,7 @@ else ifeq ($(platform), vita)
    CXX = arm-vita-eabi-g++$(EXE_EXT)
    AR = arm-vita-eabi-ar$(EXE_EXT)
    FLAGS += -DVITA -march=armv7-a -mfpu=neon -mfloat-abi=hard -mlittle-endian -ffast-math
+   ENDIANNESS_DEFINES += -DLSB_FIRST -DALIGN_DWORD
    STATIC_LINKING = 1
    EXTRA_INCLUDES := -I"$(VITASDK)/arm-vita-eabi/include"
 
@@ -235,7 +238,7 @@ else ifeq ($(platform), xenon)
    CC = xenon-gcc$(EXE_EXT)
    CXX = xenon-g++$(EXE_EXT)
    AR = xenon-ar$(EXE_EXT)
-   ENDIANNESS_DEFINES += -D__LIBXENON__ -m32 -D__ppc__ -DMSB_FIRST -DBYTE_ORDER=BIG_ENDIAN
+   ENDIANNESS_DEFINES += -D__LIBXENON__ -m32 -D__ppc__ -DMSB_FIRST -DWORDS_BIGENDIAN -DBYTE_ORDER=BIG_ENDIAN
    STATIC_LINKING = 1
 
 # Nintendo Switch (libnx)
@@ -247,8 +250,8 @@ include $(DEVKITPRO)/libnx/switch_rules
     CFLAGS  :=  $(DEFINES) -g -O3 -fPIE -I$(LIBNX)/include/ -ffunction-sections -fdata-sections -ftls-model=local-exec -Wl,--allow-multiple-definition -specs=$(LIBNX)/switch.specs
     CFLAGS += $(INCDIRS)
     CFLAGS  += $(INCLUDE)  -D__SWITCH__ -DHAVE_LIBNX
-    CXXFLAGS := $(ASFLAGS) $(CFLAGS) -fexceptions -fno-rtti -std=gnu++11 
-    CFLAGS += -std=gnu11
+    CXXFLAGS := $(ASFLAGS) $(CFLAGS) -fexceptions -fno-rtti
+    ENDIANNESS_DEFINES += -DLSB_FIRST -DALIGN_WORD
     STATIC_LINKING = 1
 
 # Nintendo Game Cube / Wii / WiiU
@@ -257,7 +260,7 @@ else ifneq (,$(filter $(platform), ngc wii wiiu))
    CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
    CXX = $(DEVKITPPC)/bin/powerpc-eabi-g++$(EXE_EXT)
    AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
-   ENDIANNESS_DEFINES += -DGEKKO -mcpu=750 -meabi -mhard-float -DMSB_FIRST -DBYTE_ORDER=BIG_ENDIAN
+   ENDIANNESS_DEFINES += -DGEKKO -mcpu=750 -meabi -mhard-float -DMSB_FIRST -DWORDS_BIGENDIAN -DBYTE_ORDER=BIG_ENDIAN
    FLAGS += -U__INT32_TYPE__ -U __UINT32_TYPE__ -D__INT32_TYPE__=int
    EXTRA_INCLUDES := -I$(DEVKITPRO)/libogc/include
    STATIC_LINKING = 1
@@ -278,6 +281,7 @@ else ifneq (,$(filter $(platform), ngc wii wiiu))
 # Emscripten
 else ifeq ($(platform), emscripten)
    TARGET := $(TARGET_NAME)_libretro_$(platform).bc
+   ENDIANNESS_DEFINES += -DLSB_FIRST -DALIGN_DWORD
    STATIC_LINKING = 1
 
 # else ifneq (,$(findstring armv,$(platform)))
@@ -331,6 +335,8 @@ TARGET := $(TARGET_NAME)_libretro.dll
 PSS_STYLE :=2
 LDFLAGS += -DLL
 WINDOWS_VERSION=1
+ENDIANNESS_DEFINES += -DLSB_FIRST
+
 # Windows MSVC 2010 x86
 else ifeq ($(platform), windows_msvc2010_x86)
 	CC  = cl.exe
@@ -356,6 +362,7 @@ TARGET := $(TARGET_NAME)_libretro.dll
 PSS_STYLE :=2
 LDFLAGS += -DLL
 WINDOWS_VERSION=1
+ENDIANNESS_DEFINES += -DLSB_FIRST
 
 # Windows MSVC 2005 x86
 else ifeq ($(platform), windows_msvc2005_x86)
@@ -379,6 +386,7 @@ LDFLAGS += -DLL
 CFLAGS += -D_CRT_SECURE_NO_DEPRECATE
 LIBS =
 WINDOWS_VERSION=1
+ENDIANNESS_DEFINES += -DLSB_FIRST
 
 # Windows MSVC 2003 x86
 else ifeq ($(platform), windows_msvc2003_x86)
@@ -401,6 +409,7 @@ PSS_STYLE :=2
 LDFLAGS += -DLL
 CFLAGS += -D_CRT_SECURE_NO_DEPRECATE
 WINDOWS_VERSION=1
+ENDIANNESS_DEFINES += -DLSB_FIRST
 
 # Windows
 else
@@ -411,6 +420,7 @@ else
    IS_X86 = 1
    SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
    LDFLAGS += -static-libgcc -static-libstdc++ -lwinmm
+   ENDIANNESS_DEFINES += -DLSB_FIRST
 WINDOWS_VERSION=1
 endif
 
@@ -456,14 +466,13 @@ endif
 
 LDFLAGS += $(fpic) $(SHARED)
 FLAGS += $(fpic) $(NEW_GCC_FLAGS) $(INCFLAGS) $(INCFLAGS_PLATFORM)
-
-FLAGS += $(ENDIANNESS_DEFINES) -DSIZEOF_DOUBLE=8 $(WARNINGS) -DPSS_STYLE=1 -DMPC_FIXED_POINT $(CORE_DEFINE) -DSTDC_HEADERS -D__STDC_LIMIT_MACROS -D__LIBRETRO__ -D_LOW_ACCURACY_ $(EXTRA_INCLUDES) $(SOUND_DEFINE)
+FLAGS += -D__LIBRETRO__ $(ENDIANNESS_DEFINES) $(WARNINGS) $(CORE_DEFINE) $(EXTRA_INCLUDES) $(SOUND_DEFINE)
 
 CXXFLAGS += $(FLAGS)
 CFLAGS += $(FLAGS)
 
 OBJOUT   = -o
-LINKOUT  = -o 
+LINKOUT  = -o
 
 ifneq (,$(findstring msvc,$(platform)))
 	OBJOUT = -Fo
