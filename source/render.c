@@ -327,7 +327,7 @@ void render_reset(void)
 	int32_t i;
 
 	/* Clear display bitmap */
-	memset(bitmap.data, 0, bitmap.pitch * bitmap.height);
+	memset(bitmap.data, 0, (long) bitmap.pitch * bitmap.height);
 
 	/* Clear palette */
 	for(i = 0; i < PALETTE_SIZE; i++)
