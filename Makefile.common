@@ -8,8 +8,6 @@ INCFLAGS	      += -I$(SOURCE_DIR)/ports/libretro -I$(LIBRETRO_COMMON)/include
 INCFLAGS	      += -I$(SOURCE_DIR) -I$(SOURCE_DIR)/cpu_cores/$(Z80_CORE) -I$(SOURCE_DIR)/unzip
 INCFLAGS	      += -I$(SOURCE_DIR)/sound -I$(SOURCE_DIR)/sound/$(SOUND_ENGINE) -I$(SOURCE_DIR)/sound_output
 
-FLAGS             += -DALIGN_DWORD -DLSB_FIRST -std=gnu99
-
 ifeq ($(SOUND_ENGINE), crabemu_sn76489)
 SOURCES_C         += $(SOURCE_DIR)/sound/crabemu_sn76489/sn76489.c
 else
