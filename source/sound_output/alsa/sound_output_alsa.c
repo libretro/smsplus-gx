@@ -128,9 +128,11 @@ void Sound_Init(void)
 void Sound_Update(void)
 {
 	uint32_t i;
-	long len = (SOUND_FREQUENCY / snd.fps), ret;
+	long len = SOUND_FREQUENCY / snd.fps, ret;
 
-	for (i = 0; i < (4 * len); i++) 
+	if (!handle) return;
+
+	for (i = 0; i < (len); i++) 
 	{
 		buffer_snd[i * 2] = snd.output[1][i] * option.soundlevel;
 		buffer_snd[i * 2 + 1] = snd.output[0][i] * option.soundlevel;
