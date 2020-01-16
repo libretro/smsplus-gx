@@ -7,18 +7,17 @@
 #define INPUT_LINE_NMI 32
 #define INPUT_LINE_IRQ0 0
 
-#define Z80.pc.w.l (0)
-
 extern void CPUZ80_Init();
 extern void CPUZ80_Reset();
 extern void CPUIRQ_Pause();
 
+extern z80_t z80;
 extern z80_t *Z80_Context;
 extern int32_t z80_ICount;
 extern int32_t extra_cycles;
 extern int32_t z80_nmipending;
 extern int32_t z80_nmi_state;
-extern uint32_t z80_cycle_count;
+extern int32_t z80_cycle_count;
 extern uint32_t z80_requested_cycles;
 
 INLINE void z80_execute(int32_t internal_cycles)
