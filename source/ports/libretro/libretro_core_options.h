@@ -50,7 +50,7 @@ extern "C" {
 
 struct retro_core_option_definition option_defs_us[] = {
    {
-      "sms_plus_ntsc_filter",
+      "smsplus_ntsc_filter",
       "Blargg NTSC Filter",
       "Enable blargg NTSC filter.",
       {
@@ -64,7 +64,7 @@ struct retro_core_option_definition option_defs_us[] = {
       "disabled"
    },
    {
-      "sms_plus_sony_decoder",
+      "smsplus_sony_decoder",
       "Decoder Matrix",
       "Toggle between standard and Sony decoder matrix.",
       {
