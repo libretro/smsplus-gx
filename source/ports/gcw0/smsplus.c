@@ -1011,54 +1011,10 @@ static void Force_IPU_Mode()
 		set_keep_aspect_ratio(0);
 }
 
-/*
-static void Controls_joystick()
-{
-	int16_t x_move = 0, y_move = 0;
-
-	for(uint_fast8_t i=0;i<2;i++)
-	{
-		x_move = SDL_JoystickGetAxis(sdl_joy[i+1], 0);
-		y_move = SDL_JoystickGetAxis(sdl_joy[i+1], 1);
-
-		if (x_move > joy_commit_range)
-			input.pad[i] |= INPUT_RIGHT;
-		else if (input.pad[i] & INPUT_RIGHT)
-			input.pad[i] &= ~INPUT_RIGHT;
-	
-		if (x_move < -joy_commit_range)
-			input.pad[i] |= INPUT_LEFT;
-		else if (input.pad[i] & INPUT_LEFT)
-			input.pad[i] &= ~INPUT_LEFT;
-
-		if (y_move > joy_commit_range)
-			input.pad[i] |= INPUT_DOWN;
-		else if (input.pad[i] & INPUT_DOWN)
-			input.pad[i] &= ~INPUT_DOWN;
-
-		if(y_move < -joy_commit_range)
-			input.pad[i] |= INPUT_UP;
-		else if (input.pad[i] & INPUT_UP)
-			input.pad[i] &= ~INPUT_UP;
-
-		if(SDL_JoystickGetButton(sdl_joy[i+1], 2) == SDL_PRESSED)
-			input.pad[i] |= INPUT_BUTTON1;
-		else if (input.pad[i] & INPUT_BUTTON1)
-			input.pad[i] &= ~INPUT_BUTTON1;
-				
-		if(SDL_JoystickGetButton(sdl_joy[i+1], 1) == SDL_PRESSED)
-			input.pad[i] |= INPUT_BUTTON2;
-		else if (input.pad[i] & INPUT_BUTTON2)
-			input.pad[i] &= ~INPUT_BUTTON2;
-	}
-	
-	SDL_JoystickUpdate();	
-}
-*/
 
 int main (int argc, char *argv[]) 
 {
-	int joy_axis[2];
+	int32_t joy_axis[2] = {0, 0};
 	uint_fast8_t i;
 	SDL_Event event;
 	
@@ -1119,8 +1075,8 @@ int main (int argc, char *argv[])
 	SDL_JoystickEventState(SDL_ENABLE);
 	
 	
-	//joy_numb = SDL_NumJoysticks();
-	//if (joy_numb > 3) joy_numb = 3;
+	joy_numb = SDL_NumJoysticks();
+	if (joy_numb > 3) joy_numb = 3;
 	
 	for(i=0;i<joy_numb;i++)
 	{
@@ -1161,8 +1117,6 @@ int main (int argc, char *argv[])
 	// Loop until the user closes the window
 	while (!quit) 
 	{
-		//Controls_joystick();
-		
 		while (SDL_PollEvent(&event)) 
 		{
 			switch(event.type) 

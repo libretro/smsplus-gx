@@ -138,7 +138,7 @@ void Sound_Init()
 void Sound_Update()
 {
 	int32_t i;
-	for (i = 0; i < (4 * (SOUND_FREQUENCY / snd.fps)); i++) 
+	for (i = 0; i < (SOUND_FREQUENCY / snd.fps); i++) 
 	{
 		buffer_snd[i * 2] = snd.output[1][i] * option.soundlevel;
 		buffer_snd[i * 2 + 1] = snd.output[0][i] * option.soundlevel;
@@ -158,11 +158,16 @@ void Sound_Close()
 		buffered_bytes = BUFFSIZE;
 		SDL_CondSignal(sound_cv);
 		SDL_UnlockMutex(sound_mutex);
-		SDL_Delay(100);
+		SDL_Delay(25);
 		SDL_DestroyCond(sound_cv);
 		SDL_DestroyMutex(sound_mutex);
 	}
 	SDL_CloseAudio();
 	SDL_QuitSubSystem(SDL_INIT_AUDIO);
-	buffer = NULL;
+	
+	if (buffer)
+	{
+		free(buffer);
+		buffer = NULL;
+	}
 }
