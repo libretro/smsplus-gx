@@ -990,7 +990,7 @@ static void Cleanup(void)
 
 uint32_t update_window_size(uint32_t w, uint32_t h)
 {
-	sdl_screen = SDL_SetVideoMode(w, h, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
+	sdl_screen = SDL_SetVideoMode(w, h, 16, SDL_HWSURFACE);
 			
 	if (!sdl_screen)
 	{
