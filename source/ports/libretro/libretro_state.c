@@ -76,6 +76,7 @@ void system_load_state_mem(void)
 
    /* Load Z80 context */
    state_read(Z80_Context, sizeof(z80_t), sizeof(int8_t), fd);
+   Z80.irq_callback = sms_irq_callback;
 
    /* Load YM2413 context */
    buf = malloc(FM_GetContextSize());
