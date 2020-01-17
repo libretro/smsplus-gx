@@ -406,7 +406,7 @@ static void check_variables(void)
    unsigned old_decode = sony_decoder;
 
    var.value = NULL;
-   var.key   = "sms_plus_ntsc_filter";
+   var.key   = "smsplus_ntsc_filter";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -431,7 +431,7 @@ static void check_variables(void)
    }
 
    var.value = NULL;
-   var.key   = "sms_plus_sony_decoder";
+   var.key   = "smsplus_sony_decoder";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {

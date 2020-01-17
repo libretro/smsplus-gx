@@ -48,7 +48,7 @@ SOUND_ENGINE = maxim_sn76489
 Z80_CORE = z80
 ZIP_SUPPORT = 0
 
-TARGET_NAME := sms_plus_gx
+TARGET_NAME := smsplus
 
 arch = intel
 ifeq ($(shell uname -p),powerpc)
