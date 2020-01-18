@@ -41,7 +41,7 @@ static uint8_t selectpressed = 0;
 static uint8_t save_slot = 0;
 static uint8_t quit = 0;
 
-static const int8_t upscalers_available = 1
+static const int8_t upscalers_available = 2
 #ifdef SCALE2X_UPSCALER
 +1
 #endif
@@ -94,7 +94,8 @@ static void Clear_video()
 
 static void video_update()
 {
-	SDL_Rect dst;
+	uint8_t hide_left;
+	SDL_Rect dst, dst2;
 	width_hold = (vdp.reg[0] & 0x20) ? 248 : 256;
 	width_remove = (vdp.reg[0] & 0x20) ? 8 : 0;
 
@@ -102,7 +103,7 @@ static void video_update()
 	{
 		remember_res_height = vdp.height;
 		
-		if (option.fullscreen == 2) scale2x_res = 2;
+		if (option.fullscreen == 3) scale2x_res = 2;
 		else scale2x_res = 1;
 		
 		if(sms.console == CONSOLE_GG) 
@@ -121,7 +122,25 @@ static void video_update()
 	{
 		// Native
         case 0: 
+		if(sms.console == CONSOLE_GG) 
+		{
+			dst.x = 48;
+			dst.w = 160;
+			dst.h = 144;
+		}
+		else
+		{
+			dst.x = width_remove;
+			dst.w = width_hold;
+			dst.h = vdp.height;
+		}
+		dst.y = 0;
+		dst2.x = (sdl_screen->w-(dst.w))/2;
+		dst2.y = (sdl_screen->h-(dst.h))/2;
+		SDL_BlitSurface(sms_bitmap,&dst,sdl_screen,&dst2);
+		break;
         case 1:
+        case 2:
 			if(sms.console == CONSOLE_GG) 
 			{
 				dst.x = 48;
@@ -139,7 +158,7 @@ static void video_update()
 			SDL_BlitSurface(sms_bitmap,&dst,sdl_screen,NULL);
 		break;
 		// Hqx
-		case 2:
+		case 3:
 #ifdef SCALE2X_UPSCALER
 		if(sms.console == CONSOLE_GG) 
 		{
@@ -314,13 +333,6 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 			input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
 		else
 			input.system &= (sms.console == CONSOLE_GG) ? ~INPUT_START : ~INPUT_PAUSE;
-	}
-	else if (k == SDLK_HOME || k == SDLK_ESCAPE)
-	{
-		if (p)
-			selectpressed = 1;
-		else
-			selectpressed = 0;
 	}
 	
 	if (sms.console == CONSOLE_COLECO) input.system = 0;
@@ -737,12 +749,15 @@ static void Menu()
 			switch(option.fullscreen)
 			{
 				case 0:
-					print_string("Scaling : Fit", TextRed, 0, 5, 105, backbuffer->pixels);
+					print_string("Scaling : Native", TextRed, 0, 5, 105, backbuffer->pixels);
 				break;
 				case 1:
-					print_string("Scaling : Fullscreen", TextRed, 0, 5, 105, backbuffer->pixels);
+					print_string("Scaling : Fit", TextRed, 0, 5, 105, backbuffer->pixels);
 				break;
 				case 2:
+					print_string("Scaling : Fullscreen", TextRed, 0, 5, 105, backbuffer->pixels);
+				break;
+				case 3:
 					print_string("Scaling : EPX/Scale2x", TextRed, 0, 5, 105, backbuffer->pixels);
 				break;
 			}
@@ -752,12 +767,15 @@ static void Menu()
 			switch(option.fullscreen)
 			{
 				case 0:
-					print_string("Scaling : Fit", TextWhite, 0, 5, 105, backbuffer->pixels);
+					print_string("Scaling : Native", TextWhite, 0, 5, 105, backbuffer->pixels);
 				break;
 				case 1:
-					print_string("Scaling : Fullscreen", TextWhite, 0, 5, 105, backbuffer->pixels);
+					print_string("Scaling : Fit", TextWhite, 0, 5, 105, backbuffer->pixels);
 				break;
 				case 2:
+					print_string("Scaling : Fullscreen", TextWhite, 0, 5, 105, backbuffer->pixels);
+				break;
+				case 3:
 					print_string("Scaling : EPX/Scale2x", TextWhite, 0, 5, 105, backbuffer->pixels);
 				break;
 			}
@@ -815,10 +833,6 @@ static void Menu()
 							break;
                             case 4:
 							option.fullscreen--;
-							if (option.fullscreen == 2 && sms.console != CONSOLE_GG)
-							{
-								option.fullscreen--;
-							}
 							if (option.fullscreen < 0)
 								option.fullscreen = upscalers_available;
 							break;
@@ -988,9 +1002,19 @@ static void Cleanup(void)
 	system_shutdown();	
 }
 
+#define SDL_FLAGS SDL_HWSURFACE
+
 uint32_t update_window_size(uint32_t w, uint32_t h)
 {
-	sdl_screen = SDL_SetVideoMode(w, h, 16, SDL_HWSURFACE);
+
+	if (option.fullscreen == 0)
+	{
+		sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_FLAGS);
+	}
+	else
+	{
+		sdl_screen = SDL_SetVideoMode(w, h, 16, SDL_FLAGS);
+	}
 			
 	if (!sdl_screen)
 	{
@@ -1074,7 +1098,6 @@ int main (int argc, char *argv[])
 	
 	SDL_JoystickEventState(SDL_ENABLE);
 	
-	
 	joy_numb = SDL_NumJoysticks();
 	if (joy_numb > 3) joy_numb = 3;
 	
@@ -1122,6 +1145,16 @@ int main (int argc, char *argv[])
 			switch(event.type) 
 			{
 				case SDL_KEYUP:
+					switch(event.key.keysym.sym) 
+					{
+						case SDLK_HOME:
+						case SDLK_RCTRL:
+						case SDLK_ESCAPE:
+							selectpressed = 1;
+						break;
+						default:
+						break;
+					}
 					sdl_controls_update_input(event.key.keysym.sym, 0);
 				break;
 				case SDL_KEYDOWN:
@@ -1144,26 +1177,24 @@ int main (int argc, char *argv[])
 			}
 		}
 		
+		
+		
 		if (joy_axis[0] > joy_commit_range) input.pad[0] |= INPUT_RIGHT;
 		else if (joy_axis[0] < -joy_commit_range) input.pad[0] |= INPUT_LEFT;
-		else
+		else if (dpad_input[1] == 0 && dpad_input[2] == 0)
 		{
-			/* UP */
-			if (dpad_input[1] == 0 && input.pad[0] & INPUT_LEFT) input.pad[0] &= ~INPUT_LEFT;
-			/* DOWN */
-			if (dpad_input[2] == 0 && input.pad[0] & INPUT_RIGHT) input.pad[0] &= ~INPUT_RIGHT;
+			input.pad[0] &= ~INPUT_LEFT;
+			input.pad[0] &= ~INPUT_RIGHT;
 		}
 		
 		if (joy_axis[1] > joy_commit_range) input.pad[0] |= INPUT_DOWN;
 		else if (joy_axis[1] < -joy_commit_range) input.pad[0] |= INPUT_UP;
-		else
+		else if (dpad_input[0] == 0 && dpad_input[3] == 0)
 		{
-			/* UP */
-			if (dpad_input[0] == 0 && input.pad[0] & INPUT_UP) input.pad[0] &= ~INPUT_UP;
-			/* DOWN */
-			if (dpad_input[3] == 0 && input.pad[0] & INPUT_DOWN) input.pad[0] &= ~INPUT_DOWN;
+			input.pad[0] &= ~INPUT_UP;
+			input.pad[0] &= ~INPUT_DOWN;
 		}
-		
+
 		// Execute frame(s)
 		system_frame(0);
 		
