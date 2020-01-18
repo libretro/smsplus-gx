@@ -307,13 +307,6 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 		else
 			input.system &= (sms.console == CONSOLE_GG) ? ~INPUT_START : ~INPUT_PAUSE;
 	}
-	else if (k == SDLK_HOME || k == SDLK_ESCAPE)
-	{
-		if (p)
-			selectpressed = 1;
-		else
-			selectpressed = 0;
-	}
 	
 	if (sms.console == CONSOLE_COLECO) input.system = 0;
 	
@@ -1118,6 +1111,14 @@ int main (int argc, char *argv[])
 			switch(event.type) 
 			{
 				case SDL_KEYUP:
+					switch(event.key.keysym.sym) 
+					{
+						case SDLK_HOME:
+						case SDLK_RCTRL:
+						case SDLK_ESCAPE:
+							selectpressed = 1;
+						break;
+					}
 					sdl_controls_update_input(event.key.keysym.sym, 0);
 				break;
 				case SDL_KEYDOWN:
