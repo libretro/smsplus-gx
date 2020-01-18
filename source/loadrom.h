@@ -26,10 +26,10 @@
 #define LOADROM_H_
 
 /* Function prototypes */
-uint32_t load_rom(const char *filename);
+uint32_t load_rom(char *filename);
 
 #ifndef NGC
-uint8_t *loadzip(char *archive, const char *filename, int32_t *filesize);
+uint8_t *loadzip(char *archive, char *filename, int32_t *filesize);
 extern char game_name[PATH_MAX];
 #endif
 
