@@ -419,7 +419,7 @@ static uint32_t crc32(uint32_t crc, const uint8_t *ptr, size_t buf_len)
 }
 #endif
 
-uint32_t load_rom (const char *filename)
+uint32_t load_rom (char *filename)
 {
 	if(cart.rom)
 	{
