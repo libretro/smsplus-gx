@@ -48,6 +48,7 @@ static sms_ntsc_t *sms_ntsc;
 #define path_default_slash_c() '/'
 #endif
 
+#define MAX_PORTS 2
 #define MAX_BUTTONS 6
 
 typedef struct
@@ -308,35 +309,40 @@ static void Cleanup(void)
 
 static void update_input(void)
 {
-   unsigned i;
-   bool startpressed = false;
+   unsigned port;
+   unsigned startpressed = 0;
 
    input_poll_cb();
 
    input.pad[0] = 0;
+   input.pad[1] = 0;
    input.system &= (sms.console == CONSOLE_GG) ? ~INPUT_START : ~INPUT_PAUSE;
 
-   if (libretro_supports_bitmasks)
+   for (port = 0; port < MAX_PORTS; port++)
    {
-      uint16_t ret = input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+      unsigned i;
+      if (libretro_supports_bitmasks)
+      {
+         uint16_t ret = input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
 
-      for (i = 0; i < MAX_BUTTONS; i++)
-         input.pad[0] |= (ret & (1 << binds[i].retro)) ? binds[i].sms : 0;
+         for (i = 0; i < MAX_BUTTONS; i++)
+            input.pad[port] |= (ret & (1 << binds[i].retro)) ? binds[i].sms : 0;
 
-      if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_START))
-         startpressed = true;
+         if (!port && (ret & (1 << RETRO_DEVICE_ID_JOYPAD_START)))
+            startpressed = 1;
+      }
+      else
+      {
+         for (i = 0; i < MAX_BUTTONS; i++)
+            input.pad[port] |= (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, binds[i].retro)) ? binds[i].sms : 0;
+
+         if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
+            startpressed = 1;
+      }
+
+      if (startpressed)
+         input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
    }
-   else
-   {
-      for (i = 0; i < MAX_BUTTONS; i++)
-         input.pad[0] |= (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, binds[i].retro)) ? binds[i].sms : 0;
-
-      if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
-         startpressed = true;
-   }
-
-   if (startpressed)
-      input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
 }
 
 static void check_system_specs(void)
