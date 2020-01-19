@@ -41,10 +41,8 @@ static SMS_NTSC_IN_T *ntsc_screen;
 static sms_ntsc_t *sms_ntsc;
 
 #ifdef _WIN32
-#define path_default_slash() "\\"
 #define path_default_slash_c() '\\'
 #else
-#define path_default_slash() "/"
 #define path_default_slash_c() '/'
 #endif
 
@@ -66,7 +64,6 @@ static sms_input_t binds[MAX_BUTTONS] =
    { RETRO_DEVICE_ID_JOYPAD_B,     INPUT_BUTTON1 },
    { RETRO_DEVICE_ID_JOYPAD_A,     INPUT_BUTTON2 }
 };
-
 
 static void get_basename(char *buf, const char *path, size_t size)
 {
@@ -101,6 +98,12 @@ static void get_basedir(char *buf, const char *path, size_t size)
       buf[0] = '\0';
 }
 
+#define NTSC_NONE 0
+#define NTSC_MONOCHROME 1
+#define NTSC_COMPOSITE 2
+#define NTSC_SVIDEO 3
+#define NTSC_RGB 4
+
 static void filter_ntsc_init(void)
 {
    if (sms_ntsc == NULL)
@@ -121,12 +124,6 @@ static void filter_ntsc_cleanup(void)
       free(ntsc_screen);
    ntsc_screen = NULL;
 }
-
-#define NTSC_NONE 0
-#define NTSC_MONOCHROME 1
-#define NTSC_COMPOSITE 2
-#define NTSC_SVIDEO 3
-#define NTSC_RGB 4
 
 static void filter_ntsc_set(void)
 {
@@ -219,12 +216,6 @@ static void video_update(void)
       render_ntsc(width, height, pitch);
 }
 
-void smsp_state(uint8_t slot_number, uint8_t mode)
-{
-   (void)slot_number;
-   (void)mode;
-}
-
 void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode)
 {
    (void)sram;
@@ -232,14 +223,7 @@ void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode)
    (void)mode;
 }
 
-static uint32_t sdl_controls_update_input(int k, int32_t p)
-{
-   (void)k;
-   (void)p;
-   return 0;
-}
-
-static void bios_init()
+static void bios_init(void)
 {
    FILE *fd;
    char bios_path[1024];
