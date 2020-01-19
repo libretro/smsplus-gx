@@ -1,14 +1,3 @@
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <errno.h>
-#include <unistd.h>
-#include <time.h>
-
-#include <math.h>
-#include <stdarg.h>
-
 #include <libretro.h>
 #include <libretro_core_options.h>
 #include <streams/memory_stream.h>
