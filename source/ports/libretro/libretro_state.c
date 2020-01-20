@@ -69,7 +69,10 @@ void system_load_state_mem(void)
 
    /* Load Z80 context */
    state_read(Z80_Context, sizeof(z80_t));
+
+#ifdef USE_Z80
    Z80.irq_callback = sms_irq_callback;
+#endif
 
    /* Load YM2413 context */
    state_read(YM2413_GetContextPtr(), YM2413_GetContextSize());
