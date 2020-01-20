@@ -15,7 +15,7 @@ static gamedata_t gdata;
 
 t_config option;
 
-static uint16_t *sms_bitmap;
+static uint16_t *sms_bitmap = NULL;
 
 static char retro_save_directory[256];
 static char retro_system_directory[256];
@@ -35,10 +35,10 @@ static unsigned libretro_serialize_size;
 static unsigned geometry_changed;
 
 /* blargg NTSC */
-static unsigned use_ntsc;
-static unsigned sony_decoder;
-static SMS_NTSC_IN_T *ntsc_screen;
-static sms_ntsc_t *sms_ntsc;
+static unsigned use_ntsc = 0;
+static unsigned sony_decoder = 0;
+static SMS_NTSC_IN_T *ntsc_screen = NULL;
+static sms_ntsc_t *sms_ntsc = NULL;
 
 #ifdef _WIN32
 #define path_default_slash_c() '\\'
@@ -106,11 +106,9 @@ static void get_basedir(char *buf, const char *path, size_t size)
 
 static void filter_ntsc_init(void)
 {
-   if (sms_ntsc == NULL)
-      sms_ntsc = (sms_ntsc_t*)malloc(sizeof(sms_ntsc_t));
+   sms_ntsc = (sms_ntsc_t*)malloc(sizeof(sms_ntsc_t));
 
-   if (ntsc_screen == NULL)
-      ntsc_screen = (SMS_NTSC_IN_T*)malloc(640 * 480 * sizeof(SMS_NTSC_IN_T));
+   ntsc_screen = (SMS_NTSC_IN_T*)malloc(640 * 480 * sizeof(SMS_NTSC_IN_T));
    memset(ntsc_screen, 0, sizeof(640 * 480 * sizeof(SMS_NTSC_IN_T)));
 }
 
@@ -277,9 +275,13 @@ static void smsp_gamedata_set(char *filename)
 
 static void Cleanup(void)
 {
-   if (sms_bitmap) free(sms_bitmap);
+   if (sms_bitmap)
+      free(sms_bitmap);
+   sms_bitmap = NULL;
 
-   if (bios.rom) free(bios.rom);
+   if (bios.rom)
+      free(bios.rom);
+   bios.rom = NULL;
 
    // Deinitialize audio and video output
    Sound_Close();
