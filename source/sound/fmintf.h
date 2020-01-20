@@ -25,6 +25,8 @@ void FM_GetContext(uint8_t *data);
 void FM_SetContext(uint8_t *data);
 uint32_t FM_GetContextSize(void);
 uint8_t *FM_GetContextPtr(void);
+uint32_t YM2413_GetContextSize(void);
+uint8_t *YM2413_GetContextPtr(void);
 void FM_WriteReg(uint8_t reg, uint8_t data);
 
 #endif /* FMINTF_H_ */

@@ -60,7 +60,6 @@ void FM_Write(uint32_t offset, uint8_t data)
 	isfm_used = 1;
 }
 
-
 void FM_GetContext(uint8_t *data)
 {
     memcpy(data, &fm_context, sizeof(FM_Context));
@@ -116,4 +115,14 @@ uint32_t FM_GetContextSize(void)
 uint8_t *FM_GetContextPtr(void)
 {
     return (uint8_t *)&fm_context;
+}
+
+uint32_t YM2413_GetContextSize(void)
+{
+    return sizeof(YM2413);
+}
+
+uint8_t *YM2413_GetContextPtr(void)
+{
+    return (uint8_t *)fmm;
 }
