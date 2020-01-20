@@ -10,7 +10,7 @@ addons:
       - ubuntu-toolchain-r-test
 env:
   global:
-    - CORE=px68k
+    - CORE=smsplus
     - COMPILER_NAME=gcc CXX=g++-7 CC=gcc-7
   matrix:
     - PLATFORM=3ds
