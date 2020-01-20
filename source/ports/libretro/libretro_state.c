@@ -37,6 +37,8 @@ uint32_t system_save_state_mem(void)
    state_write(Z80_Context, sizeof(z80_t), sizeof(int8_t), fd);
 
    /* Save YM2413 context */
+   state_write(YM2413_GetContextPtr(), YM2413_GetContextSize(), sizeof(int8_t), fd);
+
    state_write(FM_GetContextPtr(), FM_GetContextSize(), sizeof(int8_t), fd);
 
    /* Save SN76489 context */
@@ -79,6 +81,8 @@ void system_load_state_mem(void)
    Z80.irq_callback = sms_irq_callback;
 
    /* Load YM2413 context */
+   state_read(YM2413_GetContextPtr(), YM2413_GetContextSize(), sizeof(int8_t), fd);
+
    buf = malloc(FM_GetContextSize());
    state_read(buf, FM_GetContextSize(), sizeof(int8_t), fd);
    FM_SetContext(buf);
