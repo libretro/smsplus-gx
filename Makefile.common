@@ -44,6 +44,7 @@ SOURCES_C         += \
                   $(SOURCE_DIR)/cpu_cores/eighty/z80_ops.c \
                   $(SOURCE_DIR)/cpu_cores/eighty/z80_wrap.c
 else
+CFLAGS            += -DUSE_Z80
 SOURCES_C         += $(SOURCE_DIR)/cpu_cores/z80/z80.c
 endif
 
