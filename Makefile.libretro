@@ -506,12 +506,12 @@ else
 	endif
 endif
 else
-	LD = $(CXX)
+	LD = $(CC)
 endif
 
 $(TARGET): $(OBJECTS)
 ifeq ($(platform), emscripten)
-	$(CXX) $(CXXFLAGS) $(OBJOUT)$@ $^
+	$(CC) $(CFLAGS) $(OBJOUT)$@ $^
 else ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(OBJECTS)
 else
