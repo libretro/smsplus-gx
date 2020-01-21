@@ -17,7 +17,6 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <stdint.h>
-#include <malloc.h>
 #include <math.h>
 #include <limits.h>
 
