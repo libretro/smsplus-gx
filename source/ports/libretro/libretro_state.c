@@ -7,46 +7,39 @@
 extern sn76489_t psg_sn;
 #endif
 
-static uint64_t state_write(void *in_data, size_t size, size_t n_elem, memstream_t *stream)
-{
-   uint64_t len = size * n_elem;
-   return memstream_write(stream, in_data, len);
-}
-
-static uint64_t state_read(void *in_data, size_t size, size_t n_elem, memstream_t *stream)
-{
-   uint64_t len = size * n_elem;
-   return memstream_read(stream, in_data, len);
-}
+#define state_write(in_data, size) memstream_write(stream, in_data, size)
+#define state_read(in_data, size) memstream_read(stream, in_data, size)
 
 uint32_t system_save_state_mem(void)
 {
-   memstream_t *fd = memstream_open(1);
+   memstream_t *stream = memstream_open(1);
 
    /* Save VDP context */
-   state_write(&vdp, sizeof(vdp_t), sizeof(int8_t), fd);
+   state_write(&vdp, sizeof(vdp_t));
 
    /* Save SMS context */
-   state_write(&sms, sizeof(sms_t), sizeof(int8_t), fd);
+   state_write(&sms, sizeof(sms_t));
 
-   state_write(cart.fcr, 4, sizeof(int8_t), fd);
+   state_write(cart.fcr, 4);
 
-   state_write(cart.sram, 0x8000, sizeof(int8_t), fd);
+   state_write(cart.sram, 0x8000);
 
    /* Save Z80 context */
-   state_write(Z80_Context, sizeof(z80_t), sizeof(int8_t), fd);
+   state_write(Z80_Context, sizeof(z80_t));
 
    /* Save YM2413 context */
-   state_write(FM_GetContextPtr(), FM_GetContextSize(), sizeof(int8_t), fd);
+   state_write(YM2413_GetContextPtr(), YM2413_GetContextSize());
+
+   state_write(FM_GetContextPtr(), FM_GetContextSize());
 
    /* Save SN76489 context */
    #ifdef MAXIM_PSG
-   state_write(SN76489_GetContextPtr(0), SN76489_GetContextSize(), sizeof(int8_t), fd);
+   state_write(SN76489_GetContextPtr(0), SN76489_GetContextSize());
    #else
-   state_write(&psg_sn, sizeof(sn76489_t), sizeof(int8_t), fd);
+   state_write(&psg_sn, sizeof(sn76489_t));
    #endif
 
-   memstream_close(fd);
+   memstream_close(stream);
 
    return 0;
 }
@@ -55,47 +48,54 @@ void system_load_state_mem(void)
 {
    uint8_t *buf;
    uint32_t i;
-   memstream_t *fd = memstream_open(0);
+   memstream_t *stream = memstream_open(0);
 
    /* Initialize everything */
    system_reset();
 
    /* Load VDP context */
-   state_read(&vdp, sizeof(vdp_t), sizeof(int8_t), fd);
+   state_read(&vdp, sizeof(vdp_t));
 
    /* Load SMS context */
-   state_read(&sms, sizeof(sms_t), sizeof(int8_t), fd);
+   state_read(&sms, sizeof(sms_t));
 
    /** restore video & audio settings (needed if timing changed) ***/
    vdp_init();
    SMSPLUS_sound_init();
 
-   state_read(cart.fcr, 4, sizeof(int8_t), fd);
+   state_read(cart.fcr, 4);
 
-   state_read(cart.sram, 0x8000, sizeof(int8_t), fd);
+   state_read(cart.sram, 0x8000);
 
    /* Load Z80 context */
-   state_read(Z80_Context, sizeof(z80_t), sizeof(int8_t), fd);
+   state_read(Z80_Context, sizeof(z80_t));
+
+#ifdef USE_Z80
    Z80.irq_callback = sms_irq_callback;
+#endif
 
    /* Load YM2413 context */
+   state_read(YM2413_GetContextPtr(), YM2413_GetContextSize());
+
    buf = malloc(FM_GetContextSize());
-   state_read(buf, FM_GetContextSize(), sizeof(int8_t), fd);
+   state_read(buf, FM_GetContextSize());
    FM_SetContext(buf);
    free(buf);
 
    /* Load SN76489 context */
    #ifdef MAXIM_PSG
    buf = malloc(SN76489_GetContextSize());
-   state_read(buf, SN76489_GetContextSize(), sizeof(int8_t), fd);
+   state_read(buf, SN76489_GetContextSize());
    SN76489_SetContext(0, buf);
    free(buf);
    #else
    buf = malloc(sizeof(sn76489_t));
-   state_read(buf, sizeof(sn76489_t), sizeof(int8_t), fd);
+   state_read(buf, sizeof(sn76489_t));
    memcpy(&psg_sn, buf, sizeof(sn76489_t));
    free(buf);
    #endif
+
+   memstream_close(stream);
 
    if ((sms.console != CONSOLE_COLECO) && (sms.console != CONSOLE_SG1000) && (sms.console != CONSOLE_SORDM5))
    {
@@ -135,6 +135,4 @@ void system_load_state_mem(void)
    /* Restore palette */
    for(i = 0; i < PALETTE_SIZE; i++)
       palette_sync(i);
-
-   memstream_close(fd);
 }
