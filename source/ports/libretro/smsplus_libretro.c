@@ -73,7 +73,7 @@ static void get_basename(char *buf, const char *path, size_t size)
 
    if (base)
    {
-      snprintf(buf, size, "%s", base);
+      sprintf(buf, "%s", base);
       base = strrchr(buf, '.');
       if (base)
          *base = '\0';
@@ -229,7 +229,7 @@ static void bios_init(void)
    bios.rom = malloc(0x100000);
    bios.enabled = 0;
 
-   snprintf(bios_path, sizeof(bios_path), "%s%s", gdata.biosdir, "bios.sms");
+   sprintf(bios_path, "%s%s", gdata.biosdir, "bios.sms");
 
    fd = fopen(bios_path, "rb");
    if(fd)
@@ -246,7 +246,7 @@ static void bios_init(void)
       log_cb(RETRO_LOG_INFO, "bios loaded:      %s\n", bios_path);
    }
 
-   snprintf(bios_path, sizeof(bios_path), "%s%s", gdata.biosdir, "BIOS.col");
+   sprintf(bios_path, "%s%s", gdata.biosdir, "BIOS.col");
 
    fd = fopen(bios_path, "rb");
    if(fd)
@@ -267,10 +267,10 @@ static void smsp_gamedata_set(char *filename)
 
    /* Check and remove default slash from the beginning of the base name */
    if (gdata.gamename[0] == path_default_slash_c())
-      snprintf(gdata.gamename, sizeof(gdata.gamename), "%s", gdata.gamename + 1);
+      sprintf(gdata.gamename, "%s", gdata.gamename + 1);
 
    /* Set up the bios directory */
-   snprintf(gdata.biosdir, sizeof(gdata.biosdir), "%s%c", retro_system_directory, path_default_slash_c());
+   sprintf(gdata.biosdir, "%s%c", retro_system_directory, path_default_slash_c());
 }
 
 static void Cleanup(void)

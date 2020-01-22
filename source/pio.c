@@ -30,7 +30,6 @@
 */
 
 #include "shared.h"
-#include <math.h>
 
 typedef struct {
   uint8_t tr_level[2];  /* TR pin output level */

@@ -59,11 +59,7 @@ to do:
  * February 19nd 2019 : Minor inline fix.
 */
 
-#include "ym2413.h"
-
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
+#include "shared.h"
 
 /* Convenience stuff... */
 #undef INLINE
@@ -73,6 +69,10 @@ to do:
 #    define INLINE static __inline__
 #else
 #    define INLINE static
+#endif
+
+#ifndef M_PI
+#    define M_PI 3.14159265358979323846
 #endif
 
 #define logerror(...)
@@ -1470,7 +1470,8 @@ static void write_reg(YM2413 *fm, int32_t r, uint8_t v)
 
 static void sound_stream_update(YM2413 *fm, int16_t **buf, int32_t samples)
 {
-    for(int32_t i=0; i < samples ; i++ )
+	int32_t i,j;
+    for(i=0; i < samples ; i++ )
     {
         fm->output[0] = 0;
         fm->output[1] = 0;
@@ -1478,12 +1479,12 @@ static void sound_stream_update(YM2413 *fm, int16_t **buf, int32_t samples)
         advance_lfo(fm);
 
         /* FM part */
-        for(uint32_t j=0; j<6; j++)
+        for(j=0; j<6; j++)
             chan_calc(fm, &fm->P_CH[j]);
 
         if(!(fm->rhythm & 0x20))
         {
-            for(uint32_t j=6; j<9; j++)
+            for(j=6; j<9; j++)
                 chan_calc(fm, &fm->P_CH[j]);
         }
         else        /* Rhythm part */
@@ -1504,17 +1505,20 @@ static void sound_stream_update(YM2413 *fm, int16_t **buf, int32_t samples)
 
 static void device_start(YM2413 *fm, int32_t clock, int32_t rate)
 {
+	int32_t x;
+	int32_t i;
     float fb = (clock / 72.0f) / rate;
 
-	for (int32_t x=0; x<TL_RES_LEN; x++)
+	for (x=0; x<TL_RES_LEN; x++)
 	{
-		float m = (1<<16) / powf(2, (x+1) * ((float)ENV_STEP/4.0f) / 8.0f);
+		int32_t n;
+		float m = (float)(1<<16) / powf(2, (x+1) * ((float)ENV_STEP/4.0f) / 8.0f);
 		m = floorf(m);
 
 		/* we never reach (1<<16) here due to the (x+1) */
 		/* result fits within 16 bits at maximum */
 
-		int32_t n = (int32_t)m; /* 16 bits here */
+		n = (int32_t)m; /* 16 bits here */
 		n >>= 4;        /* 12 bits here */
 		if (n&1)        /* round to nearest */
 			n = (n>>1)+1;
@@ -1525,15 +1529,16 @@ static void device_start(YM2413 *fm, int32_t clock, int32_t rate)
 		fm->tl_tab[ x*2 + 0 ] = n;
 		fm->tl_tab[ x*2 + 1 ] = -fm->tl_tab[ x*2 + 0 ];
 
-		for (int32_t i=1; i<11; i++)
+		for (i=1; i<11; i++)
 		{
 			fm->tl_tab[ x*2+0 + i*2*TL_RES_LEN ] =  fm->tl_tab[ x*2+0 ]>>i;
 			fm->tl_tab[ x*2+1 + i*2*TL_RES_LEN ] = -fm->tl_tab[ x*2+0 + i*2*TL_RES_LEN ];
 		}
 	}
 
-	for (int32_t i=0; i<SIN_LEN; i++)
+	for (i=0; i<SIN_LEN; i++)
 	{
+		int32_t n;
 		/* non-standard sinus */
 		float m = sinf( ((i*2)+1) * (float)M_PI / SIN_LEN ); /* checked against the real chip */
 
@@ -1543,7 +1548,7 @@ static void device_start(YM2413 *fm, int32_t clock, int32_t rate)
 
 		o = o / ((float)ENV_STEP/4);
 
-		int32_t n = (int32_t)(2.0f*o);
+		n = (int32_t)(2.0f*o);
 		if (n&1)                        /* round to nearest */
 			n = (n>>1)+1;
 		else
@@ -1562,7 +1567,7 @@ static void device_start(YM2413 *fm, int32_t clock, int32_t rate)
 	}
 
 	/* make fnumber -> increment counter table */
-	for( int32_t i = 0 ; i < 1024; i++ )
+	for(i = 0 ; i < 1024; i++)
 	{
 		/* OPLL (YM2413) phase increment counter = 18bit */
 		fm->fn_tab[i] = i * (64 * fb * (1<<(FREQ_SH-10))); /* -10 because chip works with 10.10 fixed point, while we use 16.16 */
@@ -1589,15 +1594,18 @@ static void device_start(YM2413 *fm, int32_t clock, int32_t rate)
 
 static void device_reset(YM2413 *fm)
 {
+	int32_t i;
+	int32_t c;
+	int32_t s;
 	fm->eg_timer = 0;
 	fm->eg_cnt   = 0;
 
 	fm->noise_rng = 1;    /* noise shift register */
 
 	/* setup instruments table */
-	for (int32_t i=0; i<19; i++)
+	for (i=0; i<19; i++)
 	{
-		for (int32_t c=0; c<8; c++)
+		for (c=0; c<8; c++)
 		{
 			fm->inst_tab[i][c] = table[i][c];
 		}
@@ -1606,14 +1614,14 @@ static void device_reset(YM2413 *fm)
 
 	/* reset with register write */
 	write_reg(fm, 0x0f,0); /*test reg*/
-	for(int32_t i = 0x3f ; i >= 0x10 ; i-- )
+	for(i = 0x3f ; i >= 0x10 ; i-- )
 		write_reg(fm, i, 0x00);
 
 	/* reset operator parameters */
-	for(uint32_t c = 0 ; c < 9 ; c++ )
+	for(c = 0 ; c < 9 ; c++ )
 	{
 		struct OPLL_CH *CH = &fm->P_CH[c];
-		for(uint32_t s = 0 ; s < 2 ; s++ )
+		for(s = 0 ; s < 2 ; s++ )
 		{
 			/* wave table */
 			CH->SLOT[s].wavetable = 0;
