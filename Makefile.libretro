@@ -55,6 +55,13 @@ ifeq ($(shell uname -p),powerpc)
 arch = ppc
 endif
 
+ifneq (,$(findstring msvc,$(platform)))
+LIBM :=
+else
+LIBM := -lm
+endif
+LIBS :=
+
 # Unix
 ifneq (,$(findstring unix,$(platform)))
    TARGET := $(TARGET_NAME)_libretro.so
@@ -470,7 +477,7 @@ FLAGS += -fsanitize=$(SANITIZER)
 LDFLAGS += -fsanitize=$(SANITIZER)
 endif
 
-LDFLAGS += $(fpic) $(SHARED)
+LDFLAGS += $(fpic) $(SHARED) $(LIBM)
 FLAGS += $(fpic) $(NEW_GCC_FLAGS) $(INCFLAGS) $(INCFLAGS_PLATFORM)
 FLAGS += -D__LIBRETRO__ $(ENDIANNESS_DEFINES) $(WARNINGS) $(CORE_DEFINE) $(EXTRA_INCLUDES) $(SOUND_DEFINE)
 
