@@ -10,8 +10,8 @@
  * though i admit that the switch to the newer code was mostly licensing based.
  * This is no longer an issue now thankfully. (and it helped that MAME's version was mostly similar)
 */
-// license:BSD-3-Clause
-// copyright-holders:Juergen Buchmueller
+/* license:BSD-3-Clause
+ * copyright-holders:Juergen Buchmueller */
 /*****************************************************************************
  *
  *   z80.c
@@ -3510,7 +3510,7 @@ void z80_reset_cycle_count(void)
 
 int32_t z80_get_elapsed_cycles(void)
 {
-	// inside execution loop
+	/* inside execution loop */
 	if(z80_exec == 1) return z80_cycle_count + (z80_requested_cycles - Z80.icount);
 	return z80_cycle_count;
 }

@@ -283,15 +283,15 @@ static void Cleanup(void)
       free(bios.rom);
    bios.rom = NULL;
 
-   // Deinitialize audio and video output
+   /* Deinitialize audio and video output */
    Sound_Close();
 
-   // Shut down
+   /* Shut down */
    system_poweroff();
    system_shutdown();
 }
 
-// Libretro implementation
+/* Libretro implementation */
 
 static void update_input(void)
 {
@@ -459,7 +459,7 @@ bool retro_load_game(const struct retro_game_info *info)
    option.country = 0;
    option.console = 0;
 
-   // Load ROM
+   /* Load ROM */
    if (!load_rom_mem((const char*)info->data, info->size))
    {
       fprintf(stderr, "Error: Failed to load %s.\n", info->path);
@@ -474,7 +474,7 @@ bool retro_load_game(const struct retro_game_info *info)
    log_cb(RETRO_LOG_INFO, "system directory: %s\n", retro_system_directory);
    log_cb(RETRO_LOG_INFO, "save directory:   %s\n", retro_save_directory);
 
-   // Set parameters for internal bitmap
+   /* Set parameters for internal bitmap */
    bitmap.width       = VIDEO_WIDTH_SMS;
    bitmap.height      = 240;
    bitmap.depth       = 16;
@@ -486,7 +486,7 @@ bool retro_load_game(const struct retro_game_info *info)
    bitmap.viewport.x  = 0x00;
    bitmap.viewport.y  = 0x00;
 
-   //sms.territory = settings.misc_region;
+   /* sms.territory = settings.misc_region; */
    if (sms.console == CONSOLE_SMS || sms.console == CONSOLE_SMS2)
       sms.use_fm = 1;
 
@@ -494,7 +494,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
    Sound_Init();
 
-   // Initialize all systems and power on
+   /* Initialize all systems and power on */
    system_poweron();
 
    filter_ntsc_init();
@@ -571,7 +571,7 @@ void retro_deinit()
 
 unsigned retro_get_region(void)
 {
-   return RETRO_REGION_NTSC; // FIXME: Regions for other cores.
+   return RETRO_REGION_NTSC; /* FIXME: Regions for other cores */
 }
 
 unsigned retro_api_version(void)

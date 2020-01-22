@@ -105,8 +105,8 @@ case 0x4f:	/* LD R,A */
 tstates += 1;
 
 /* Keep the RZX instruction counter right */
-// rzx_instructions_offset += ( R - A );
-//debug(0);
+/* rzx_instructions_offset += ( R - A ); */
+/* debug(0); */
 R=R7=A;
 break;
 
@@ -520,17 +520,17 @@ case 0xbb:	/* OTDR */
 break;
 
 case 0xfb:	/* Emulator trap to load .slt data */
-//if( settings_current.slt_traps ) {
-//
-//  if( slt_length[A] ) {
-//    uint16_t base = HL;
-//    uint8_t *data = slt[A];
-//    size_t length = slt_length[A];
-//
-//    while( length-- ) writebyte( base++, *data++ );
-//  }
-//
-//}
+/* if( settings_current.slt_traps ) {
+
+  if( slt_length[A] ) {
+    uint16_t base = HL;
+    uint8_t *data = slt[A];
+    size_t length = slt_length[A];
+
+    while( length-- ) writebyte( base++, *data++ );
+  }
+
+} */
 break;
 
 default:	/* All other opcodes are NOPD */

@@ -11,8 +11,9 @@
     this file (GPLv2 or newer).
 */
 
-// license:GPL-2.0+
-// copyright-holders:Jarek Burczynski,Ernesto Corvi
+/* license:GPL-2.0+
+ * copyright-holders:Jarek Burczynski,Ernesto Corvi 
+ */
 #ifndef YM2413_H__
 #define YM2413_H__
 
