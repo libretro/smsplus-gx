@@ -58,8 +58,8 @@ typedef struct
 	int32_t irq_state;      /* irq line state */
 	int32_t (*irq_callback)(int32_t);
 	int32_t icount;
-	int32_t wait_state;         // wait line state
-	int32_t busrq_state;        // bus request line state
+	int32_t wait_state;     /* wait line state */
+	int32_t busrq_state;    /* bus request line state */
 }  Z80_Regs;
 
 

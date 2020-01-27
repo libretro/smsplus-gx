@@ -41,7 +41,7 @@ uint32_t z80_do_opcode(z80_t* z80)
 
     contend( PC, 4 ); R++;
 
-    //if (z80.halted) opcode=0;
+    /* if (z80.halted) opcode=0; */
     opcode = opcode_fetch( PC++ );
 
     switch(opcode) {
@@ -864,7 +864,7 @@ uint32_t z80_do_opcode(z80_t* z80)
 	contend( PC, 4 );
 	outtemp = readbyte( PC++ ) + ( A << 8 );
 	OUT( outtemp , A);
-        //tstates += 1;
+        /* tstates += 1; */
       }
       break;
     case 0xd4:		/* CALL NC,nnnn */

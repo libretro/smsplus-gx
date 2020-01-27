@@ -305,13 +305,13 @@ void make_tms_tables(void)
     {
         for(bx = 0; bx < 256; bx++)
         {
-//          uint8_t bd = (bx & 0x0F);
+/*          uint8_t bd = (bx & 0x0F); */
             uint8_t bs = (bx & 0x40);
-//          uint8_t bt = (bd == 0) ? 1 : 0;
+/*          uint8_t bt = (bd == 0) ? 1 : 0; */
             uint8_t sd = (sx & 0x0F);
-//          uint8_t st = (sd == 0) ? 1 : 0;
+/*          uint8_t st = (sd == 0) ? 1 : 0; */
 
-            // opaque sprite pixel, choose 2nd pal and set sprite marker
+            /* opaque sprite pixel, choose 2nd pal and set sprite marker */
             if(sd && !bs)
             {
                 tms_obj_lut[(sx<<8)|(bx)] = sd | 0x10 | 0x40;
@@ -319,7 +319,7 @@ void make_tms_tables(void)
             else
             if(sd && bs)
             {
-                // writing over a sprite
+                /* writing over a sprite */
                 tms_obj_lut[(sx<<8)|(bx)] = bx;
             }
             else
@@ -466,7 +466,7 @@ static void render_bg_m1(int32_t line)
     uint8_t *clut;
     uint8_t *bpex;
     uint8_t *lb = &linebuf[0];
-//  uint8_t *pn = &vdp.vram[vdp.pn + ((line >> 3) * 40)];
+/*  uint8_t *pn = &vdp.vram[vdp.pn + ((line >> 3) * 40)]; */
 
     uint8_t *pn = &vdp.vram[vdp.pn + text_counter];
 

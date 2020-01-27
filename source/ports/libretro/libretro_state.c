@@ -59,7 +59,7 @@ void system_load_state_mem(void)
    /* Load SMS context */
    state_read(&sms, sizeof(sms_t));
 
-   /** restore video & audio settings (needed if timing changed) ***/
+   /* restore video & audio settings (needed if timing changed) */
    vdp_init();
    SMSPLUS_sound_init();
 

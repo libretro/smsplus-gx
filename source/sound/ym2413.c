@@ -10,9 +10,9 @@
     this file (GPLv2 or newer).
 */
 
-// license:GPL-2.0+
-// copyright-holders:Jarek Burczynski, Ernesto Corvi
-/*
+/* license:GPL-2.0+
+** copyright-holders:Jarek Burczynski, Ernesto Corvi
+**
 **
 ** File: ym2413.c - software implementation of YM2413
 **                  FM sound generator type OPLL
@@ -59,11 +59,7 @@ to do:
  * February 19nd 2019 : Minor inline fix.
 */
 
-#include "ym2413.h"
-
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
+#include "shared.h"
 
 /* Convenience stuff... */
 #undef INLINE
@@ -73,6 +69,10 @@ to do:
 #    define INLINE static __inline__
 #else
 #    define INLINE static
+#endif
+
+#ifndef M_PI
+#    define M_PI 3.14159265358979323846
 #endif
 
 #define logerror(...)
@@ -387,34 +387,34 @@ static const int8_t lfo_pm_table[8*8] = {
 static const uint8_t table[19][8] = {
 /* MULT  MULT modTL DcDmFb AR/DR AR/DR SL/RR SL/RR */
 /*   0     1     2     3     4     5     6    7    */
-	{0x49, 0x4c, 0x4c, 0x12, 0x00, 0x00, 0x00, 0x00 },  //0
+	{0x49, 0x4c, 0x4c, 0x12, 0x00, 0x00, 0x00, 0x00 },  /* 0 */
 
-	{0x61, 0x61, 0x1e, 0x17, 0xf0, 0x78, 0x00, 0x17 },  //1
-	{0x13, 0x41, 0x1e, 0x0d, 0xd7, 0xf7, 0x13, 0x13 },  //2
-	{0x13, 0x01, 0x99, 0x04, 0xf2, 0xf4, 0x11, 0x23 },  //3
-	{0x21, 0x61, 0x1b, 0x07, 0xaf, 0x64, 0x40, 0x27 },  //4
+	{0x61, 0x61, 0x1e, 0x17, 0xf0, 0x78, 0x00, 0x17 },  /* 1 */
+	{0x13, 0x41, 0x1e, 0x0d, 0xd7, 0xf7, 0x13, 0x13 },  /* 2 */
+	{0x13, 0x01, 0x99, 0x04, 0xf2, 0xf4, 0x11, 0x23 },  /* 3 */
+	{0x21, 0x61, 0x1b, 0x07, 0xaf, 0x64, 0x40, 0x27 },  /* 4 */
 
-//{0x22, 0x21, 0x1e, 0x09, 0xf0, 0x76, 0x08, 0x28 },    //5
-	{0x22, 0x21, 0x1e, 0x06, 0xf0, 0x75, 0x08, 0x18 },  //5
+/* {0x22, 0x21, 0x1e, 0x09, 0xf0, 0x76, 0x08, 0x28 }, */    /* 5 */
+	{0x22, 0x21, 0x1e, 0x06, 0xf0, 0x75, 0x08, 0x18 },  /* 5 */
 
-//{0x31, 0x22, 0x16, 0x09, 0x90, 0x7f, 0x00, 0x08 },    //6
-	{0x31, 0x22, 0x16, 0x05, 0x90, 0x71, 0x00, 0x13 },  //6
+/* {0x31, 0x22, 0x16, 0x09, 0x90, 0x7f, 0x00, 0x08 }, */    /* 6 */
+	{0x31, 0x22, 0x16, 0x05, 0x90, 0x71, 0x00, 0x13 },  /* 6 */
 
-	{0x21, 0x61, 0x1d, 0x07, 0x82, 0x80, 0x10, 0x17 },  //7
-	{0x23, 0x21, 0x2d, 0x16, 0xc0, 0x70, 0x07, 0x07 },  //8
-	{0x61, 0x61, 0x1b, 0x06, 0x64, 0x65, 0x10, 0x17 },  //9
+	{0x21, 0x61, 0x1d, 0x07, 0x82, 0x80, 0x10, 0x17 },  /* 7 */
+	{0x23, 0x21, 0x2d, 0x16, 0xc0, 0x70, 0x07, 0x07 },  /* 8 */
+	{0x61, 0x61, 0x1b, 0x06, 0x64, 0x65, 0x10, 0x17 },  /* 9 */
 
-//{0x61, 0x61, 0x0c, 0x08, 0x85, 0xa0, 0x79, 0x07 },    //A
-	{0x61, 0x61, 0x0c, 0x18, 0x85, 0xf0, 0x70, 0x07 },  //A
+/* {0x61, 0x61, 0x0c, 0x08, 0x85, 0xa0, 0x79, 0x07 }, */    /* A */
+	{0x61, 0x61, 0x0c, 0x18, 0x85, 0xf0, 0x70, 0x07 },  /* A */
 
-	{0x23, 0x01, 0x07, 0x11, 0xf0, 0xa4, 0x00, 0x22 },  //B
-	{0x97, 0xc1, 0x24, 0x07, 0xff, 0xf8, 0x22, 0x12 },  //C
+	{0x23, 0x01, 0x07, 0x11, 0xf0, 0xa4, 0x00, 0x22 },  /* B */
+	{0x97, 0xc1, 0x24, 0x07, 0xff, 0xf8, 0x22, 0x12 },  /* C */
 
-//{0x61, 0x10, 0x0c, 0x08, 0xf2, 0xc4, 0x40, 0xc8 },    //D
-	{0x61, 0x10, 0x0c, 0x05, 0xf2, 0xf4, 0x40, 0x44 },  //D
+/* {0x61, 0x10, 0x0c, 0x08, 0xf2, 0xc4, 0x40, 0xc8 }, */    /* D */
+	{0x61, 0x10, 0x0c, 0x05, 0xf2, 0xf4, 0x40, 0x44 },  /* D */
 
-	{0x01, 0x01, 0x55, 0x03, 0xf3, 0x92, 0xf3, 0xf3 },  //E
-	{0x61, 0x41, 0x89, 0x03, 0xf1, 0xf4, 0xf0, 0x13 },  //F
+	{0x01, 0x01, 0x55, 0x03, 0xf3, 0x92, 0xf3, 0xf3 },  /* E */
+	{0x61, 0x41, 0x89, 0x03, 0xf1, 0xf4, 0xf0, 0x13 },  /* F */
 
 /* drum instruments definitions */
 /* MULTI MULTI modTL  xxx  AR/DR AR/DR SL/RR SL/RR */
@@ -828,17 +828,18 @@ static void rhythm_calc(YM2413 *fm, struct OPLL_CH *CH, int32_t noise)
 
 
 	/* Phase generation is based on: */
-	// HH  (13) channel 7->slot 1 combined with channel 8->slot 2 (same combination as TOP CYMBAL but different output phases)
-	// SD  (16) channel 7->slot 1
-	// TOM (14) channel 8->slot 1
-	// TOP (17) channel 7->slot 1 combined with channel 8->slot 2 (same combination as HIGH HAT but different output phases)
+	/* HH  (13) channel 7->slot 1 combined with channel 8->slot 2 (same combination as TOP CYMBAL but different output phases)
+	 * SD  (16) channel 7->slot 1
+	 * TOM (14) channel 8->slot 1
+	 * TOP (17) channel 7->slot 1 combined with channel 8->slot 2 (same combination as HIGH HAT but different output phases)
+	 */
 
 	/* Envelope generation based on: */
-	// HH  channel 7->slot1
-	// SD  channel 7->slot2
-	// TOM channel 8->slot1
-	// TOP channel 8->slot2
-
+	/* HH  channel 7->slot1
+	 * SD  channel 7->slot2
+	 * TOM channel 8->slot1
+	 * TOP channel 8->slot2
+	 */
 
 	/* The following formulas can be well optimized.
 	   I leave them in direct form for now (in case I've missed something).
@@ -1240,7 +1241,7 @@ static void write_reg(YM2413 *fm, int32_t r, uint8_t v)
 				if ((fm->rhythm&0x20)==0)
 				/*rhythm off to on*/
 				{
-					//logerror("YM2413: Rhythm mode enable\n");
+					/* logerror("YM2413: Rhythm mode enable\n"); */
 
 	/* Load instrument settings for channel seven(chan=6 since we're zero based). (Bass drum) */
 					chan = 6;
@@ -1462,13 +1463,15 @@ static void write_reg(YM2413 *fm, int32_t r, uint8_t v)
 	}
 }
 
-//-------------------------------------------------
-//  sound_stream_update - handle a stream update
-//-------------------------------------------------
+/*-------------------------------------------------
+ *  sound_stream_update - handle a stream update
+ *-------------------------------------------------
+ */
 
 static void sound_stream_update(YM2413 *fm, int16_t **buf, int32_t samples)
 {
-    for(int32_t i=0; i < samples ; i++ )
+	int32_t i,j;
+    for(i=0; i < samples ; i++ )
     {
         fm->output[0] = 0;
         fm->output[1] = 0;
@@ -1476,12 +1479,12 @@ static void sound_stream_update(YM2413 *fm, int16_t **buf, int32_t samples)
         advance_lfo(fm);
 
         /* FM part */
-        for(uint32_t j=0; j<6; j++)
+        for(j=0; j<6; j++)
             chan_calc(fm, &fm->P_CH[j]);
 
         if(!(fm->rhythm & 0x20))
         {
-            for(uint32_t j=6; j<9; j++)
+            for(j=6; j<9; j++)
                 chan_calc(fm, &fm->P_CH[j]);
         }
         else        /* Rhythm part */
@@ -1495,23 +1498,27 @@ static void sound_stream_update(YM2413 *fm, int16_t **buf, int32_t samples)
     }
 }
 
-//-------------------------------------------------
-//  device_start - device-specific startup
-//-------------------------------------------------
+/*-------------------------------------------------
+ *  device_start - device-specific startup
+ *-------------------------------------------------
+ */
 
 static void device_start(YM2413 *fm, int32_t clock, int32_t rate)
 {
+	int32_t x;
+	int32_t i;
     float fb = (clock / 72.0f) / rate;
 
-	for (int32_t x=0; x<TL_RES_LEN; x++)
+	for (x=0; x<TL_RES_LEN; x++)
 	{
-		float m = (1<<16) / powf(2, (x+1) * ((float)ENV_STEP/4.0f) / 8.0f);
+		int32_t n;
+		float m = (float)(1<<16) / powf(2, (x+1) * ((float)ENV_STEP/4.0f) / 8.0f);
 		m = floorf(m);
 
 		/* we never reach (1<<16) here due to the (x+1) */
 		/* result fits within 16 bits at maximum */
 
-		int32_t n = (int32_t)m; /* 16 bits here */
+		n = (int32_t)m; /* 16 bits here */
 		n >>= 4;        /* 12 bits here */
 		if (n&1)        /* round to nearest */
 			n = (n>>1)+1;
@@ -1522,15 +1529,16 @@ static void device_start(YM2413 *fm, int32_t clock, int32_t rate)
 		fm->tl_tab[ x*2 + 0 ] = n;
 		fm->tl_tab[ x*2 + 1 ] = -fm->tl_tab[ x*2 + 0 ];
 
-		for (int32_t i=1; i<11; i++)
+		for (i=1; i<11; i++)
 		{
 			fm->tl_tab[ x*2+0 + i*2*TL_RES_LEN ] =  fm->tl_tab[ x*2+0 ]>>i;
 			fm->tl_tab[ x*2+1 + i*2*TL_RES_LEN ] = -fm->tl_tab[ x*2+0 + i*2*TL_RES_LEN ];
 		}
 	}
 
-	for (int32_t i=0; i<SIN_LEN; i++)
+	for (i=0; i<SIN_LEN; i++)
 	{
+		int32_t n;
 		/* non-standard sinus */
 		float m = sinf( ((i*2)+1) * (float)M_PI / SIN_LEN ); /* checked against the real chip */
 
@@ -1540,7 +1548,7 @@ static void device_start(YM2413 *fm, int32_t clock, int32_t rate)
 
 		o = o / ((float)ENV_STEP/4);
 
-		int32_t n = (int32_t)(2.0f*o);
+		n = (int32_t)(2.0f*o);
 		if (n&1)                        /* round to nearest */
 			n = (n>>1)+1;
 		else
@@ -1559,7 +1567,7 @@ static void device_start(YM2413 *fm, int32_t clock, int32_t rate)
 	}
 
 	/* make fnumber -> increment counter table */
-	for( int32_t i = 0 ; i < 1024; i++ )
+	for(i = 0 ; i < 1024; i++)
 	{
 		/* OPLL (YM2413) phase increment counter = 18bit */
 		fm->fn_tab[i] = i * (64 * fb * (1<<(FREQ_SH-10))); /* -10 because chip works with 10.10 fixed point, while we use 16.16 */
@@ -1579,21 +1587,25 @@ static void device_start(YM2413 *fm, int32_t clock, int32_t rate)
 	fm->eg_timer_overflow = 1<<EG_SH;
 }
 
-//-------------------------------------------------
-//  device_reset - device-specific reset
-//-------------------------------------------------
+/*-------------------------------------------------
+ *  device_reset - device-specific reset
+ *-------------------------------------------------
+ */
 
 static void device_reset(YM2413 *fm)
 {
+	int32_t i;
+	int32_t c;
+	int32_t s;
 	fm->eg_timer = 0;
 	fm->eg_cnt   = 0;
 
 	fm->noise_rng = 1;    /* noise shift register */
 
 	/* setup instruments table */
-	for (int32_t i=0; i<19; i++)
+	for (i=0; i<19; i++)
 	{
-		for (int32_t c=0; c<8; c++)
+		for (c=0; c<8; c++)
 		{
 			fm->inst_tab[i][c] = table[i][c];
 		}
@@ -1602,14 +1614,14 @@ static void device_reset(YM2413 *fm)
 
 	/* reset with register write */
 	write_reg(fm, 0x0f,0); /*test reg*/
-	for(int32_t i = 0x3f ; i >= 0x10 ; i-- )
+	for(i = 0x3f ; i >= 0x10 ; i-- )
 		write_reg(fm, i, 0x00);
 
 	/* reset operator parameters */
-	for(uint32_t c = 0 ; c < 9 ; c++ )
+	for(c = 0 ; c < 9 ; c++ )
 	{
 		struct OPLL_CH *CH = &fm->P_CH[c];
-		for(uint32_t s = 0 ; s < 2 ; s++ )
+		for(s = 0 ; s < 2 ; s++ )
 		{
 			/* wave table */
 			CH->SLOT[s].wavetable = 0;

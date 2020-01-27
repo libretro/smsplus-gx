@@ -137,10 +137,10 @@ void upscale_SMS_to_320x240(uint32_t* restrict dst, uint32_t* restrict src, uint
             gh = src[source + 3] & 0xF7DEF7DE;
 
             if(Eh >= midh) {
-                ab = AVERAGE(ab, src[source + 256/2]) & 0xF7DEF7DE; // to prevent overflow
-                cd = AVERAGE(cd, src[source + 256/2 + 1]) & 0xF7DEF7DE; // to prevent overflow
-                ef = AVERAGE(ef, src[source + 256/2 + 2]) & 0xF7DEF7DE; // to prevent overflow
-                gh = AVERAGE(gh, src[source + 256/2 + 3]) & 0xF7DEF7DE; // to prevent overflow
+                ab = AVERAGE(ab, src[source + 256/2]) & 0xF7DEF7DE; /* to prevent overflow */
+                cd = AVERAGE(cd, src[source + 256/2 + 1]) & 0xF7DEF7DE; /* to prevent overflow */
+                ef = AVERAGE(ef, src[source + 256/2 + 2]) & 0xF7DEF7DE; /* to prevent overflow */
+                gh = AVERAGE(gh, src[source + 256/2 + 3]) & 0xF7DEF7DE; /* to prevent overflow */
             }
 
             *dst++ = ab;
@@ -168,7 +168,7 @@ void upscale_160x144_to_320x272_for_480x272(uint32_t* restrict dst, uint32_t* re
     uint32_t dh = 0;
     uint32_t i, j;
 
-    dst += (480-320)/4; // center correction for 480x272 mode
+    dst += (480-320)/4; /* center correction for 480x272 mode */
 
     for (i = 0; i < 272; i++)
     {
@@ -202,7 +202,7 @@ void upscale_160x144_to_320x272_for_480x272(uint32_t* restrict dst, uint32_t* re
             source += 2;
 
         }
-        dst += (480-320)/2; // pitch correction for 480x272 mode
+        dst += (480-320)/2; /* pitch correction for 480x272 mode */
         Eh += 144; if(Eh >= 272) { Eh -= 272; dh++; }
     }
 }
@@ -333,21 +333,21 @@ void upscale_256xXXX_to_480x272(uint32_t* restrict dst, uint32_t* restrict src, 
                 op = AVERAGE(op, src[source + 256/2 + 7]) & 0xF7DEF7DE;
             }*/
 
-            *dst++ = (ab & 0xFFFF) + (ab << 16);            // [aa]
-            *dst++ = (ab >> 16) + (ab & 0xFFFF0000);        // [bb]
-            *dst++ = (cd & 0xFFFF) + (cd << 16);            // [cc]
-            *dst++ = (cd >> 16) + (((cd & 0xF7DE0000) >> 1) + ((ef & 0xF7DE) << 15)); // [d(de)]
-            *dst++ = ef;                                    // [ef]
-            *dst++ = (ef >> 16) + (gh << 16);               // [fg]
-            *dst++ = gh;                                    // [gh]
-            *dst++ = (gh >> 16) + (ij << 16);               // [hi]
-            *dst++ = ij;                                    // [ij]
-            *dst++ = (ij >> 16) + (kl << 16);               // [jk]
-            *dst++ = kl;                                    // [kl]
-            *dst++ = (((kl & 0xF7DE0000) >> 17) + ((mn & 0xF7DE) >> 1)) + (mn << 16); // [(lm)m]
-            *dst++ = (mn >> 16) + (mn & 0xFFFF0000);        // [nn]
-            *dst++ = (op & 0xFFFF) + (op << 16);            // [oo]
-            *dst++ = (op >> 16) + (op & 0xFFFF0000);        // [pp]
+            *dst++ = (ab & 0xFFFF) + (ab << 16);            /* [aa] */
+            *dst++ = (ab >> 16) + (ab & 0xFFFF0000);        /* [bb] */
+            *dst++ = (cd & 0xFFFF) + (cd << 16);            /* [cc] */
+            *dst++ = (cd >> 16) + (((cd & 0xF7DE0000) >> 1) + ((ef & 0xF7DE) << 15)); /* [d(de)] */
+            *dst++ = ef;                                    /* [ef] */
+            *dst++ = (ef >> 16) + (gh << 16);               /* [fg] */
+            *dst++ = gh;                                    /* [gh] */
+            *dst++ = (gh >> 16) + (ij << 16);               /* [hi] */
+            *dst++ = ij;                                    /* [ij] */
+            *dst++ = (ij >> 16) + (kl << 16);               /* [jk] */
+            *dst++ = kl;                                    /* [kl] */
+            *dst++ = (((kl & 0xF7DE0000) >> 17) + ((mn & 0xF7DE) >> 1)) + (mn << 16); /* [(lm)m] */
+            *dst++ = (mn >> 16) + (mn & 0xFFFF0000);        /* [nn] */
+            *dst++ = (op & 0xFFFF) + (op << 16);            /* [oo] */
+            *dst++ = (op >> 16) + (op & 0xFFFF0000);        /* [pp] */
 
             source += 8;
         }
@@ -365,7 +365,7 @@ void upscale_160x144_to_320x320_for_480x320(uint32_t* restrict dst, uint32_t* re
     uint32_t dh = 0;
     uint32_t i, j;
 
-    dst += (480-320)/4; // center correction for 480x320 mode
+    dst += (480-320)/4; /* center correction for 480x320 mode */
 
     for (i = 0; i < 320; i++)
     {
@@ -399,7 +399,7 @@ void upscale_160x144_to_320x320_for_480x320(uint32_t* restrict dst, uint32_t* re
             source += 2;
 
         }
-        dst += (480-320)/2; // pitch correction for 480x320 mode
+        dst += (480-320)/2; /* pitch correction for 480x320 mode */
         Eh += 144; if(Eh >= 320) { Eh -= 320; dh++; }
     }
 }
@@ -529,21 +529,21 @@ void upscale_256xXXX_to_480x320(uint32_t* restrict dst, uint32_t* restrict src, 
                 op = AVERAGE(op, src[source + 256/2 + 7]) & 0xF7DEF7DE;
             }*/
 
-            *dst++ = (ab & 0xFFFF) + (ab << 16);            // [aa]
-            *dst++ = (ab >> 16) + (ab & 0xFFFF0000);        // [bb]
-            *dst++ = (cd & 0xFFFF) + (cd << 16);            // [cc]
-            *dst++ = (cd >> 16) + (((cd & 0xF7DE0000) >> 1) + ((ef & 0xF7DE) << 15)); // [d(de)]
-            *dst++ = ef;                                    // [ef]
-            *dst++ = (ef >> 16) + (gh << 16);               // [fg]
-            *dst++ = gh;                                    // [gh]
-            *dst++ = (gh >> 16) + (ij << 16);               // [hi]
-            *dst++ = ij;                                    // [ij]
-            *dst++ = (ij >> 16) + (kl << 16);               // [jk]
-            *dst++ = kl;                                    // [kl]
-            *dst++ = (((kl & 0xF7DE0000) >> 17) + ((mn & 0xF7DE) >> 1)) + (mn << 16); // [(lm)m]
-            *dst++ = (mn >> 16) + (mn & 0xFFFF0000);        // [nn]
-            *dst++ = (op & 0xFFFF) + (op << 16);            // [oo]
-            *dst++ = (op >> 16) + (op & 0xFFFF0000);        // [pp]
+            *dst++ = (ab & 0xFFFF) + (ab << 16);            /* [aa] */
+            *dst++ = (ab >> 16) + (ab & 0xFFFF0000);        /* [bb] */
+            *dst++ = (cd & 0xFFFF) + (cd << 16);            /* [cc] */
+            *dst++ = (cd >> 16) + (((cd & 0xF7DE0000) >> 1) + ((ef & 0xF7DE) << 15)); /* [d(de)] */
+            *dst++ = ef;                                    /* [ef] */
+            *dst++ = (ef >> 16) + (gh << 16);               /* [fg] */
+            *dst++ = gh;                                    /* [gh] */
+            *dst++ = (gh >> 16) + (ij << 16);               /* [hi] */
+            *dst++ = ij;                                    /* [ij] */
+            *dst++ = (ij >> 16) + (kl << 16);               /* [jk] */
+            *dst++ = kl;                                    /* [kl] */
+            *dst++ = (((kl & 0xF7DE0000) >> 17) + ((mn & 0xF7DE) >> 1)) + (mn << 16); /* [(lm)m] */
+            *dst++ = (mn >> 16) + (mn & 0xFFFF0000);        /* [nn] */
+            *dst++ = (op & 0xFFFF) + (op << 16);            /* [oo] */
+            *dst++ = (op >> 16) + (op & 0xFFFF0000);        /* [pp] */
 
             source += 8;
         }
