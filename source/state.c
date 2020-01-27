@@ -67,6 +67,7 @@ uint32_t system_save_state(FILE* fd)
 void system_load_state(FILE* fd)
 {
 	uint8_t *buf;
+	uint32_t i;
 	
 	/* Initialize everything */
 	system_reset();
@@ -137,13 +138,13 @@ void system_load_state(FILE* fd)
 
 	/* Force full pattern cache update */
 	bg_list_index = 0x200;
-	for(uint16_t i = 0; i < 0x200; i++)
+	for(i = 0; i < 0x200; i++)
 	{
 		bg_name_list[i] = i;
 		bg_name_dirty[i] = 255;
 	}
 
 	/* Restore palette */
-	for(uint32_t i = 0; i < PALETTE_SIZE; i++)
+	for(i = 0; i < PALETTE_SIZE; i++)
 		palette_sync(i);
 }

@@ -73,7 +73,7 @@ static void get_basename(char *buf, const char *path, size_t size)
 
    if (base)
    {
-      snprintf(buf, size, "%s", base);
+      sprintf(buf, "%s", base);
       base = strrchr(buf, '.');
       if (base)
          *base = '\0';
@@ -229,7 +229,7 @@ static void bios_init(void)
    bios.rom = malloc(0x100000);
    bios.enabled = 0;
 
-   snprintf(bios_path, sizeof(bios_path), "%s%s", gdata.biosdir, "bios.sms");
+   sprintf(bios_path, "%s%s", gdata.biosdir, "bios.sms");
 
    fd = fopen(bios_path, "rb");
    if(fd)
@@ -246,7 +246,7 @@ static void bios_init(void)
       log_cb(RETRO_LOG_INFO, "bios loaded:      %s\n", bios_path);
    }
 
-   snprintf(bios_path, sizeof(bios_path), "%s%s", gdata.biosdir, "BIOS.col");
+   sprintf(bios_path, "%s%s", gdata.biosdir, "BIOS.col");
 
    fd = fopen(bios_path, "rb");
    if(fd)
@@ -267,10 +267,10 @@ static void smsp_gamedata_set(char *filename)
 
    /* Check and remove default slash from the beginning of the base name */
    if (gdata.gamename[0] == path_default_slash_c())
-      snprintf(gdata.gamename, sizeof(gdata.gamename), "%s", gdata.gamename + 1);
+      sprintf(gdata.gamename, "%s", gdata.gamename + 1);
 
    /* Set up the bios directory */
-   snprintf(gdata.biosdir, sizeof(gdata.biosdir), "%s%c", retro_system_directory, path_default_slash_c());
+   sprintf(gdata.biosdir, "%s%c", retro_system_directory, path_default_slash_c());
 }
 
 static void Cleanup(void)
@@ -283,15 +283,15 @@ static void Cleanup(void)
       free(bios.rom);
    bios.rom = NULL;
 
-   // Deinitialize audio and video output
+   /* Deinitialize audio and video output */
    Sound_Close();
 
-   // Shut down
+   /* Shut down */
    system_poweroff();
    system_shutdown();
 }
 
-// Libretro implementation
+/* Libretro implementation */
 
 static void update_input(void)
 {
@@ -459,7 +459,7 @@ bool retro_load_game(const struct retro_game_info *info)
    option.country = 0;
    option.console = 0;
 
-   // Load ROM
+   /* Load ROM */
    if (!load_rom_mem((const char*)info->data, info->size))
    {
       fprintf(stderr, "Error: Failed to load %s.\n", info->path);
@@ -474,7 +474,7 @@ bool retro_load_game(const struct retro_game_info *info)
    log_cb(RETRO_LOG_INFO, "system directory: %s\n", retro_system_directory);
    log_cb(RETRO_LOG_INFO, "save directory:   %s\n", retro_save_directory);
 
-   // Set parameters for internal bitmap
+   /* Set parameters for internal bitmap */
    bitmap.width       = VIDEO_WIDTH_SMS;
    bitmap.height      = 240;
    bitmap.depth       = 16;
@@ -486,7 +486,7 @@ bool retro_load_game(const struct retro_game_info *info)
    bitmap.viewport.x  = 0x00;
    bitmap.viewport.y  = 0x00;
 
-   //sms.territory = settings.misc_region;
+   /* sms.territory = settings.misc_region; */
    if (sms.console == CONSOLE_SMS || sms.console == CONSOLE_SMS2)
       sms.use_fm = 1;
 
@@ -494,7 +494,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
    Sound_Init();
 
-   // Initialize all systems and power on
+   /* Initialize all systems and power on */
    system_poweron();
 
    filter_ntsc_init();
@@ -571,7 +571,7 @@ void retro_deinit()
 
 unsigned retro_get_region(void)
 {
-   return RETRO_REGION_NTSC; // FIXME: Regions for other cores.
+   return RETRO_REGION_NTSC; /* FIXME: Regions for other cores */
 }
 
 unsigned retro_api_version(void)

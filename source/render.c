@@ -232,7 +232,7 @@ void render_shutdown(void)
 /* Initialize the rendering data */
 void render_init(void)
 {
-	int32_t j;
+	int32_t i, j;
 	int32_t bx, sx, b, s, bp, bf, sf, c;
 
 	make_tms_tables();
@@ -292,21 +292,23 @@ void render_init(void)
 	}
 
 	/* Make bitplane to pixel lookup table */
-	for(int32_t i = 0; i < 0x100; i++)
-	for(j = 0; j < 0x100; j++)
+	for(i = 0; i < 0x100; i++)
 	{
-		int32_t x;
-		uint32_t out = 0;
-		for(x = 0; x < 8; x++)
+		for(j = 0; j < 0x100; j++)
 		{
-			out |= (j & (0x80 >> x)) ? (uint32_t)(8 << (x << 2)) : 0;
-			out |= (i & (0x80 >> x)) ? (uint32_t)(4 << (x << 2)) : 0;
-		}
+			int32_t x;
+			uint32_t out = 0;
+			for(x = 0; x < 8; x++)
+			{
+				out |= (j & (0x80 >> x)) ? (uint32_t)(8 << (x << 2)) : 0;
+				out |= (i & (0x80 >> x)) ? (uint32_t)(4 << (x << 2)) : 0;
+			}
 #if LSB_FIRST
-		bp_lut[(j << 8) | (i)] = out;
+			bp_lut[(j << 8) | (i)] = out;
 #else
-		bp_lut[(i << 8) | (j)] = out;
+			bp_lut[(i << 8) | (j)] = out;
 #endif
+		}
 	}
 
 	sms_cram_expand_table[0] =  0;
@@ -314,7 +316,7 @@ void render_init(void)
 	sms_cram_expand_table[2] = 0xAA;
 	sms_cram_expand_table[3] = 0xFF;
 
-	for(uint8_t i = 0; i < 16; i++)
+	for(i = 0; i < 16; i++)
 	{
 		gg_cram_expand_table[i] = i << 4 | i;    
 	}
