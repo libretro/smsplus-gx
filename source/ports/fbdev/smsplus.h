@@ -11,8 +11,8 @@
 
 //#define NONBLOCKING_AUDIO 1
 
-#define LOCK_VIDEO ()
-#define UNLOCK_VIDEO ()
+#define LOCK_VIDEO
+#define UNLOCK_VIDEO
 
 typedef struct {
 	char gamename[256];

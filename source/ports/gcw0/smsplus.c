@@ -59,7 +59,11 @@ static uint_fast8_t dpad_input[4] = {0, 0, 0, 0};
 
 uint32_t update_window_size(uint32_t w, uint32_t h);
 
+#ifdef RS97
+static const char *KEEP_ASPECT_FILENAME = "/proc/jz/ipu";
+#else
 static const char *KEEP_ASPECT_FILENAME = "/sys/devices/platform/jz-lcd.0/keep_aspect_ratio";
+#endif
 
 static inline uint_fast8_t get_keep_aspect_ratio()
 {
@@ -431,47 +435,53 @@ static const char* Return_Text_Button(uint32_t button)
 	switch(button)
 	{
 		/* UP button */
-		case 273:
+		case SDLK_UP:
 			return "DPAD UP";
 		break;
 		/* DOWN button */
-		case 274:
+		case SDLK_DOWN:
 			return "DPAD DOWN";
 		break;
 		/* LEFT button */
-		case 276:
+		case SDLK_LEFT:
 			return "DPAD LEFT";
 		break;
 		/* RIGHT button */
-		case 275:
+		case SDLK_RIGHT:
 			return "DPAD RIGHT";
 		break;
 		/* A button */
-		case 306:
+		case SDLK_LCTRL:
 			return "A button";
 		break;
 		/* B button */
-		case 308:
+		case SDLK_LALT:
 			return "B button";
 		break;
 		/* X button */
-		case 304:
+		case SDLK_LSHIFT:
 			return "X button";
 		break;
 		/* Y button */
-		case 32:
+		case SDLK_SPACE:
 			return "Y button";
 		break;
 		/* L button */
-		case 9:
-			return "Left Shoulder";
+		case SDLK_TAB:
+			return "L1";
 		break;
 		/* R button */
-		case 8:
-			return "Right Shoulder";
+		case SDLK_BACKSPACE:
+			return "R1";
+		break;
+		case SDLK_PAGEUP:
+			return "L2";
+		break;
+		case SDLK_PAGEDOWN:
+			return "R2";
 		break;
 		/* Power button */
-		case 279:
+		case SDLK_HOME:
 			return "POWER";
 		break;
 		/* Brightness */
@@ -487,11 +497,18 @@ static const char* Return_Text_Button(uint32_t button)
 			return "Volume +";
 		break;
 		/* Start */
-		case 13:
+		case SDLK_RETURN:
 			return "Start button";
 		break;
-		default:
+		/* Select */
+		case SDLK_ESCAPE:
+			return "Select button";
+		break;
+		case 0:
 			return "...";
+		break;
+		default:
+			return "Unknown";
 		break;
 	}	
 }
@@ -605,7 +622,7 @@ static void Input_Remapping()
 						{
 							if (Event.type == SDL_KEYDOWN)
 							{
-								if (Event.key.keysym.sym != SDLK_END)
+								if (Event.key.keysym.sym != SDLK_END && Event.key.keysym.sym != SDLK_HOME && Event.key.keysym.sym != SDLK_RCTRL)
 								{
 									option.config_buttons[currentselection - 1] = Event.key.keysym.sym;
 									exit_map = 1;
@@ -920,17 +937,17 @@ static void Menu()
 static void Reset_Mapping()
 {
 	uint_fast8_t i;
-	option.config_buttons[CONFIG_BUTTON_UP] = 273;
-	option.config_buttons[CONFIG_BUTTON_DOWN] = 274;
-	option.config_buttons[CONFIG_BUTTON_LEFT] = 276;
-	option.config_buttons[CONFIG_BUTTON_RIGHT] = 275;
+	option.config_buttons[CONFIG_BUTTON_UP] = SDLK_UP;
+	option.config_buttons[CONFIG_BUTTON_DOWN] = SDLK_DOWN;
+	option.config_buttons[CONFIG_BUTTON_LEFT] = SDLK_LEFT;
+	option.config_buttons[CONFIG_BUTTON_RIGHT] = SDLK_RIGHT;
 		
-	option.config_buttons[CONFIG_BUTTON_BUTTON1] = 306;
-	option.config_buttons[CONFIG_BUTTON_BUTTON2] = 308;
+	option.config_buttons[CONFIG_BUTTON_BUTTON1] = SDLK_LCTRL;
+	option.config_buttons[CONFIG_BUTTON_BUTTON2] = SDLK_LALT;
 		
-	option.config_buttons[CONFIG_BUTTON_START] = 13;
+	option.config_buttons[CONFIG_BUTTON_START] = SDLK_RETURN;
 	
-	/* This is for the Colecovision buttons. Set to  by default */
+	/* This is for the Colecovision buttons. Don't set those to anything */
 	for (i = 7; i < 19; i++)
 	{
 		option.config_buttons[i] = 0;
@@ -982,13 +999,19 @@ static void Cleanup(void)
 	uint_fast8_t i;
 #ifdef SCALE2X_UPSCALER
 	if (scale2x_buf) SDL_FreeSurface(scale2x_buf);
+	scale2x_buf = NULL;
 #endif
 	if (sdl_screen) SDL_FreeSurface(sdl_screen);
 	if (backbuffer) SDL_FreeSurface(backbuffer);
 	if (sms_bitmap) SDL_FreeSurface(sms_bitmap);
 	if (miniscreen) SDL_FreeSurface(miniscreen);
 	
+	backbuffer = NULL;
+	sms_bitmap = NULL;
+	miniscreen = NULL;
+	
 	if (bios.rom) free(bios.rom);
+	bios.rom = NULL;
 	
 	for(i=0;i<joy_numb;i++)
 	{
@@ -1176,8 +1199,6 @@ int main (int argc, char *argv[])
 				break;
 			}
 		}
-		
-		
 		
 		if (joy_axis[0] > joy_commit_range) input.pad[0] |= INPUT_RIGHT;
 		else if (joy_axis[0] < -joy_commit_range) input.pad[0] |= INPUT_LEFT;
