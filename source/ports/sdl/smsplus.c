@@ -610,11 +610,16 @@ static void Cleanup(void)
 {
 #ifdef SCALE2X_UPSCALER
 	if (scale2x_buf) SDL_FreeSurface(scale2x_buf);
+	scale2x_buf = NULL;
 #endif
 	if (sdl_screen) SDL_FreeSurface(sdl_screen);
+	sdl_screen = NULL;
+	
 	if (sms_bitmap) SDL_FreeSurface(sms_bitmap);
-
+	sms_bitmap = NULL;
+	
 	if (bios.rom) free(bios.rom);
+	bios.rom = NULL;
 	
 	// Deinitialize audio and video output
 	Sound_Close();

@@ -579,10 +579,14 @@ static void Cleanup(void)
 {
 #ifdef SCALE2X_UPSCALER
 	if (scale2x_buf) free(scale2x_buf);
+	scale2x_buf = NULL;
 #endif
 	if (sms_bitmap) free(sms_bitmap);
+	sms_bitmap = NULL;
+	
 	if (buffer_fbdev[0]) free(buffer_fbdev[0]);
 	munmap(buffer_fbdev[0], screensize);
+	buffer_fbdev[0] = NULL;
 	
 	if (ioctl(fbfd, FBIOPUT_VSCREENINFO, &orig_vinfo)) 
 	{
@@ -590,9 +594,13 @@ static void Cleanup(void)
 	}
 	
 	if (fbfd) close(fbfd);
+	fbfd = NULL;
+	
 	if (keyboard_fd) close(keyboard_fd);
+	keyboard_fd = NULL;
 	
 	if (bios.rom) free(bios.rom);
+	bios.rom = NULL;
 	
 	// Deinitialize audio and video output
 	Sound_Close();

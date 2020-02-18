@@ -619,10 +619,19 @@ static void config_save()
 static void Cleanup(void)
 {
 	if (sdl_screen) SDL_FreeSurface(sdl_screen);
+	sdl_screen = NULL;
+	
 	if (sms_bitmap) SDL_FreeSurface(sms_bitmap);
+	sms_bitmap = NULL;
+	
 	if (font) SDL_FreeSurface(font);
+	font = NULL;
+	
 	if (bigfontwhite) SDL_FreeSurface(bigfontwhite);
+	bigfontwhite = NULL;
+	
 	if (bigfontred) SDL_FreeSurface(bigfontred);
+	bios.rom = NULL;
 	
 	for(uint8_t i=0;i<2;i++)
 	{
@@ -630,6 +639,7 @@ static void Cleanup(void)
 	}
 	
 	if (bios.rom) free(bios.rom);
+	bios.rom = NULL;
 	
 	// Deinitialize audio and video output
 	Sound_Close();

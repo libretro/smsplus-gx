@@ -49,27 +49,6 @@ static uint_fast8_t scale2x_res = 1;
 static uint_fast8_t forcerefresh = 0;
 static uint_fast8_t dpad_input[4] = {0, 0, 0, 0};
 
-static const char *KEEP_ASPECT_FILENAME = "/sys/devices/platform/jz-lcd.0/keep_aspect_ratio";
-
-static inline uint_fast8_t get_keep_aspect_ratio()
-{
-	FILE *f = fopen(KEEP_ASPECT_FILENAME, "rb");
-	if (!f) return false;
-	char c;
-	fread(&c, 1, 1, f);
-	fclose(f);
-	return c == 'Y';
-}
-
-static inline void set_keep_aspect_ratio(uint_fast8_t n)
-{
-	FILE *f = fopen(KEEP_ASPECT_FILENAME, "wb");
-	if (!f) return;
-	char c = n ? 'Y' : 'N';
-	fwrite(&c, 1, 1, f);
-	fclose(f);
-}
-
 static void Clear_video()
 {
 	SDL_FillRect(sdl_screen, NULL, 0);
@@ -979,13 +958,19 @@ static void Cleanup(void)
 {
 #ifdef SCALE2X_UPSCALER
 	if (scale2x_buf) SDL_FreeSurface(scale2x_buf);
+	scale2x_buf = NULL;
 #endif
 	if (sdl_screen) SDL_FreeSurface(sdl_screen);
 	if (backbuffer) SDL_FreeSurface(backbuffer);
 	if (sms_bitmap) SDL_FreeSurface(sms_bitmap);
 	if (miniscreen) SDL_FreeSurface(miniscreen);
 	
+	backbuffer = NULL;
+	sms_bitmap = NULL;
+	miniscreen = NULL;
+	
 	if (bios.rom) free(bios.rom);
+	bios.rom = NULL;
 	
 	// Deinitialize audio and video output
 	Sound_Close();

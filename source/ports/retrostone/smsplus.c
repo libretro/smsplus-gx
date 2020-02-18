@@ -395,6 +395,7 @@ static const char* Return_Text_Button(uint32_t button)
 		case 13:
 			return "Start button";
 		break;
+		
 		default:
 			return "...";
 		break;
@@ -510,7 +511,7 @@ static void Input_Remapping()
 						{
 							if (Event.type == SDL_KEYDOWN)
 							{
-								if (Event.key.keysym.sym != SDLK_RCTRL)
+								if (Event.key.keysym.sym != SDLK_RCTRL && Event.key.keysym.sym != SDLK_ESCAPE)
 								{
 									option.config_buttons[currentselection - 1] = Event.key.keysym.sym;
 									exit_map = 1;
@@ -887,12 +888,19 @@ static void Cleanup(void)
 {
 #ifdef SCALE2X_UPSCALER
 	if (scale2x_buf) SDL_FreeSurface(scale2x_buf);
+	scale2x_buf = NULL;
 #endif
 	if (sdl_screen) SDL_FreeSurface(sdl_screen);
+	sdl_screen = NULL;
+	
 	if (backbuffer) SDL_FreeSurface(backbuffer);
+	backbuffer = NULL;
+	
 	if (sms_bitmap) SDL_FreeSurface(sms_bitmap);
+	sms_bitmap = NULL;
 	
 	if (bios.rom) free(bios.rom);
+	bios.rom = NULL;
 	
 	// Deinitialize audio and video output
 	Sound_Close();
