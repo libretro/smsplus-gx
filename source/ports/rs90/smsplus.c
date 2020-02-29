@@ -24,7 +24,8 @@ static char home_path[256];
 static uint8_t selectpressed = 0;
 static uint8_t save_slot = 0;
 static uint8_t quit = 0;
-static const uint32_t upscalers_available = 1;
+/* Don't use a const here as it need to be reassigned */
+static uint_fast8_t upscalers_available = 3;
 
 static void video_update(void)
 {
@@ -60,6 +61,13 @@ static void video_update(void)
 		}
 		bitmap_scale(dst_x,0,dst_w,dst_h,sdl_screen->w,sdl_screen->h,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
 		break;
+		/* These can only be selected when Game Gear mode is used*/
+		case 2:  //Scale 4:3 for GG
+			upscale_160x144_to_212x160((uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
+        break;
+        case 3:  //Subpixel Scale for GG
+            upscale_160x144_to_212x144((uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);     
+        break;
 	}
 	SDL_UnlockSurface(sdl_screen);	
 	SDL_Flip(sdl_screen);
@@ -543,7 +551,7 @@ static void Input_Remapping()
 	
 }
 
-void Menu()
+static void Menu()
 {
 	char text[50];
     int16_t pressed = 0;
@@ -582,6 +590,12 @@ void Menu()
 				case 1:
 					print_string("Scaling : Stretched", TextBlue, 0, 5, 75, backbuffer->pixels);
 				break;
+				case 2:
+					print_string("Scaling : 4:3", TextBlue, 0, 5, 75, backbuffer->pixels);
+				break;
+				case 3:
+					print_string("Scaling : Alt 4:3", TextBlue, 0, 5, 75, backbuffer->pixels);
+				break;
 			}
         }
         else
@@ -593,6 +607,12 @@ void Menu()
 				break;
 				case 1:
 					print_string("Scaling : Stretched", TextWhite, 0, 5, 75, backbuffer->pixels);
+				break;
+				case 2:
+					print_string("Scaling : 4:3", TextWhite, 0, 5, 75, backbuffer->pixels);
+				break;
+				case 3:
+					print_string("Scaling : Alt 4:3", TextWhite, 0, 5, 75, backbuffer->pixels);
 				break;
 			}
         }
@@ -877,6 +897,17 @@ int main (int argc, char *argv[])
 	
 	// Initialize all systems and power on
 	system_poweron();
+	
+	/* Set the number of scalers according to the console being emulated */
+    if (sms.console == CONSOLE_GG)
+    {
+		upscalers_available = 3;
+	}
+    else
+    {
+		upscalers_available = 1;
+		if (option.fullscreen > upscalers_available) option.fullscreen = 1;
+	}
 	
 	// Loop until the user closes the window
 	while (!quit) 

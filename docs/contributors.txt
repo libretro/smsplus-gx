@@ -21,6 +21,12 @@ Alekmaul
 =========
 He came up with the bitmap_scale function. That function is solely used for the menu and unscaled.
 
+drowsnug95
+==========
+
+Came up with upscale_160x144_to_212x144 and upscale_160x144_to_212x160.
+License should fall under the GPLv2+.
+
 Harteex
 ========
 Came up with the TGA font loading code and he converted the fonts to a c array with bin2h.
