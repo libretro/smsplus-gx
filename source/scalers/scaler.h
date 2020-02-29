@@ -22,4 +22,8 @@ void upscale_160x144_to_480x320(uint32_t* restrict dst, uint32_t* restrict src);
 void upscale_256xXXX_to_384x320_for_480x320(uint32_t* restrict dst, uint32_t* restrict src, uint32_t height);
 void upscale_256xXXX_to_480x320(uint32_t* restrict dst, uint32_t* restrict src, uint32_t height);
 
+/* RS-90 scalers */
+void upscale_160x144_to_212x160(uint16_t* restrict src, uint16_t* restrict dst);
+void upscale_160x144_to_212x144(uint16_t* restrict src, uint16_t* restrict dst);
+
 #endif

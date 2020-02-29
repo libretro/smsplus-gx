@@ -6,6 +6,132 @@
 #define AVERAGE(z, x) ((((z) & 0xF7DEF7DE) >> 1) + (((x) & 0xF7DEF7DE) >> 1))
 #define AVERAGEHI(AB) ((((AB) & 0xF7DE0000) >> 1) + (((AB) & 0xF7DE) << 15))
 #define AVERAGELO(CD) ((((CD) & 0xF7DE) >> 1) + (((CD) & 0xF7DE0000) >> 17))
+#define RSHIFT(X) (((X) & 0xF7DE) >>1)
+#define RMASK 0b1111100000000000
+#define GMASK 0b0000011111100000
+#define BMASK 0b0000000000011111
+
+void upscale_160x144_to_212x144(uint16_t* restrict src, uint16_t* restrict dst)
+{    
+    uint16_t* __restrict__ buffer_mem;
+    const uint16_t ix=3, iy=1;
+	dst += 240 * 8;
+
+    for (uint_fast8_t y = 0; y < 144; y+=iy)
+    {
+        dst += 14;
+        uint_fast16_t x = 48;
+        buffer_mem = &src[y * 256];
+        for(uint_fast8_t w = 0; w < 160/3; w++)
+        {
+            uint16_t r[3],g[3],b[3];
+            for(uint_fast8_t i = 0; i < 3; i++){
+                uint16_t p = buffer_mem[x + i];
+                r[i] = p & RMASK;
+                g[i] = p & GMASK;
+                b[i] = p & BMASK;
+            }
+            *dst++ = r[0] | g[0] | b[0];
+            *dst++ = r[0] | g[1] | b[1];
+            *dst++ = r[1] | g[1] | b[2];
+            *dst++ = r[2] | g[2] | b[2];
+            x += ix;
+        }
+        *dst = buffer_mem[x];
+        dst += 14;
+    }
+}
+
+void upscale_160x144_to_212x160(uint16_t* restrict src, uint16_t* restrict dst)
+{
+	uint16_t* __restrict__ buffer_mem;
+	const uint16_t ix=3, iy=9;
+    
+	for (uint_fast8_t y = 0; y < 144; y+=iy)
+	{
+		dst+=14;
+		uint_fast16_t x = 48;
+        buffer_mem = &src[y * 256];
+        for(uint_fast8_t w = 0; w < 160/3; w++)
+        {
+            uint16_t a[9],b[9],c[9];
+            for(uint_fast8_t i = 0; i < 9; i++)
+            {
+                a[i]=RSHIFT(buffer_mem[x + 256 * i]);
+                b[i]=RSHIFT(buffer_mem[x + 256 * i + 1]);
+                c[i]=RSHIFT(buffer_mem[x + 256 * i + 2]);
+            }
+            //A0~A9
+            *dst         = a[0]<<1;
+            *(dst+240)   = a[1] + RSHIFT(a[1] + RSHIFT(a[1]+ a[0]));
+            *(dst+240*2) = a[2] + RSHIFT(a[1] + a[2]);
+            *(dst+240*3) = a[3] + RSHIFT(a[2] + RSHIFT(a[2] + a[3]));
+            *(dst+240*4) = a[4] + RSHIFT(a[3] + RSHIFT(a[3] + RSHIFT(a[3] + a[4])));
+            *(dst+240*5) = a[4] + RSHIFT(a[5] + RSHIFT(a[5] + RSHIFT(a[5] + a[4])));
+            *(dst+240*6) = a[5] + RSHIFT(a[6] + RSHIFT(a[5] + a[6]));
+            *(dst+240*7) = a[6] + RSHIFT(a[6] + a[7]);
+            *(dst+240*8) = a[7] + RSHIFT(a[7] + RSHIFT(a[7] + a[8]));
+            *(dst+240*9) = a[8]<<1;
+            dst++;
+            
+			//B9~B9
+            *dst         = b[0] +RSHIFT(a[0] + RSHIFT(a[0] +  b[0]));
+            *(dst+240)   = b[1] + RSHIFT(a[1] + RSHIFT(b[1] + RSHIFT(a[1] + b[0])));
+            *(dst+240*2) = b[2] + RSHIFT(a[2] + RSHIFT(b[1] + RSHIFT(b[2] + a[1])));
+            *(dst+240*3) = RSHIFT(a[3] + b[2]) + RSHIFT(b[3] + RSHIFT(a[2] + b[3]));
+            *(dst+240*4) = RSHIFT(b[3] + b[4]) + RSHIFT(RSHIFT(a[3] + a[4]) + RSHIFT(b[4] + RSHIFT(a[4] + b[3])));
+            *(dst+240*5) = RSHIFT(b[4] + b[5]) +RSHIFT(RSHIFT(a[4] + a[5]) + RSHIFT(b[4] + RSHIFT(b[5] + a[4])));
+            *(dst+240*6) = RSHIFT(a[5] + b[5]) + RSHIFT(b[6] + RSHIFT(a[6] + b[5]));
+            *(dst+240*7) = b[6] + RSHIFT(a[6]+ RSHIFT(b[7] + RSHIFT(a[7] + b[6])));
+            *(dst+240*8) = b[7] + RSHIFT(a[7] + RSHIFT(b[7] + RSHIFT(b[8] + a[7])));
+            *(dst+240*9) = b[8] + RSHIFT(a[8] + RSHIFT(a[8] + b[8]));
+            dst++;
+			//C0~C9
+            *dst         = b[0] + RSHIFT(c[0] + RSHIFT(c[0] + b[0]));
+            *(dst+240)   = b[1] + RSHIFT(c[1] + RSHIFT(b[1] + RSHIFT(c[1] + b[0])));
+            *(dst+240*2) = b[2] + RSHIFT(c[2] + RSHIFT(b[1] + RSHIFT(b[2] + c[1])));
+            *(dst+240*3) = RSHIFT(c[3] + b[2]) + RSHIFT(b[3] + RSHIFT(c[2] + b[3]));
+            *(dst+240*4) = RSHIFT(b[3] + b[4]) + RSHIFT(RSHIFT(b[4] + c[3]) + RSHIFT(c[4] + RSHIFT(c[4] + b[3])));
+            *(dst+240*5) = RSHIFT(b[4] + b[5]) + RSHIFT(RSHIFT(b[4] + c[4]) + RSHIFT(c[5] + RSHIFT(b[5] + c[4])));
+            *(dst+240*6) = RSHIFT(b[5] + b[6]) + RSHIFT(c[5] + RSHIFT(c[6] + b[5]));
+            *(dst+240*7) = b[6] + RSHIFT(c[6] + RSHIFT(b[7] + RSHIFT(c[7] + b[6])));
+            *(dst+240*8) = b[7] + RSHIFT(c[7] + RSHIFT(b[7] + RSHIFT(c[7] + b[8])));
+            *(dst+240*9) = b[8] + RSHIFT(c[8] + RSHIFT(c[8] + b[8]));
+            dst++;
+			//D0~D9
+            *dst         = c[0]<<1;
+            *(dst+240)   = c[1] + RSHIFT(c[1] + RSHIFT(c[1] + c[0]));
+            *(dst+240*2) = c[2] + RSHIFT(c[1] + c[2]);
+            *(dst+240*3) = c[3] + RSHIFT(c[2] + RSHIFT(c[2] + c[3]));
+            *(dst+240*4) = c[4] + RSHIFT(c[3] + RSHIFT(c[3] + RSHIFT(c[3] + c[4])));
+            *(dst+240*5) = c[4] + RSHIFT(c[5] + RSHIFT(c[5] + RSHIFT(c[5] + c[4])));
+            *(dst+240*6) = c[5] + RSHIFT(c[6] + RSHIFT(c[5] + c[6]));
+            *(dst+240*7) = c[6] + RSHIFT(c[6] + c[7]);
+            *(dst+240*8) = c[7] + RSHIFT(c[7] + RSHIFT(c[7] + c[8]));
+            *(dst+240*9) = c[8]<<1;
+            dst++;
+            x += ix;
+        }
+		//last one line
+		uint16_t a[9];
+		for(uint_fast8_t i = 0; i < 9; i++)
+		{
+			a[i]=RSHIFT(buffer_mem[x + 256 * i]);
+		}
+		//A0~A9
+		*dst         = a[0]<<1;
+		*(dst+240)   = a[1] + RSHIFT(a[1] + RSHIFT(a[1]+ a[0]));
+		*(dst+240*2) = a[2] + RSHIFT(a[1] + a[2]);
+		*(dst+240*3) = a[3] + RSHIFT(a[2] + RSHIFT(a[2] + a[3]));
+		*(dst+240*4) = a[4] + RSHIFT(a[3] + RSHIFT(a[3] + RSHIFT(a[3] + a[4])));
+		*(dst+240*5) = a[4] + RSHIFT(a[5] + RSHIFT(a[5] + RSHIFT(a[5] + a[4])));
+		*(dst+240*6) = a[5] + RSHIFT(a[6] + RSHIFT(a[5] + a[6]));
+		*(dst+240*7) = a[6] + RSHIFT(a[6] + a[7]);
+		*(dst+240*8) = a[7] + RSHIFT(a[7] + RSHIFT(a[7] + a[8]));
+		*(dst+240*9) = a[8]<<1;
+		dst += 14 + 240 * 9;
+    }
+}
 
 /* alekmaul's scaler taken from mame4all */
 void bitmap_scale(uint32_t startx, uint32_t starty, uint32_t viswidth, uint32_t visheight, uint32_t newwidth, uint32_t newheight,uint32_t pitchsrc,uint32_t pitchdest, uint16_t* restrict src, uint16_t* restrict dst)
