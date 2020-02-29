@@ -445,7 +445,7 @@ uint32_t load_rom (char *filename)
 
 		/* Seek to end of file, and get size */
 		fseek(fd, 0, SEEK_END);
-		cart.size = ftell(fd);
+		cart.size = (uint32_t)ftell(fd);
 		fseek(fd, 0, SEEK_SET);
 
 		if (cart.size < 0x4000) cart.size = 0x4000;

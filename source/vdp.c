@@ -47,6 +47,8 @@
 	bg_name_dirty[name] |= (1 << ((addr >> 2) & 7));\
 }
 
+/*** Vertical Counter Tables ***/
+extern uint8_t *vc_table[2][3];
 
 /* VDP context */
 vdp_t vdp;
@@ -212,7 +214,7 @@ void viewport_check(void)
 }
 
 
-void vdp_reg_w(uint8_t r, uint8_t d)
+static void vdp_reg_w(uint8_t r, uint8_t d)
 {
 	/* Store register data */
 	vdp.reg[r] = d;
