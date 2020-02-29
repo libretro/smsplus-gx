@@ -899,12 +899,9 @@ int main (int argc, char *argv[])
 	system_poweron();
 	
 	/* Set the number of scalers according to the console being emulated */
-    if (sms.console == CONSOLE_GG)
-    {
-		upscalers_available = 3;
-	}
-    else
-    {
+	if (sms.console == CONSOLE_GG) upscalers_available = 3;
+	else
+	{
 		upscalers_available = 1;
 		if (option.fullscreen > upscalers_available) option.fullscreen = 1;
 	}
