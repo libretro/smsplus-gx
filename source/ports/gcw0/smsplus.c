@@ -458,13 +458,13 @@ static const char* Return_Text_Button(uint32_t button)
 		case SDLK_LALT:
 			return "B button";
 		break;
-		/* X button */
-		case SDLK_LSHIFT:
-			return "X button";
-		break;
 		/* Y button */
-		case SDLK_SPACE:
+		case SDLK_LSHIFT:
 			return "Y button";
+		break;
+		/* X button */
+		case SDLK_SPACE:
+			return "X button";
 		break;
 		/* L button */
 		case SDLK_TAB:
