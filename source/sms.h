@@ -116,10 +116,10 @@ typedef struct
 	uint8_t memctrl;
 	uint8_t ioctrl;
 	uint8_t irq;
-	uint8_t device[2];
 	uint8_t gun_offset;
 	uint32_t fm_detect;
 	int32_t use_fm;
+	uint8_t device[2];
 } sms_t;
 
 /* BIOS ROM */

@@ -46,7 +46,7 @@ uint8_t z80_read_unmapped(void)
 }
 
 /* Port $3E (Memory Control Port) */
-void memctrl_w(uint8_t data)
+static void memctrl_w (uint8_t data)
 {
 	/* detect CARTRIDGE/BIOS enabled/disabled */
 	if (IS_SMS)

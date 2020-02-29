@@ -54,8 +54,8 @@ enum
 /* User input structure */
 typedef struct
 {
-	uint8_t pad[2];
 	int32_t analog[2][2];
+	uint8_t pad[2];
 	uint8_t system;
 } input_t;
 

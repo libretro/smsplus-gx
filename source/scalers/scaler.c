@@ -11,6 +11,8 @@
 #define GMASK 0b0000011111100000
 #define BMASK 0b0000000000011111
 
+/* upscale_160x144_to_212x144 and upscale_160x144_to_212x160 by rowsnug95 */
+
 void upscale_160x144_to_212x144(uint16_t* restrict src, uint16_t* restrict dst)
 {    
     uint16_t* __restrict__ buffer_mem;
