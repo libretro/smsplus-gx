@@ -1,5 +1,7 @@
 /* Configure library by modifying this file */
 
+#include <stdint.h>
+
 #ifndef SMS_NTSC_CONFIG_H
 #define SMS_NTSC_CONFIG_H
 
@@ -15,7 +17,7 @@ handle things however it wants. */
 #define SMS_NTSC_OUT_DEPTH 16
 
 /* Type of input pixel values */
-#define SMS_NTSC_IN_T unsigned short
+#define SMS_NTSC_IN_T uint16_t
 
 /* Each raw pixel input value is passed through this. You might want to mask
 the pixel index if you use the high bits as flags, etc. */

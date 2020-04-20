@@ -55,24 +55,13 @@ struct retro_core_option_definition option_defs_us[] = {
       "Enable blargg NTSC filter.",
       {
          { "disabled",   NULL },
-         { "monochrome", NULL },
          { "composite",  NULL },
          { "svideo",     NULL },
          { "rgb",        NULL },
+         { "monochrome", NULL },
          { NULL,         NULL },
       },
       "disabled"
-   },
-   {
-      "smsplus_sony_decoder",
-      "Decoder Matrix",
-      "Toggle between standard and Sony decoder matrix.",
-      {
-         { "standard",  NULL },
-         { "cxa2025as", NULL },
-         { NULL,        NULL },
-      },
-      "standard"
    },
 
    { NULL, NULL, NULL, {{0}}, NULL },

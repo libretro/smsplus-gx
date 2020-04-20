@@ -135,39 +135,7 @@ static void filter_ntsc_set(void)
       default: return;
    }
 
-   setup.decoder_matrix = 0;
-
-   if (sony_decoder)
-   {
-      /* Sony CXA2025AS US */
-      static float matrix[6] = { 1.630, 0.317, -0.378, -0.466, -1.089, 1.677 };
-      setup.decoder_matrix = matrix;
-   }
-
    sms_ntsc_init(sms_ntsc, &setup);
-}
-
-void double_output_height(unsigned char* pixels, unsigned width, unsigned height, long pitch)
-{
-   int y;
-   for (y = height / 2; --y >= 0;)
-   {
-      unsigned char const *in = pixels + y * pitch;
-      unsigned char *out = pixels + y * 2 * pitch;
-      int n;
-      for (n = width; n; --n)
-      {
-         unsigned prev = *(unsigned short *)in;
-         unsigned next = *(unsigned short *)(in + pitch);
-         /* mix 16-bit rgb without losing low bits */
-         unsigned mixed = prev + next + ((prev ^ next) & 0x0821);
-         /* darken by 12% */
-         *(unsigned short *)out = prev;
-         *(unsigned short *)(out + pitch) = (mixed >> 1) - (mixed >> 4 & 0x18E3);
-         in += 2;
-         out += 2;
-      }
-   }
 }
 
 static void update_geometry(void)
@@ -180,13 +148,12 @@ static void update_geometry(void)
 static void render_ntsc(int32_t width, int32_t height, uint32_t pitch)
 {
    int32_t output_width            = SMS_NTSC_OUT_WIDTH(width);
-   int32_t output_height           = height << 1;
+   int32_t output_height           = height;
    uint32_t output_pitch           = output_width << 1;
-   const unsigned short* in_pixels = sms_bitmap + bitmap.viewport.x;
-   unsigned char* output_pixels    = (unsigned char *)ntsc_screen;
+   const uint16_t* in_pixels       = sms_bitmap + bitmap.viewport.x;
+   uint16_t* output_pixels         = ntsc_screen;
 
    sms_ntsc_blit(sms_ntsc, in_pixels, pitch / sizeof(uint16_t), width, height, output_pixels, output_pitch);
-   double_output_height(output_pixels, output_width, output_height, output_pitch);
    video_cb(output_pixels, output_width, output_height, output_pitch);
 }
 
@@ -200,7 +167,6 @@ static void video_update(void)
    unsigned width  = bitmap.viewport.w;   
    unsigned height = bitmap.viewport.h;
    unsigned pitch  = bitmap.pitch;
-   unsigned char *output_pixels;
 
    if (geometry_changed)
    {
@@ -443,14 +409,6 @@ static void check_variables(void)
          use_ntsc = NTSC_NONE;
    }
 
-   var.value = NULL;
-   var.key   = "smsplus_sony_decoder";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      sony_decoder = (strcmp(var.value, "cxa2025as") == 0) ? 1 : 0;
-   }
-
    if (old_ntsc != use_ntsc || old_decode != sony_decoder)
    {
       geometry_changed = 1;
@@ -591,7 +549,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->geometry.base_width   = !use_ntsc ? bitmap.viewport.w : SMS_NTSC_OUT_WIDTH (bitmap.viewport.w);
    info->geometry.base_height  = bitmap.viewport.h;
    info->geometry.max_width    = !use_ntsc ? bitmap.width : SMS_NTSC_OUT_WIDTH (bitmap.width);
-   info->geometry.max_height   = !use_ntsc ? bitmap.height : (bitmap.height << 1);
+   info->geometry.max_height   = bitmap.height;
    info->geometry.aspect_ratio = 4.0 / 3.0;
 }
 
