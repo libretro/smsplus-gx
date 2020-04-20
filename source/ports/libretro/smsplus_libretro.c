@@ -36,7 +36,6 @@ static unsigned geometry_changed;
 
 /* blargg NTSC */
 static unsigned use_ntsc = 0;
-static unsigned sony_decoder = 0;
 static SMS_NTSC_IN_T *ntsc_screen = NULL;
 static sms_ntsc_t *sms_ntsc = NULL;
 
@@ -214,9 +213,9 @@ static int bios_init(void)
 
    sprintf(bios_path, "%s%s", gdata.biosdir, "BIOS.col");
 
-   fd = fopen(bios_path, "rb");
    if (sms.console == CONSOLE_COLECO)
    {
+      fd = fopen(bios_path, "rb");
       if(fd)
       {
          /* Seek to end of file, and get size */
@@ -382,12 +381,53 @@ bool retro_load_game_special(unsigned id, const struct retro_game_info *info, si
    return false;
 }
 
-static void check_variables(void)
+static void check_variables(bool startup)
 {
    struct retro_variable var = { 0 };
 
    unsigned old_ntsc   = use_ntsc;
-   unsigned old_decode = sony_decoder;
+
+   var.value = NULL;
+   var.key   = "smsplus_hardware";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && startup)
+   {
+      if (strcmp(var.value, "master system") == 0)
+         sms.console = CONSOLE_SMS;
+      else if (strcmp(var.value, "master system II") == 0)
+         sms.console = CONSOLE_SMS2;
+      else if (strcmp(var.value, "game gear") == 0)
+         sms.console = CONSOLE_GG;
+      else if (strcmp(var.value, "game gear (sms compatibility)") == 0)
+         sms.console = CONSOLE_GGMS;
+      else if (strcmp(var.value, "coleco") == 0)
+      {
+         sms.console = CONSOLE_COLECO;
+			cart.mapper = MAPPER_NONE;
+      }
+   }
+
+   var.value = NULL;
+   var.key   = "smsplus_region";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && startup)
+   {
+      if (strcmp(var.value, "ntsc-u") == 0)
+      {
+         sms.display = DISPLAY_NTSC;
+			sms.territory = TERRITORY_EXPORT;
+      }
+      else if (strcmp(var.value, "pal") == 0)
+      {
+         sms.display = DISPLAY_PAL;
+			sms.territory = TERRITORY_EXPORT;
+      }
+      else if (strcmp(var.value, "ntsc-j") == 0)
+      {
+         sms.display = DISPLAY_NTSC;
+			sms.territory = TERRITORY_DOMESTIC;
+      }
+   }
 
    var.value = NULL;
    var.key   = "smsplus_ntsc_filter";
@@ -395,26 +435,18 @@ static void check_variables(void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (strcmp(var.value, "monochrome") == 0)
-      {
          use_ntsc = NTSC_MONOCHROME;
-      }
       else if (strcmp(var.value, "composite") == 0)
-      {
          use_ntsc = NTSC_COMPOSITE;
-      }
       else if (strcmp(var.value, "svideo") == 0)
-      {
          use_ntsc = NTSC_SVIDEO;
-      }
       else if (strcmp(var.value, "rgb") == 0)
-      {
          use_ntsc = NTSC_RGB;
-      }
       else
          use_ntsc = NTSC_NONE;
    }
 
-   if (old_ntsc != use_ntsc || old_decode != sony_decoder)
+   if (old_ntsc != use_ntsc)
    {
       geometry_changed = 1;
       filter_ntsc_set();
@@ -465,6 +497,8 @@ bool retro_load_game(const struct retro_game_info *info)
       return false;
    }
 
+   check_variables(true);
+
    sms_bitmap  = (uint16_t*)malloc(VIDEO_WIDTH_SMS * 240 * sizeof(uint16_t));
 
    log_cb(RETRO_LOG_INFO, "CRC :             0x%08X\n", cart.crc);
@@ -498,8 +532,6 @@ bool retro_load_game(const struct retro_game_info *info)
 
    filter_ntsc_init();
 
-   check_variables();
-
    libretro_serialize_size = 0;
 
    geometry_changed = 1;
@@ -516,7 +548,7 @@ void retro_run(void)
    bool updated = false;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
-      check_variables();
+      check_variables(false);
 
    /* Read input */
    update_input();

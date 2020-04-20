@@ -50,6 +50,34 @@ extern "C" {
 
 struct retro_core_option_definition option_defs_us[] = {
    {
+      "smsplus_hardware",
+      "Hardware (Restart)",
+      "Emulates which system hardware to use. Needs restart.",
+      {
+         { "auto",             NULL },
+         { "master system",    NULL },
+         { "master system II", NULL },
+         { "game gear",        NULL },
+         { "game gear (sms compatibility)",  NULL },
+         { "coleco",           NULL },
+         { NULL,               NULL },
+      },
+      "auto"
+   },
+   {
+      "smsplus_region",
+      "Region (Restart)",
+      "Runs console at a specific video timing based on region. Needs restart.",
+      {
+         { "auto",   NULL },
+         { "ntsc-u", NULL },
+         { "pal",    NULL },
+         { "ntsc-j", NULL },
+         { NULL,     NULL },
+      },
+      "auto"
+   },
+   {
       "smsplus_ntsc_filter",
       "Blargg NTSC Filter",
       "Enable blargg NTSC filter.",
