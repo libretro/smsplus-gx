@@ -34,6 +34,10 @@ static unsigned libretro_supports_bitmasks;
 static unsigned libretro_serialize_size;
 static unsigned geometry_changed;
 
+static unsigned remove_left_border = 0;
+static unsigned system_width = VIDEO_WIDTH_SMS;
+static unsigned system_height = VIDEO_HEIGHT_SMS;
+
 /* blargg NTSC */
 static unsigned use_ntsc = 0;
 static SMS_NTSC_IN_T *ntsc_screen = NULL;
@@ -107,8 +111,8 @@ static void filter_ntsc_init(void)
 {
    sms_ntsc = (sms_ntsc_t*)malloc(sizeof(sms_ntsc_t));
 
-   ntsc_screen = (SMS_NTSC_IN_T*)malloc(640 * 480 * sizeof(SMS_NTSC_IN_T));
-   memset(ntsc_screen, 0, sizeof(640 * 480 * sizeof(SMS_NTSC_IN_T)));
+   ntsc_screen = (SMS_NTSC_IN_T*)malloc(602 * 240 * sizeof(SMS_NTSC_IN_T));
+   memset(ntsc_screen, 0, sizeof(602 * 240 * sizeof(SMS_NTSC_IN_T)));
 }
 
 static void filter_ntsc_cleanup(void)
@@ -137,46 +141,60 @@ static void filter_ntsc_set(void)
    sms_ntsc_init(sms_ntsc, &setup);
 }
 
-static void update_geometry(void)
+static void render_ntsc(void *vidbuf)
 {
-   struct retro_system_av_info game;
-   retro_get_system_av_info(&game);
-   environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &game);
-}
-
-static void render_ntsc(int32_t width, int32_t height, uint32_t pitch)
-{
-   int32_t output_width            = SMS_NTSC_OUT_WIDTH(width);
-   int32_t output_height           = height;
+   int32_t output_width            = SMS_NTSC_OUT_WIDTH(system_width);
+   int32_t output_height           = system_height;
    uint32_t output_pitch           = output_width << 1;
-   const uint16_t* in_pixels       = sms_bitmap + bitmap.viewport.x;
-   uint16_t* output_pixels         = ntsc_screen;
 
-   sms_ntsc_blit(sms_ntsc, in_pixels, pitch / sizeof(uint16_t), width, height, output_pixels, output_pitch);
-   video_cb(output_pixels, output_width, output_height, output_pitch);
+   sms_ntsc_blit(sms_ntsc, vidbuf, bitmap.pitch / sizeof(uint16_t), system_width, system_height, ntsc_screen, output_pitch);
+   video_cb(ntsc_screen, output_width, output_height, output_pitch);
 }
 
-static void render_nofilter(int32_t width, int32_t height, uint32_t pitch)
+static void render_nofilter(void *vidbuf)
 {
-   video_cb(sms_bitmap + bitmap.viewport.x, width, height, pitch);
+   video_cb(vidbuf, system_width, system_height, bitmap.pitch);
 }
 
 static void video_update(void)
 {
-   unsigned width  = bitmap.viewport.w;   
-   unsigned height = bitmap.viewport.h;
-   unsigned pitch  = bitmap.pitch;
+   unsigned x = bitmap.viewport.x;
+   static int last_width, last_height;
+
+   system_width = bitmap.viewport.w;
+   system_height = bitmap.viewport.h;
+
+   if (sms.console != CONSOLE_GG && remove_left_border)
+   {
+      x = (vdp.reg[0] & 0x20) ? 8 : 0;
+      system_width = VIDEO_WIDTH_SMS - x;
+   }
+
+   if (system_width != last_width || system_height != last_height)
+      bitmap.viewport.changed = 1;
+
+   last_width = system_width;
+   last_height = system_height;
 
    if (geometry_changed)
    {
+      struct retro_system_av_info info;
+      retro_get_system_av_info(&info);
+      environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &info);
       geometry_changed = 0;
-      update_geometry();
+   }
+   else if (bitmap.viewport.changed)
+   {
+      struct retro_system_av_info info;
+      retro_get_system_av_info(&info);
+      environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &info);
+      bitmap.viewport.changed = 0;
    }
 
    if (!use_ntsc)
-      render_nofilter(width, height, pitch);
+      render_nofilter(sms_bitmap + x);
    else
-      render_ntsc(width, height, pitch);
+      render_ntsc(sms_bitmap + x);
 }
 
 void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode)
@@ -386,6 +404,7 @@ static void check_variables(bool startup)
    struct retro_variable var = { 0 };
 
    unsigned old_ntsc   = use_ntsc;
+   unsigned old_border = remove_left_border;
 
    var.value = NULL;
    var.key   = "smsplus_hardware";
@@ -430,6 +449,17 @@ static void check_variables(bool startup)
    }
 
    var.value = NULL;
+   var.key   = "smsplus_remove_left_border";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "enabled") == 0)
+         remove_left_border = 1;
+      else
+         remove_left_border = 0;
+   }
+
+   var.value = NULL;
    var.key   = "smsplus_ntsc_filter";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -451,6 +481,9 @@ static void check_variables(bool startup)
       geometry_changed = 1;
       filter_ntsc_set();
    }
+
+   if (old_border != remove_left_border)
+      bitmap.viewport.changed = 1;
 }
 
 bool retro_load_game(const struct retro_game_info *info)
@@ -497,6 +530,8 @@ bool retro_load_game(const struct retro_game_info *info)
       return false;
    }
 
+   filter_ntsc_init();
+
    check_variables(true);
 
    sms_bitmap  = (uint16_t*)malloc(VIDEO_WIDTH_SMS * 240 * sizeof(uint16_t));
@@ -530,11 +565,10 @@ bool retro_load_game(const struct retro_game_info *info)
    /* Initialize all systems and power on */
    system_poweron();
 
-   filter_ntsc_init();
+   system_width = bitmap.viewport.w;
+   system_height = bitmap.viewport.h;
 
    libretro_serialize_size = 0;
-
-   geometry_changed = 1;
 
    return true;
 }
@@ -586,10 +620,10 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
    info->timing.fps            = fps;
    info->timing.sample_rate    = rate;
-   info->geometry.base_width   = !use_ntsc ? bitmap.viewport.w : SMS_NTSC_OUT_WIDTH (bitmap.viewport.w);
-   info->geometry.base_height  = bitmap.viewport.h;
-   info->geometry.max_width    = !use_ntsc ? bitmap.width : SMS_NTSC_OUT_WIDTH (bitmap.width);
-   info->geometry.max_height   = bitmap.height;
+   info->geometry.base_width   = !use_ntsc ? system_width : SMS_NTSC_OUT_WIDTH (system_width);
+   info->geometry.base_height  = system_height;
+   info->geometry.max_width    = !use_ntsc ? VIDEO_WIDTH_SMS : SMS_NTSC_OUT_WIDTH(VIDEO_WIDTH_SMS);
+   info->geometry.max_height   = VIDEO_HEIGHT_SMS;
    info->geometry.aspect_ratio = 4.0 / 3.0;
 }
 

@@ -78,6 +78,17 @@ struct retro_core_option_definition option_defs_us[] = {
       "auto"
    },
    {
+      "smsplus_remove_left_border",
+      "Remove Border",
+      "Removes border that is seen on the left of screen.",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL,       NULL },
+      },
+      "disabled"
+   },
+   {
       "smsplus_ntsc_filter",
       "Blargg NTSC Filter",
       "Enable blargg NTSC filter.",
