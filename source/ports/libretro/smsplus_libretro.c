@@ -221,7 +221,7 @@ void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode)
    (void)mode;
 }
 
-static void bios_init(void)
+static int bios_init(void)
 {
    FILE *fd;
    char bios_path[1024];
@@ -249,13 +249,23 @@ static void bios_init(void)
    sprintf(bios_path, "%s%s", gdata.biosdir, "BIOS.col");
 
    fd = fopen(bios_path, "rb");
-   if(fd)
+   if (sms.console == CONSOLE_COLECO)
    {
-      /* Seek to end of file, and get size */
-      fread(coleco.rom, 0x2000, 1, fd);
-      fclose(fd);
-      log_cb(RETRO_LOG_INFO, "bios loaded:      %s\n", bios_path);
+      if(fd)
+      {
+         /* Seek to end of file, and get size */
+         fread(coleco.rom, 0x2000, 1, fd);
+         fclose(fd);
+         log_cb(RETRO_LOG_INFO, "bios loaded:      %s\n", bios_path);
+      }
+      else
+      {
+         /* Coleco bios is required when running coleco roms */
+         log_cb(RETRO_LOG_ERROR, "Cannot load required colero rom: %s\n", bios_path);
+         return 0;
+      }
    }
+   return 1;
 }
 
 static void smsp_gamedata_set(char *filename)
@@ -489,7 +499,7 @@ bool retro_load_game(const struct retro_game_info *info)
    {
       fprintf(stderr, "Error: Failed to load %s.\n", info->path);
       Cleanup();
-      return 0;
+      return false;
    }
 
    sms_bitmap  = (uint16_t*)malloc(VIDEO_WIDTH_SMS * 240 * sizeof(uint16_t));
@@ -515,7 +525,8 @@ bool retro_load_game(const struct retro_game_info *info)
    if (sms.console == CONSOLE_SMS || sms.console == CONSOLE_SMS2)
       sms.use_fm = 1;
 
-   bios_init();
+   if (!bios_init()) /* This only fails when running coleco roms and coleco bios is not found */
+      return false;
 
    Sound_Init();
 
@@ -530,7 +541,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
    geometry_changed = 1;
 
-   return 1;
+   return true;
 }
 
 void retro_unload_game(void)
