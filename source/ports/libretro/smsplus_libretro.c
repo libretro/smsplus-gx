@@ -295,6 +295,8 @@ static void Cleanup(void)
 
 static void update_input(void)
 {
+#define KEYP(key) input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, key)
+
    unsigned port;
    unsigned startpressed = 0;
 
@@ -303,6 +305,24 @@ static void update_input(void)
    input.pad[0] = 0;
    input.pad[1] = 0;
    input.system &= (sms.console == CONSOLE_GG) ? ~INPUT_START : ~INPUT_PAUSE;
+
+   if (sms.console == CONSOLE_COLECO)
+   {
+      coleco.keypad[0] = 0xff;
+      coleco.keypad[1] = 0xff;
+
+      if (KEYP(RETROK_1)) coleco.keypad[0] = 1;
+      else if (KEYP(RETROK_2)) coleco.keypad[0] = 2;
+      else if (KEYP(RETROK_3)) coleco.keypad[0] = 3;
+      else if (KEYP(RETROK_4)) coleco.keypad[0] = 4;
+      else if (KEYP(RETROK_5)) coleco.keypad[0] = 5;
+      else if (KEYP(RETROK_6)) coleco.keypad[0] = 6;
+      else if (KEYP(RETROK_7)) coleco.keypad[0] = 7;
+      else if (KEYP(RETROK_8)) coleco.keypad[0] = 8;
+      else if (KEYP(RETROK_9)) coleco.keypad[0] = 9;
+      else if (KEYP(RETROK_DOLLAR)) coleco.keypad[0] = 10;
+      else if (KEYP(RETROK_ASTERISK)) coleco.keypad[0] = 11;
+   }
 
    for (port = 0; port < MAX_PORTS; port++)
    {
@@ -325,10 +345,12 @@ static void update_input(void)
          if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
             startpressed = 1;
       }
-
-      if (startpressed)
-         input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
    }
+
+   if (startpressed)
+      input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
+
+   if (sms.console == CONSOLE_COLECO) input.system = 0;
 }
 
 static void check_system_specs(void)
@@ -458,6 +480,9 @@ bool retro_load_game(const struct retro_game_info *info)
 
    option.country = 0;
    option.console = 0;
+
+   /* Force Colecovision mode if extension is .col */
+	if (strcmp(strrchr(info->path, '.'), ".col") == 0) option.console = 6;
 
    /* Load ROM */
    if (!load_rom_mem((const char*)info->data, info->size))
