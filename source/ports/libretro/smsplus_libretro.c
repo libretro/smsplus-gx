@@ -243,7 +243,12 @@ static void smsp_gamedata_set(char *filename)
 
    /* Check and remove default slash from the beginning of the base name */
    if (gdata.gamename[0] == path_default_slash_c())
-      sprintf(gdata.gamename, "%s", gdata.gamename + 1);
+   {
+      int i, len = strlen(gdata.gamename) - 1;
+      for (i = 0; i < len; i++)
+         gdata.gamename[i] = gdata.gamename[i + 1];
+      gdata.gamename[len] = 0;
+   }
 
    /* Set up the bios directory */
    sprintf(gdata.biosdir, "%s%c", retro_system_directory, path_default_slash_c());
@@ -544,8 +549,11 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 {
    memset(info, 0, sizeof(*info));
 
-   info->timing.fps            = 60.0;
-   info->timing.sample_rate    = 44100.0;
+   double fps = retro_get_region() ? FPS_PAL : FPS_NTSC;
+   double rate = (double)option.sndrate;
+
+   info->timing.fps            = fps;
+   info->timing.sample_rate    = rate;
    info->geometry.base_width   = !use_ntsc ? bitmap.viewport.w : SMS_NTSC_OUT_WIDTH (bitmap.viewport.w);
    info->geometry.base_height  = bitmap.viewport.h;
    info->geometry.max_width    = !use_ntsc ? bitmap.width : SMS_NTSC_OUT_WIDTH (bitmap.width);
@@ -565,7 +573,7 @@ void retro_deinit()
 
 unsigned retro_get_region(void)
 {
-   return RETRO_REGION_NTSC; /* FIXME: Regions for other cores */
+   return (sms.display == DISPLAY_PAL) ? RETRO_REGION_PAL : RETRO_REGION_NTSC;
 }
 
 unsigned retro_api_version(void)
