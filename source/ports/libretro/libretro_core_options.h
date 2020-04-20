@@ -50,29 +50,57 @@ extern "C" {
 
 struct retro_core_option_definition option_defs_us[] = {
    {
+      "smsplus_hardware",
+      "Hardware (Restart)",
+      "Emulates which system hardware to use. Needs restart.",
+      {
+         { "auto",             NULL },
+         { "master system",    NULL },
+         { "master system II", NULL },
+         { "game gear",        NULL },
+         { "game gear (sms compatibility)",  NULL },
+         { "coleco",           NULL },
+         { NULL,               NULL },
+      },
+      "auto"
+   },
+   {
+      "smsplus_region",
+      "Region (Restart)",
+      "Runs console at a specific video timing based on region. Needs restart.",
+      {
+         { "auto",   NULL },
+         { "ntsc-u", NULL },
+         { "pal",    NULL },
+         { "ntsc-j", NULL },
+         { NULL,     NULL },
+      },
+      "auto"
+   },
+   {
+      "smsplus_remove_left_border",
+      "Remove Border",
+      "Removes border that is seen on the left of screen.",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL,       NULL },
+      },
+      "disabled"
+   },
+   {
       "smsplus_ntsc_filter",
       "Blargg NTSC Filter",
       "Enable blargg NTSC filter.",
       {
          { "disabled",   NULL },
-         { "monochrome", NULL },
          { "composite",  NULL },
          { "svideo",     NULL },
          { "rgb",        NULL },
+         { "monochrome", NULL },
          { NULL,         NULL },
       },
       "disabled"
-   },
-   {
-      "smsplus_sony_decoder",
-      "Decoder Matrix",
-      "Toggle between standard and Sony decoder matrix.",
-      {
-         { "standard",  NULL },
-         { "cxa2025as", NULL },
-         { NULL,        NULL },
-      },
-      "standard"
    },
 
    { NULL, NULL, NULL, {{0}}, NULL },
