@@ -17,9 +17,6 @@ t_config option;
 
 static uint16_t *sms_bitmap = NULL;
 
-static char retro_save_directory[256];
-static char retro_system_directory[256];
-
 struct retro_perf_callback perf_cb;
 static retro_get_cpu_features_t perf_get_cpu_features_cb = NULL;
 static retro_log_printf_t log_cb;
@@ -34,12 +31,12 @@ static unsigned libretro_supports_bitmasks;
 static unsigned libretro_serialize_size;
 static unsigned geometry_changed;
 
-static unsigned remove_left_border = 0;
-static unsigned system_width = VIDEO_WIDTH_SMS;
-static unsigned system_height = VIDEO_HEIGHT_SMS;
+static unsigned remove_left_border;
+static unsigned system_width;
+static unsigned system_height;
 
 /* blargg NTSC */
-static unsigned use_ntsc = 0;
+static unsigned use_ntsc;
 static SMS_NTSC_IN_T *ntsc_screen = NULL;
 static sms_ntsc_t *sms_ntsc = NULL;
 
@@ -67,39 +64,6 @@ static sms_input_t binds[MAX_BUTTONS] =
    { RETRO_DEVICE_ID_JOYPAD_B,     INPUT_BUTTON1 },
    { RETRO_DEVICE_ID_JOYPAD_A,     INPUT_BUTTON2 }
 };
-
-static void get_basename(char *buf, const char *path, size_t size)
-{
-   char *base = strrchr(path, '/');
-   if (!base)
-      base = strrchr(path, '\\');
-
-   if (base)
-   {
-      sprintf(buf, "%s", base);
-      base = strrchr(buf, '.');
-      if (base)
-         *base = '\0';
-   }
-   else
-      buf[0] = '\0';
-}
-
-static void get_basedir(char *buf, const char *path, size_t size)
-{
-   char *base;
-   strncpy(buf, path, size - 1);
-   buf[size - 1] = '\0';
-
-   base = strrchr(buf, '/');
-   if (!base)
-      base = strrchr(buf, '\\');
-
-   if (base)
-      *base = '\0';
-   else
-      buf[0] = '\0';
-}
 
 #define NTSC_NONE 0
 #define NTSC_MONOCHROME 1
@@ -217,9 +181,10 @@ static int bios_init(void)
    fd = fopen(bios_path, "rb");
    if(fd)
    {
+      uint32_t size;
       /* Seek to end of file, and get size */
       fseek(fd, 0, SEEK_END);
-      uint32_t size = ftell(fd);
+      size = ftell(fd);
       fseek(fd, 0, SEEK_SET);
       if (size < 0x4000) size = 0x4000;
       fread(bios.rom, size, 1, fd);
@@ -229,10 +194,9 @@ static int bios_init(void)
       log_cb(RETRO_LOG_INFO, "bios loaded:      %s\n", bios_path);
    }
 
-   sprintf(bios_path, "%s%s", gdata.biosdir, "BIOS.col");
-
    if (sms.console == CONSOLE_COLECO)
    {
+      sprintf(bios_path, "%s%s", gdata.biosdir, "BIOS.col");
       fd = fopen(bios_path, "rb");
       if(fd)
       {
@@ -249,26 +213,6 @@ static int bios_init(void)
       }
    }
    return 1;
-}
-
-static void smsp_gamedata_set(char *filename)
-{
-   unsigned long i;
-
-   /* Set the game name */
-   get_basename(gdata.gamename, filename, sizeof(gdata.gamename));
-
-   /* Check and remove default slash from the beginning of the base name */
-   if (gdata.gamename[0] == path_default_slash_c())
-   {
-      int i, len = strlen(gdata.gamename) - 1;
-      for (i = 0; i < len; i++)
-         gdata.gamename[i] = gdata.gamename[i + 1];
-      gdata.gamename[len] = 0;
-   }
-
-   /* Set up the bios directory */
-   sprintf(gdata.biosdir, "%s%c", retro_system_directory, path_default_slash_c());
 }
 
 static void Cleanup(void)
@@ -367,19 +311,6 @@ void retro_init(void)
 
    bool achievements = true;
    environ_cb(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, &achievements);
-
-   const char *dir = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
-      sprintf(retro_system_directory, "%s", dir);
-
-   dir = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir)
-      sprintf(retro_save_directory, "%s", dir);
-
-   enum retro_pixel_format rgb565 = RETRO_PIXEL_FORMAT_RGB565;
-   if (environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565) && log_cb)
-      log_cb(RETRO_LOG_INFO, "Frontend supports RGB565 - will use that instead of XRGB1555.\n");
 
    libretro_supports_bitmasks = 0;
    if (environ_cb(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, NULL))
@@ -488,8 +419,9 @@ static void check_variables(bool startup)
 
 bool retro_load_game(const struct retro_game_info *info)
 {
-   if (!info)
-      return false;
+   enum retro_pixel_format rgb565 = RETRO_PIXEL_FORMAT_RGB565;
+   const char *dir = NULL;
+   char retro_system_directory[256];
 
    struct retro_input_descriptor desc[] = {
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left" },
@@ -503,9 +435,19 @@ bool retro_load_game(const struct retro_game_info *info)
       { 0 },
    };
 
+   if (!info)
+      return false;
+
    environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
-   smsp_gamedata_set((char*)info->path);
+   if (environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565) && log_cb)
+      log_cb(RETRO_LOG_INFO, "Frontend supports RGB565 - will use that instead of XRGB1555.\n");
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
+      sprintf(retro_system_directory, "%s", dir);
+
+   /* Set up the bios directory */
+   sprintf(gdata.biosdir, "%s%c", retro_system_directory, path_default_slash_c());
 
    memset(&option, 0, sizeof(option));
 
@@ -525,21 +467,12 @@ bool retro_load_game(const struct retro_game_info *info)
    /* Load ROM */
    if (!load_rom_mem((const char*)info->data, info->size))
    {
-      fprintf(stderr, "Error: Failed to load %s.\n", info->path);
+      log_cb(RETRO_LOG_ERROR, "Error: Failed to load %s.\n", info->path);
       Cleanup();
       return false;
    }
 
-   filter_ntsc_init();
-
-   check_variables(true);
-
    sms_bitmap  = (uint16_t*)malloc(VIDEO_WIDTH_SMS * 240 * sizeof(uint16_t));
-
-   log_cb(RETRO_LOG_INFO, "CRC :             0x%08X\n", cart.crc);
-   log_cb(RETRO_LOG_INFO, "gamename:         %s\n", gdata.gamename);
-   log_cb(RETRO_LOG_INFO, "system directory: %s\n", retro_system_directory);
-   log_cb(RETRO_LOG_INFO, "save directory:   %s\n", retro_save_directory);
 
    /* Set parameters for internal bitmap */
    bitmap.width       = VIDEO_WIDTH_SMS;
@@ -553,17 +486,23 @@ bool retro_load_game(const struct retro_game_info *info)
    bitmap.viewport.x  = 0x00;
    bitmap.viewport.y  = 0x00;
 
-   /* sms.territory = settings.misc_region; */
-   if (sms.console == CONSOLE_SMS || sms.console == CONSOLE_SMS2)
-      sms.use_fm = 1;
+   filter_ntsc_init();
+
+   check_variables(true);
 
    if (!bios_init()) /* This only fails when running coleco roms and coleco bios is not found */
       return false;
+
+   /* sms.territory = settings.misc_region; */
+   if (sms.console == CONSOLE_SMS || sms.console == CONSOLE_SMS2)
+      sms.use_fm = 1;
 
    Sound_Init();
 
    /* Initialize all systems and power on */
    system_poweron();
+
+   log_cb(RETRO_LOG_INFO, "CRC : 0x%08X\n", cart.crc);
 
    system_width = bitmap.viewport.w;
    system_height = bitmap.viewport.h;
@@ -613,17 +552,17 @@ void retro_get_system_info(struct retro_system_info *info)
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
-   memset(info, 0, sizeof(*info));
-
    double fps = retro_get_region() ? FPS_PAL : FPS_NTSC;
    double rate = (double)option.sndrate;
+
+   memset(info, 0, sizeof(*info));
 
    info->timing.fps            = fps;
    info->timing.sample_rate    = rate;
    info->geometry.base_width   = !use_ntsc ? system_width : SMS_NTSC_OUT_WIDTH (system_width);
    info->geometry.base_height  = system_height;
    info->geometry.max_width    = !use_ntsc ? VIDEO_WIDTH_SMS : SMS_NTSC_OUT_WIDTH(VIDEO_WIDTH_SMS);
-   info->geometry.max_height   = VIDEO_HEIGHT_SMS;
+   info->geometry.max_height   = 240;
    info->geometry.aspect_ratio = 4.0 / 3.0;
 }
 
@@ -649,8 +588,8 @@ unsigned retro_api_version(void)
 
 void retro_set_controller_port_device(unsigned in_port, unsigned device)
 {
-   if (in_port)
-      return;
+   (void)in_port;
+   (void)device;
 }
 
 void retro_set_environment(retro_environment_t cb)
