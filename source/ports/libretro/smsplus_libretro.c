@@ -32,6 +32,8 @@ static unsigned libretro_serialize_size;
 static unsigned geometry_changed;
 
 static unsigned remove_left_border;
+static unsigned use_fm_sound;
+
 static unsigned system_width;
 static unsigned system_height;
 
@@ -380,6 +382,17 @@ static void check_variables(bool startup)
    }
 
    var.value = NULL;
+   var.key   = "smsplus_fm_sound";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && startup)
+   {
+      if (strcmp(var.value, "disabled") == 0)
+         use_fm_sound = 0;
+      else
+         use_fm_sound = 1;
+   }
+
+   var.value = NULL;
    var.key   = "smsplus_remove_left_border";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -495,7 +508,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
    /* sms.territory = settings.misc_region; */
    if (sms.console == CONSOLE_SMS || sms.console == CONSOLE_SMS2)
-      sms.use_fm = 1;
+      sms.use_fm = use_fm_sound;
 
    Sound_Init();
 

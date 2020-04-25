@@ -78,6 +78,17 @@ struct retro_core_option_definition option_defs_us[] = {
       "auto"
    },
    {
+      "smsplus_fm_sound",
+      "Use FM (YM2413) (Restart)",
+      "Use FM Sound for some Master System games to enable enhanced music. Some games will only enable YM2413 sound if the Region option is also set to ntsc-j (e.g. Wonder Boy III). Needs restart.",
+      {
+         { "auto",  NULL },
+         { "disabled", NULL },
+         { NULL,       NULL },
+      },
+      "auto"
+   },
+   {
       "smsplus_remove_left_border",
       "Remove Border",
       "Removes border that is seen on the left of screen.",
