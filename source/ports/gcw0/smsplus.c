@@ -59,29 +59,22 @@ static uint_fast8_t dpad_input[4] = {0, 0, 0, 0};
 
 uint32_t update_window_size(uint32_t w, uint32_t h);
 
-#ifdef RS97
-static const char *KEEP_ASPECT_FILENAME = "/proc/jz/ipu";
-#else
 static const char *KEEP_ASPECT_FILENAME = "/sys/devices/platform/jz-lcd.0/keep_aspect_ratio";
-#endif
 
-static inline uint_fast8_t get_keep_aspect_ratio()
+static inline void set_keep_aspect_ratio(uint32_t n)
 {
-	FILE *f = fopen(KEEP_ASPECT_FILENAME, "rb");
-	if (!f) return false;
-	char c;
-	fread(&c, 1, 1, f);
-	fclose(f);
-	return c == 'Y';
-}
-
-static inline void set_keep_aspect_ratio(uint_fast8_t n)
-{
+#ifdef RS97
+	if (FILE *f = fopen("/proc/jz/ipu", "w")) {
+		fprintf(f, "%d", mode);
+		fclose(f);
+	}
+#else
 	FILE *f = fopen(KEEP_ASPECT_FILENAME, "wb");
 	if (!f) return;
 	char c = n ? 'Y' : 'N';
 	fwrite(&c, 1, 1, f);
 	fclose(f);
+#endif
 }
 
 static void Clear_video()
@@ -98,7 +91,6 @@ static void Clear_video()
 
 static void video_update()
 {
-	uint8_t hide_left;
 	SDL_Rect dst, dst2;
 	width_hold = (vdp.reg[0] & 0x20) ? 248 : 256;
 	width_remove = (vdp.reg[0] & 0x20) ? 8 : 0;
@@ -348,7 +340,7 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 static void bios_init()
 {
 	FILE *fd;
-	char bios_path[256];
+	char bios_path[384];
 	
 	bios.rom = malloc(0x100000);
 	bios.enabled = 0;
@@ -957,7 +949,7 @@ static void Reset_Mapping()
 static void config_load()
 {
 	FILE* fp;
-	char config_path[256];
+	char config_path[384];
 	
 	snprintf(config_path, sizeof(config_path), "%s/config.cfg", home_path);
 	
@@ -982,7 +974,7 @@ static void config_load()
 
 static void config_save()
 {
-	char config_path[256];
+	char config_path[384];
 	snprintf(config_path, sizeof(config_path), "%s/config.cfg", home_path);
 	FILE* fp;
 	
@@ -1029,7 +1021,6 @@ static void Cleanup(void)
 
 uint32_t update_window_size(uint32_t w, uint32_t h)
 {
-
 	if (option.fullscreen == 0)
 	{
 		sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_FLAGS);
@@ -1054,7 +1045,7 @@ static void Force_IPU_Mode()
 {
 	if (option.fullscreen == 0)
 		set_keep_aspect_ratio(1);
-	else if (option.fullscreen == 1)
+	else
 		set_keep_aspect_ratio(0);
 }
 
