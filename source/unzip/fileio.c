@@ -27,6 +27,11 @@ uint8_t *loadFromZipByName(char *archive, char *filename, uint32_t *filesize)
 
     /* Get information about the file */
     unzGetCurrentFileInfo(zhandle, &zinfo, &name[0], 0xff, NULL, 0, NULL, 0);
+    
+    /* Force console if file extension is detected */
+    if (strcmp(strrchr(&name[0], '.'), ".col") == 0) option.console = 6;
+    else if (strcmp(strrchr(&name[0], '.'), ".gg") == 0) option.console = 3;
+    
     *filesize = zinfo.uncompressed_size;
 
     /* Error: file size is zero */
