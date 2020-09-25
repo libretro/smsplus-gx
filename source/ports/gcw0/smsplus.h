@@ -41,7 +41,7 @@ extern SDL_Surface* sms_bitmap;
 /* End of Defines for input remapping */
 
 typedef struct {
-	char gamename[256];
+	char gamename[128];
 	char sramdir[256];
 	char sramfile[256];
 	char stdir[256];
@@ -51,7 +51,12 @@ typedef struct {
 
 void smsp_state(uint8_t slot_number, uint8_t mode);
 
+#ifdef RS97
+#define SOUND_FREQUENCY 44100
+#define SOUND_SAMPLES_SIZE 1024
+#else
 #define SOUND_FREQUENCY 48000
 #define SOUND_SAMPLES_SIZE 2048
+#endif
 
 #endif
