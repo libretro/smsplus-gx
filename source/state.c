@@ -32,8 +32,6 @@
 
 #include "shared.h"
 
-static uint8_t state[0x10000];
-static uint32_t bufferptr;
 #ifndef MAXIM_PSG
 extern sn76489_t psg_sn;
 #endif
