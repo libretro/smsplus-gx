@@ -59,24 +59,6 @@ static uint_fast8_t dpad_input[4] = {0, 0, 0, 0};
 
 uint32_t update_window_size(uint32_t w, uint32_t h);
 
-static const char *KEEP_ASPECT_FILENAME = "/sys/devices/platform/jz-lcd.0/keep_aspect_ratio";
-
-static inline void set_keep_aspect_ratio(uint32_t n)
-{
-#ifdef RS97
-	if (FILE *f = fopen("/proc/jz/ipu", "w")) {
-		fprintf(f, "%d", mode);
-		fclose(f);
-	}
-#else
-	FILE *f = fopen(KEEP_ASPECT_FILENAME, "wb");
-	if (!f) return;
-	char c = n ? 'Y' : 'N';
-	fwrite(&c, 1, 1, f);
-	fclose(f);
-#endif
-}
-
 static void Clear_video()
 {
 	SDL_FillRect(sdl_screen, NULL, 0);
@@ -1041,15 +1023,6 @@ uint32_t update_window_size(uint32_t w, uint32_t h)
 	return 0;
 }
 
-static void Force_IPU_Mode()
-{
-	if (option.fullscreen == 0)
-		set_keep_aspect_ratio(1);
-	else
-		set_keep_aspect_ratio(0);
-}
-
-
 int main (int argc, char *argv[]) 
 {
 	int32_t joy_axis[2] = {0, 0};
@@ -1148,9 +1121,7 @@ int main (int argc, char *argv[])
 
 	// Initialize all systems and power on
 	system_poweron();
-	
-	Force_IPU_Mode();
-	
+
 	// Loop until the user closes the window
 	while (!quit) 
 	{
@@ -1224,12 +1195,8 @@ int main (int argc, char *argv[])
             input.system &= (IS_GG) ? ~INPUT_START : ~INPUT_PAUSE;
             selectpressed = 0;
             forcerefresh = 1;
-			Force_IPU_Mode();
 		}
 	}
-	
-	/* Change it back to Normal */
-	set_keep_aspect_ratio(1);
 	
 	config_save();
 	Cleanup();
