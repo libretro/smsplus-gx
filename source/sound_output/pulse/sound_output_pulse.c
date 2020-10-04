@@ -37,13 +37,14 @@ void Sound_Init()
 
 void Sound_Update()
 {
-	int32_t i;
-	for (i = 0; i < (SOUND_FREQUENCY / snd.fps); i++) 
+	size_t i;
+	size_t len = (SOUND_FREQUENCY / snd.fps);
+	for (i = 0; i < len; i++) 
 	{
 		buffer_snd[i * 2] = snd.output[1][i] * option.soundlevel;
 		buffer_snd[i * 2 + 1] = snd.output[0][i] * option.soundlevel;
 	}
-	if (pa_simple_write(pulse_stream, buffer_snd, (size_t) (SOUND_FREQUENCY / snd.fps), NULL) < 0)
+	if (pa_simple_write(pulse_stream, buffer_snd, len * 4, NULL) < 0)
 	{
 		fprintf(stderr, "PulseAudio: pa_simple_write() failed!\n");
 	}

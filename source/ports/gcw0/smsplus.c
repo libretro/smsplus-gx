@@ -14,9 +14,8 @@
 #include "font_drawing.h"
 #include "sound_output.h"
 
-#if !SDL_TRIPLEBUF
-#define SDL_TRIPLEBUF SDL_DOUBLEBUF
-#endif
+
+#define SDL_FLAGS SDL_HWSURFACE
 
 static SDL_Joystick * sdl_joy[3];
 #define joy_commit_range 8192
@@ -133,7 +132,17 @@ static void video_update()
 				dst.h = vdp.height;
 			}
 			dst.y = 0;
-			SDL_BlitSurface(sms_bitmap,&dst,sdl_screen,NULL);
+			#ifdef OPENDINGUX_GCD_16PIXELS_ISSUE
+			dst2.x = width_remove ? 4 : 0;
+			dst2.y = 0;
+			#endif
+			SDL_BlitSurface(sms_bitmap,&dst,sdl_screen,
+			#ifdef OPENDINGUX_GCD_16PIXELS_ISSUE
+			&dst2
+			#else
+			NULL
+			#endif
+			);
 		break;
 		// Hqx
 		case 3:
@@ -999,22 +1008,26 @@ static void Cleanup(void)
 	system_shutdown();	
 }
 
-#define SDL_FLAGS SDL_HWSURFACE
-
 uint32_t update_window_size(uint32_t w, uint32_t h)
 {
+	if (sdl_screen) SDL_FreeSurface(sdl_screen);
+	
 	if (option.fullscreen == 0)
 	{
 		sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_FLAGS);
 	}
 	else
 	{
+		#ifdef OPENDINGUX_GCD_16PIXELS_ISSUE
+		if (w == 248 && h == 192) w = 256;
+		#endif
 		sdl_screen = SDL_SetVideoMode(w, h, 16, SDL_FLAGS);
 	}
 			
 	if (!sdl_screen)
 	{
-		printf("SDL_SetVideoMode error\n");
+		fprintf(stderr,"SDL_SetVideoMode Initialisation error : %s",SDL_GetError());
+		printf("Width %d, Height %d, FLAGS 0x%x\n", w, h, SDL_FLAGS);
 		return 1;
 	}
 

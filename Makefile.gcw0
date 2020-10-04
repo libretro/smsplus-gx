@@ -10,8 +10,9 @@ SOUND_ENGINE = maxim_sn76489
 # Possible choices : z80 (accurate), eighty (EightyZ80's core, GPLv2)
 Z80_CORE = z80
 SCALE2X_UPSCALER = 1
-PROFILE = 0
+PROFILE = APPLY
 ZIP_SUPPORT = 1
+HUGE_PAGES = 1
 
 SRCDIR		= ./source ./source/cpu_cores/$(Z80_CORE) ./source/sound ./source/unzip
 SRCDIR		+= ./source/scalers ./source/ports/$(PORT) ./source/sound/$(SOUND_ENGINE) ./source/sound_output/$(SOUND_OUTPUT)
@@ -22,11 +23,11 @@ OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
 OBJ_CP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CP)))
 OBJS		= $(OBJ_C) $(OBJ_CP)
 
-CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-fp-exceptions -mno-check-zero-division -fsingle-precision-constant -fno-common -mips32 -fno-PIC -mno-abicalls -flto
+CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mframe-header-opt -mno-fp-exceptions -mno-check-zero-division -fsingle-precision-constant -fno-common -march=mips32r2 -mtune=mips32r2 -flto
 # SMS Plus GX suffers from alignment issues so setting these to 1 helps.
 CFLAGS		+= -falign-functions=1 -falign-jumps=1 -falign-loops=1 -falign-labels=1
 CFLAGS		+= -fipa-pta -fsection-anchors -fdelete-dead-exceptions
-CFLAGS		+= -DALIGN_DWORD -DNOBLANKING_LEFTCOLUM
+CFLAGS		+= -DALIGN_DWORD -DNOBLANKING_LEFTCOLUM -DOPENDINGUX_GCD_16PIXELS_ISSUE
 CFLAGS		+= -DLSB_FIRST -std=gnu99
 CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/scalers -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
 
@@ -53,7 +54,13 @@ CFLAGS		+= -Isource/scale2x
 SRCDIR		+= ./source/scale2x
 endif
 
-LDFLAGS     = -nodefaultlibs -lc -lgcc -lSDL -lm -Wl,--as-needed -Wl,--gc-sections -flto
+ifeq ($(HUGE_PAGES), 0)
+LDFLAGS		= -nodefaultlibs
+endif
+LDFLAGS     += -lc -lgcc -lSDL -lasound -lm -flto -s
+ifeq ($(HUGE_PAGES), 1)
+LDFLAGS		+= -Wl,-zcommon-page-size=2097152 -Wl,-zmax-page-size=2097152 -lhugetlbfs
+endif
 
 ifeq ($(SOUND_OUTPUT), portaudio)
 LDFLAGS		+= -lportaudio
@@ -71,9 +78,12 @@ endif
 # Rules to make executable
 $(PRGNAME): $(OBJS)  
 	$(CC) $(CFLAGS) -o $(PRGNAME) $^ $(LDFLAGS)
+ifeq ($(HUGE_PAGES), 1)
+	hugeedit --text --data $(PRGNAME)
+endif
 
 $(OBJ_C) : %.o : %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
-
+	
 clean:
 	rm -f $(PRGNAME) *.o
