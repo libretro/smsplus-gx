@@ -132,7 +132,7 @@ void Sound_Update(void)
 
 	if (!handle) return;
 
-	for (i = 0; i < (len); i++) 
+	for (i = 0; i < (SOUND_FREQUENCY / snd.fps); i++) 
 	{
 		buffer_snd[i * 2] = snd.output[1][i] * option.soundlevel;
 		buffer_snd[i * 2 + 1] = snd.output[0][i] * option.soundlevel;
