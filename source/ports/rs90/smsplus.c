@@ -33,6 +33,7 @@ static void video_update(void)
 	switch(option.fullscreen)
 	{
 		case 0: //Scale Native
+		default:
 		if(sms.console == CONSOLE_GG) {
 			bitmap_scale(48,0,160,144,160,144,256,HOST_WIDTH_RESOLUTION-160,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-160)/2+(HOST_HEIGHT_RESOLUTION-144)/2*HOST_WIDTH_RESOLUTION);
         }
@@ -55,13 +56,12 @@ static void video_update(void)
 		}
 		else
 		{
-            /*
 			uint32_t hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
 			dst_x = hide_left ? 8 : 0;
 			dst_w = (hide_left ? 248 : 256);
 			dst_h = vdp.height;
-            bitmap_scale(dst_x,0,dst_w,dst_h,sdl_screen->w,sdl_screen->h,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);*/
-            downscale_240x192to240x160((uint32_t* restrict)sms_bitmap->pixels,(uint32_t* restrict)sdl_screen->pixels);
+            bitmap_scale(dst_x,0,dst_w,dst_h,sdl_screen->w,sdl_screen->h,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
+			//downscale_240x192to240x160((uint32_t* restrict)sms_bitmap->pixels,(uint32_t* restrict)sdl_screen->pixels);
 		}
 		break;
         case 2:  //Scale 4:3 for GG
@@ -865,14 +865,13 @@ static void Cleanup(void)
 
 int main (int argc, char *argv[]) 
 {
+	uint_fast8_t i;
 	SDL_Event event;
-	// Print Header
-	fprintf(stdout, "%s %s\n", APP_NAME, APP_VERSION);
 	
 	if(argc < 2) 
 	{
 		fprintf(stderr, "Usage: ./smsplus [FILE]\n");
-		exit(1);
+		return 0;
 	}
 	
 	smsp_gamedata_set(argv[1]);
@@ -883,20 +882,23 @@ int main (int argc, char *argv[])
 	option.fm = 1;
 	option.spritelimit = 1;
 	option.tms_pal = 2;
+	option.console = 0;
 	option.nosound = 0;
 	option.soundlevel = 2;
 	
 	config_load();
-	
-	option.country = 0;
+
 	option.console = 0;
 	
-	snprintf(option.game_name, sizeof(option.game_name), "%s", basename(argv[1]));
-
+	strcpy(option.game_name, argv[1]);
+	
 	// Force Colecovision mode if extension is .col
 	if (strcmp(strrchr(argv[1], '.'), ".col") == 0) option.console = 6;
 	// Sometimes Game Gear games are not properly detected, force them accordingly
 	else if (strcmp(strrchr(argv[1], '.'), ".gg") == 0) option.console = 3;
+	
+	if (option.fullscreen < 0 && option.fullscreen > upscalers_available) option.fullscreen = 0;
+	if (option.console != 3 && option.fullscreen > 1) option.fullscreen = 1;
 
 	// Load ROM
 	if(!load_rom(argv[1])) {
