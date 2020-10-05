@@ -24,8 +24,7 @@ static char home_path[256];
 static uint8_t selectpressed = 0;
 static uint8_t save_slot = 0;
 static uint8_t quit = 0;
-/* Don't use a const here as it need to be reassigned */
-static uint_fast8_t upscalers_available = 3;
+static const uint32_t upscalers_available = 3;
 
 static void video_update(void)
 {
@@ -33,9 +32,10 @@ static void video_update(void)
 	SDL_LockSurface(sdl_screen);
 	switch(option.fullscreen)
 	{
-		case 0:
-		if(sms.console == CONSOLE_GG) 
+		case 0: //Scale Native
+		if(sms.console == CONSOLE_GG) {
 			bitmap_scale(48,0,160,144,160,144,256,HOST_WIDTH_RESOLUTION-160,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-160)/2+(HOST_HEIGHT_RESOLUTION-144)/2*HOST_WIDTH_RESOLUTION);
+        }
 		else
 		{
 			uint32_t hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
@@ -45,29 +45,51 @@ static void video_update(void)
 			bitmap_scale(dst_x,0,dst_w,dst_h,sdl_screen->w,sdl_screen->h,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
 		}
 		break;
-		case 1:
+		case 1: //Scale Full
 		if(sms.console == CONSOLE_GG) 
 		{
-			dst_x = 48;
-			dst_w = 160;
-			dst_h = 144;
+			//dst_x = 48;
+			//dst_w = 160;
+			//dst_h = 144;
+            upscale_160x144_to_240x160((uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
 		}
 		else
+		{
+            /*
+			uint32_t hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
+			dst_x = hide_left ? 8 : 0;
+			dst_w = (hide_left ? 248 : 256);
+			dst_h = vdp.height;
+            bitmap_scale(dst_x,0,dst_w,dst_h,sdl_screen->w,sdl_screen->h,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);*/
+            downscale_240x192to240x160((uint32_t* restrict)sms_bitmap->pixels,(uint32_t* restrict)sdl_screen->pixels);
+		}
+		break;
+        case 2:  //Scale 4:3 for GG
+		if(sms.console == CONSOLE_GG) 
+            upscale_160x144_to_212x160((uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
+        else
 		{
 			uint32_t hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
 			dst_x = hide_left ? 8 : 0;
 			dst_w = (hide_left ? 248 : 256);
 			dst_h = vdp.height;
+            bitmap_scale(dst_x,0,dst_w,dst_h,sdl_screen->w,sdl_screen->h,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
 		}
-		bitmap_scale(dst_x,0,dst_w,dst_h,sdl_screen->w,sdl_screen->h,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
-		break;
-		/* These can only be selected when Game Gear mode is used*/
-		case 2:  //Scale 4:3 for GG
-			upscale_160x144_to_212x160((uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
+            
         break;
-        case 3:  //Subpixel Scale for GG
-            upscale_160x144_to_212x144((uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);     
+        case 3:  //Subpixel Scale for GG ( 4:3 New)
+		if(sms.console == CONSOLE_GG) 
+            upscale_160x144_to_212x144((uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
+        else
+		{
+			uint32_t hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
+			dst_x = hide_left ? 8 : 0;
+			dst_w = (hide_left ? 248 : 256);
+			dst_h = vdp.height;
+            bitmap_scale(dst_x,0,dst_w,dst_h,sdl_screen->w,sdl_screen->h,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
+		}       
         break;
+            
 	}
 	SDL_UnlockSurface(sdl_screen);	
 	SDL_Flip(sdl_screen);
@@ -86,7 +108,10 @@ void smsp_state(uint8_t slot_number, uint8_t mode)
 			if (fd) {
 				system_save_state(fd);
 				fclose(fd);
+                printf("State Saved. >%s\n",stpath);
 			}
+            else
+                printf("State Save Failed! >%s\n",stpath);
 			break;
 		
 		case 1:
@@ -94,7 +119,10 @@ void smsp_state(uint8_t slot_number, uint8_t mode)
 			if (fd) {
 				system_load_state(fd);
 				fclose(fd);
+                printf("State Saved. >%s\n",stpath);
 			}
+            else
+                printf("State Save Failed! >%s\n",stpath);
 			break;
 	}
 }
@@ -113,7 +141,10 @@ void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode)
 				{
 					fwrite(sram, 0x8000, 1, fd);
 					fclose(fd);
+                    printf("SRAM Saved. >%s\n", gdata.sramfile);
 				}
+                else
+                    printf("SRAM Save Failed! >%s\n", gdata.sramfile);
 			}
 			break;
 		
@@ -124,9 +155,12 @@ void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode)
 				sms.save = 1;
 				fread(sram, 0x8000, 1, fd);
 				fclose(fd);
+                printf("SRAM Loaded. >%s\n", gdata.sramfile);
 			}
-			else
+			else{
+                printf("SRAM Load Failed! >%s\n", gdata.sramfile);
 				memset(sram, 0x00, 0x8000);
+            }
 			break;
 	}
 }
@@ -551,33 +585,34 @@ static void Input_Remapping()
 	
 }
 
-static void Menu()
+void Menu()
 {
 	char text[50];
     int16_t pressed = 0;
     int16_t currentselection = 1;
+
     SDL_Rect dstRect;
     SDL_Event Event;
     
-    while (((currentselection != 1) && (currentselection != 7)) || (!pressed))
+    while (((currentselection != 1) && (currentselection != 8)) || (!pressed))
     {
         pressed = 0;
  		SDL_FillRect( backbuffer, NULL, 0 );
 
 		print_string("SMS Plus GX", TextWhite, 0, 72, 15, backbuffer->pixels);
 		
-		if (currentselection == 1) print_string("Continue", TextBlue, 0, 5, 30, backbuffer->pixels);
-		else  print_string("Continue", TextWhite, 0, 5, 30, backbuffer->pixels);
+		if (currentselection == 1) print_string("Continue", TextBlue, 0, 5, 27, backbuffer->pixels);
+		else  print_string("Continue", TextWhite, 0, 5, 27, backbuffer->pixels);
 		
 		snprintf(text, sizeof(text), "Load State %d", save_slot);
 		
-		if (currentselection == 2) print_string(text, TextBlue, 0, 5, 45, backbuffer->pixels);
-		else print_string(text, TextWhite, 0, 5, 45, backbuffer->pixels);
+		if (currentselection == 2) print_string(text, TextBlue, 0, 5, 39, backbuffer->pixels);
+		else print_string(text, TextWhite, 0, 5, 39, backbuffer->pixels);
 		
 		snprintf(text, sizeof(text), "Save State %d", save_slot);
 		
-		if (currentselection == 3) print_string(text, TextBlue, 0, 5, 60, backbuffer->pixels);
-		else print_string(text, TextWhite, 0, 5, 60, backbuffer->pixels);
+		if (currentselection == 3) print_string(text, TextBlue, 0, 5, 51, backbuffer->pixels);
+		else print_string(text, TextWhite, 0, 5, 51, backbuffer->pixels);
 		
 
         if (currentselection == 4)
@@ -585,16 +620,16 @@ static void Menu()
 			switch(option.fullscreen)
 			{
 				case 0:
-					print_string("Scaling : Native", TextBlue, 0, 5, 75, backbuffer->pixels);
+					print_string("Scaling : Native", TextBlue, 0, 5, 63, backbuffer->pixels);
 				break;
 				case 1:
-					print_string("Scaling : Stretched", TextBlue, 0, 5, 75, backbuffer->pixels);
+					print_string("Scaling : Stretched", TextBlue, 0, 5, 63, backbuffer->pixels);
 				break;
-				case 2:
-					print_string("Scaling : 4:3", TextBlue, 0, 5, 75, backbuffer->pixels);
+                case 2:
+					print_string("Scaling : 4:3(GG Only)", TextBlue, 0, 5, 63, backbuffer->pixels);
 				break;
-				case 3:
-					print_string("Scaling : Alt 4:3", TextBlue, 0, 5, 75, backbuffer->pixels);
+                case 3:
+					print_string("Scaling : New 4:3(GG Only)", TextBlue, 0, 5, 63, backbuffer->pixels);
 				break;
 			}
         }
@@ -603,31 +638,35 @@ static void Menu()
 			switch(option.fullscreen)
 			{
 				case 0:
-					print_string("Scaling : Native", TextWhite, 0, 5, 75, backbuffer->pixels);
+					print_string("Scaling : Native", TextWhite, 0, 5, 63, backbuffer->pixels);
 				break;
 				case 1:
-					print_string("Scaling : Stretched", TextWhite, 0, 5, 75, backbuffer->pixels);
+					print_string("Scaling : Stretched", TextWhite, 0, 5, 63, backbuffer->pixels);
 				break;
-				case 2:
-					print_string("Scaling : 4:3", TextWhite, 0, 5, 75, backbuffer->pixels);
+                case 2:
+					print_string("Scaling : 4:3(GG Only)", TextWhite, 0, 5, 63, backbuffer->pixels);
 				break;
-				case 3:
-					print_string("Scaling : Alt 4:3", TextWhite, 0, 5, 75, backbuffer->pixels);
+                case 3:
+					print_string("Scaling : New 4:3(GG Only)", TextWhite, 0, 5, 63, backbuffer->pixels);
 				break;
 			}
         }
 
 		snprintf(text, sizeof(text), "Sound volume : %d", option.soundlevel);
 		
-		if (currentselection == 5) print_string(text, TextBlue, 0, 5, 90, backbuffer->pixels);
-		else print_string(text, TextWhite, 0, 5, 90, backbuffer->pixels);
+		if (currentselection == 5) print_string(text, TextBlue, 0, 5, 75, backbuffer->pixels);
+		else print_string(text, TextWhite, 0, 5, 75, backbuffer->pixels);
 		
-		if (currentselection == 6) print_string("Input remapping", TextBlue, 0, 5, 105, backbuffer->pixels);
-		else print_string("Input remapping", TextWhite, 0, 5, 105, backbuffer->pixels);
+		if (currentselection == 6) print_string("Input remapping", TextBlue, 0, 5, 87, backbuffer->pixels);
+		else print_string("Input remapping", TextWhite, 0, 5, 87, backbuffer->pixels);
 		
-		if (currentselection == 7) print_string("Quit", TextBlue, 0, 5, 125, backbuffer->pixels);
-		else print_string("Quit", TextWhite, 0, 5, 125, backbuffer->pixels);
-		
+		if (currentselection == 7) print_string("Reset", TextBlue, 0, 5, 99, backbuffer->pixels);
+		else print_string("Reset", TextWhite, 0, 5, 99, backbuffer->pixels);
+
+        if (currentselection == 8) print_string("Quit", TextBlue, 0, 5, 111, backbuffer->pixels);
+		else print_string("Quit", TextWhite, 0, 5, 111, backbuffer->pixels);
+
+        
 		print_string("By gameblabla, ekeeke", TextWhite, 0, 5, 145, backbuffer->pixels);
 
         while (SDL_PollEvent(&Event))
@@ -639,11 +678,11 @@ static void Menu()
                     case SDLK_UP:
                         currentselection--;
                         if (currentselection == 0)
-                            currentselection = 7;
+                            currentselection = 8;
                         break;
                     case SDLK_DOWN:
                         currentselection++;
-                        if (currentselection == 8)
+                        if (currentselection == 9)
                             currentselection = 1;
                         break;
                     case SDLK_LCTRL:
@@ -705,6 +744,12 @@ static void Menu()
         {
             switch(currentselection)
             {
+                case 7:
+                    //reset
+                    Sound_Close();
+                    Sound_Init();
+                    system_poweron();
+                    break;
 				case 6:
 					Input_Remapping();
 				break;
@@ -742,7 +787,7 @@ static void Menu()
     SDL_Flip(sdl_screen);
     #endif
     
-    if (currentselection == 7)
+    if (currentselection == 8)
         quit = 1;
 }
 
@@ -759,9 +804,12 @@ static void config_load()
 	{
 		fread(&option, sizeof(option), sizeof(int8_t), fp);
 		fclose(fp);
+        printf("Config loaded. >%s\n",config_path);
 	}
 	else
 	{
+        printf("Config NOT loaded. >%s\n",config_path);
+
 		/* Default mapping for the Bittboy in case loading configuration file fails */
 		option.config_buttons[CONFIG_BUTTON_UP] = 273;
 		option.config_buttons[CONFIG_BUTTON_DOWN] = 274;
@@ -791,7 +839,10 @@ static void config_save()
 	{
 		fwrite(&option, sizeof(option), sizeof(int8_t), fp);
 		fclose(fp);
+        printf("Config Saved. >%s\n",config_path);
 	}
+    else
+        printf("Config Save Failed! >%s\n",config_path);
 }
 
 
@@ -897,14 +948,6 @@ int main (int argc, char *argv[])
 	
 	// Initialize all systems and power on
 	system_poweron();
-	
-	/* Set the number of scalers according to the console being emulated */
-	if (sms.console == CONSOLE_GG) upscalers_available = 3;
-	else
-	{
-		upscalers_available = 1;
-		if (option.fullscreen > upscalers_available) option.fullscreen = 1;
-	}
 	
 	// Loop until the user closes the window
 	while (!quit) 

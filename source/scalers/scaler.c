@@ -1,139 +1,228 @@
 
 #include "scaler.h"
-
-/* Not*/
+#include <stdio.h>
 
 #define AVERAGE(z, x) ((((z) & 0xF7DEF7DE) >> 1) + (((x) & 0xF7DEF7DE) >> 1))
 #define AVERAGEHI(AB) ((((AB) & 0xF7DE0000) >> 1) + (((AB) & 0xF7DE) << 15))
 #define AVERAGELO(CD) ((((CD) & 0xF7DE) >> 1) + (((CD) & 0xF7DE0000) >> 17))
+
 #define RSHIFT(X) (((X) & 0xF7DE) >>1)
+#define RSHIFT32(X) (((X) & 0xF7DEF7DE) >>1)
 #define RMASK 0b1111100000000000
 #define GMASK 0b0000011111100000
 #define BMASK 0b0000000000011111
 
-/* upscale_160x144_to_212x144 and upscale_160x144_to_212x160 by rowsnug95 */
-
-void upscale_160x144_to_212x144(uint16_t* restrict src, uint16_t* restrict dst)
-{    
-    uint16_t* __restrict__ buffer_mem;
-    const uint16_t ix=3, iy=1;
-	dst += 240 * 8;
-
-    for (uint_fast8_t y = 0; y < 144; y+=iy)
+//downscaling for rs-90
+void downscale_240x192to240x160(uint32_t* restrict src, uint32_t* restrict dst)
+{
+    uint16_t y=0;
+    uint32_t* __restrict__ buffer_mem;
+ 
+    const uint16_t ix=1, iy=6;
+    
+    for(int H = 0; H < 160 / 4; H++)
     {
-        dst += 14;
-        uint_fast16_t x = 48;
-        buffer_mem = &src[y * 256];
-        for(uint_fast8_t w = 0; w < 160/3; w++)
+	    buffer_mem = &src[y*128];
+        uint16_t x = 4;  //crop left&right 8px
+        for(int W = 0; W < 120; W++) 
         {
-            uint16_t r[3],g[3],b[3];
-            for(uint_fast8_t i = 0; i < 3; i++){
-                uint16_t p = buffer_mem[x + i];
-                r[i] = p & RMASK;
-                g[i] = p & GMASK;
-                b[i] = p & BMASK;
-            }
-            *dst++ = r[0] | g[0] | b[0];
-            *dst++ = r[0] | g[1] | b[1];
-            *dst++ = r[1] | g[1] | b[2];
-            *dst++ = r[2] | g[2] | b[2];
+            //Vertical Scaling (6px to 5px)
+            uint32_t a,b,c,d,e,f;
+            a = RSHIFT32(buffer_mem[x]);
+            b = RSHIFT32(buffer_mem[x + 128]);
+            c = RSHIFT32(buffer_mem[x + 128 * 2]);
+            d = RSHIFT32(buffer_mem[x + 128 * 3]);
+            e = RSHIFT32(buffer_mem[x + 128 * 4]);
+            f = RSHIFT32(buffer_mem[x + 128 * 5]);
+            
+            *dst             = a + RSHIFT32(a + RSHIFT32(b + RSHIFT32(b + a)));
+	        *(dst + 120)     = b + RSHIFT32(c + RSHIFT32(b + c));
+	        *(dst + 120 * 2) = c + d;
+	        *(dst + 120 * 3) = e + RSHIFT32(d + RSHIFT32(d + e));
+            *(dst + 120 * 4) = f + RSHIFT32(f + RSHIFT32(e + RSHIFT32(e + f)));
+            dst++;
             x += ix;
         }
-        *dst = buffer_mem[x];
-        dst += 14;
+        dst += 120*4;
+        y += iy;
     }
 }
 
-void upscale_160x144_to_212x160(uint16_t* restrict src, uint16_t* restrict dst)
-{
-	uint16_t* __restrict__ buffer_mem;
-	const uint16_t ix=3, iy=9;
+// Full scale up (New Subpixel math)
+void upscale_160x144_to_240x160(uint16_t* restrict src, uint16_t* restrict dst){    
+    uint16_t* __restrict__ buffer_mem;
+    uint16_t* d = dst;
+    const uint16_t ix=2, iy=9;
     
-	for (uint_fast8_t y = 0; y < 144; y+=iy)
-	{
-		dst+=14;
-		uint_fast16_t x = 48;
+    for (int y = 0; y < 144; y+=iy)
+    {
+        int x =48;
         buffer_mem = &src[y * 256];
-        for(uint_fast8_t w = 0; w < 160/3; w++)
+        for(int w =0; w < 160 / 2; w++)
+        {
+            uint16_t c[3][10];
+            //stretch 2px to 3px(horizonal)
+            for(int i=0; i<10; i++){
+                uint16_t r0,r1,g0,g1,b1,b2;
+                c[0][i] = buffer_mem[x + i * 256];
+                r0 = buffer_mem[x + i * 256]     & RMASK;
+                g0 = buffer_mem[x + i * 256]     & GMASK;
+                g1 = buffer_mem[x + i * 256 + 1] & GMASK;
+                b1 = buffer_mem[x + i * 256 + 1] & BMASK;
+                c[1][i] = r0 | (((g0 + g1)>>1) & GMASK) | b1;
+                c[2][i] = buffer_mem[x + i * 256 + 1];
+            }
+            //stretch 9px to 10px (Vertically)
+            for(int i = 0; i<3 ; i++){
+                *d             = c[i][0];
+                *(d + 240)     = c[i][1];
+                *(d + 240 * 2) = c[i][2];
+                *(d + 240 * 3) = c[i][3];
+                *(d + 240 * 4) = c[i][4];
+                *(d + 240 * 5) = c[i][5];
+                *(d + 240 * 6) = c[i][6];
+                *(d + 240 * 7) = c[i][7];
+                uint16_t r0,g0,b0,r1,g1,b1;
+                r0 = c[i][7] & RMASK;
+                g0 = c[i][7] & GMASK;
+                b0 = c[i][7] & BMASK;
+                r1 = c[i][8] & RMASK;
+                g1 = c[i][8] & GMASK;
+                b1 = c[i][8] & BMASK;
+                *(d + 240 * 8) = (((r0>>1) + (r1>>1))&RMASK) |
+                                (((g0 + g1)>>1)&GMASK) |
+                                (((b0 + b1)>>1)&BMASK);
+                *(d + 240 * 9) = c[i][8];
+                d++;
+            }
+            x += ix;
+        }
+        d += 240 * 9;
+    }
+}
+
+// 4:3 scale up (New Subpixel math)
+void upscale_160x144_to_212x144(uint16_t* restrict src, uint16_t* restrict dst){    
+    uint16_t* __restrict__ buffer_mem;
+    uint16_t* d = dst + 240 * 8;
+    const uint16_t ix=3, iy=1;
+    
+    for (int y = 0; y < 144; y+=iy)
+    {
+        d+=14;
+        int x =48;
+        buffer_mem = &src[y * 256];
+        for(int w =0; w < 160/3; w++)
+        {
+            uint16_t r0,r1,g1,b1,b2;
+            r0 = buffer_mem[x]     & RMASK;
+            g1 = buffer_mem[x + 1] & GMASK;
+            b1 = buffer_mem[x + 1] & BMASK;
+            r1 = buffer_mem[x + 1] & RMASK;
+            b2 = buffer_mem[x + 2] & BMASK;
+
+            *d++ = buffer_mem[x];
+            *d++ = r0 | g1 | b1;
+            *d++ = r1 | g1 | b2;
+            *d++ = buffer_mem[x + 2];
+            x += ix;
+        }
+        *d = buffer_mem[x];
+        d+=14;
+    }
+}
+
+// 4:3 scaleup (blur)
+void upscale_160x144_to_212x160(uint16_t* restrict src, uint16_t* restrict dst){    
+    uint16_t* __restrict__ buffer_mem;
+    uint16_t* d = dst;
+    const uint16_t ix=3, iy=9;
+    
+    for (int y = 0; y < 144; y+=iy)
+    {
+        d+=14;
+        int x =48;
+        buffer_mem = &src[y * 256];
+        for(int w =0; w < 160/3; w++)
         {
             uint16_t a[9],b[9],c[9];
-            for(uint_fast8_t i = 0; i < 9; i++)
-            {
+            for(int i =0; i < 9; i++){
                 a[i]=RSHIFT(buffer_mem[x + 256 * i]);
                 b[i]=RSHIFT(buffer_mem[x + 256 * i + 1]);
                 c[i]=RSHIFT(buffer_mem[x + 256 * i + 2]);
             }
             //A0~A9
-            *dst         = a[0]<<1;
-            *(dst+240)   = a[1] + RSHIFT(a[1] + RSHIFT(a[1]+ a[0]));
-            *(dst+240*2) = a[2] + RSHIFT(a[1] + a[2]);
-            *(dst+240*3) = a[3] + RSHIFT(a[2] + RSHIFT(a[2] + a[3]));
-            *(dst+240*4) = a[4] + RSHIFT(a[3] + RSHIFT(a[3] + RSHIFT(a[3] + a[4])));
-            *(dst+240*5) = a[4] + RSHIFT(a[5] + RSHIFT(a[5] + RSHIFT(a[5] + a[4])));
-            *(dst+240*6) = a[5] + RSHIFT(a[6] + RSHIFT(a[5] + a[6]));
-            *(dst+240*7) = a[6] + RSHIFT(a[6] + a[7]);
-            *(dst+240*8) = a[7] + RSHIFT(a[7] + RSHIFT(a[7] + a[8]));
-            *(dst+240*9) = a[8]<<1;
-            dst++;
+            *d         = a[0]<<1;
+            *(d+240)   = a[1] + RSHIFT(a[1] + RSHIFT(a[1]+ a[0]));
+            *(d+240*2) = a[2] + RSHIFT(a[1] + a[2]);
+            *(d+240*3) = a[3] + RSHIFT(a[2] + RSHIFT(a[2] + a[3]));
+            *(d+240*4) = a[4] + RSHIFT(a[3] + RSHIFT(a[3] + RSHIFT(a[3] + a[4])));
+            *(d+240*5) = a[4] + RSHIFT(a[5] + RSHIFT(a[5] + RSHIFT(a[5] + a[4])));
+            *(d+240*6) = a[5] + RSHIFT(a[6] + RSHIFT(a[5] + a[6]));
+            *(d+240*7) = a[6] + RSHIFT(a[6] + a[7]);
+            *(d+240*8) = a[7] + RSHIFT(a[7] + RSHIFT(a[7] + a[8]));
+            *(d+240*9) = a[8]<<1;
+            d++;
             
-			//B9~B9
-            *dst         = b[0] +RSHIFT(a[0] + RSHIFT(a[0] +  b[0]));
-            *(dst+240)   = b[1] + RSHIFT(a[1] + RSHIFT(b[1] + RSHIFT(a[1] + b[0])));
-            *(dst+240*2) = b[2] + RSHIFT(a[2] + RSHIFT(b[1] + RSHIFT(b[2] + a[1])));
-            *(dst+240*3) = RSHIFT(a[3] + b[2]) + RSHIFT(b[3] + RSHIFT(a[2] + b[3]));
-            *(dst+240*4) = RSHIFT(b[3] + b[4]) + RSHIFT(RSHIFT(a[3] + a[4]) + RSHIFT(b[4] + RSHIFT(a[4] + b[3])));
-            *(dst+240*5) = RSHIFT(b[4] + b[5]) +RSHIFT(RSHIFT(a[4] + a[5]) + RSHIFT(b[4] + RSHIFT(b[5] + a[4])));
-            *(dst+240*6) = RSHIFT(a[5] + b[5]) + RSHIFT(b[6] + RSHIFT(a[6] + b[5]));
-            *(dst+240*7) = b[6] + RSHIFT(a[6]+ RSHIFT(b[7] + RSHIFT(a[7] + b[6])));
-            *(dst+240*8) = b[7] + RSHIFT(a[7] + RSHIFT(b[7] + RSHIFT(b[8] + a[7])));
-            *(dst+240*9) = b[8] + RSHIFT(a[8] + RSHIFT(a[8] + b[8]));
-            dst++;
-			//C0~C9
-            *dst         = b[0] + RSHIFT(c[0] + RSHIFT(c[0] + b[0]));
-            *(dst+240)   = b[1] + RSHIFT(c[1] + RSHIFT(b[1] + RSHIFT(c[1] + b[0])));
-            *(dst+240*2) = b[2] + RSHIFT(c[2] + RSHIFT(b[1] + RSHIFT(b[2] + c[1])));
-            *(dst+240*3) = RSHIFT(c[3] + b[2]) + RSHIFT(b[3] + RSHIFT(c[2] + b[3]));
-            *(dst+240*4) = RSHIFT(b[3] + b[4]) + RSHIFT(RSHIFT(b[4] + c[3]) + RSHIFT(c[4] + RSHIFT(c[4] + b[3])));
-            *(dst+240*5) = RSHIFT(b[4] + b[5]) + RSHIFT(RSHIFT(b[4] + c[4]) + RSHIFT(c[5] + RSHIFT(b[5] + c[4])));
-            *(dst+240*6) = RSHIFT(b[5] + b[6]) + RSHIFT(c[5] + RSHIFT(c[6] + b[5]));
-            *(dst+240*7) = b[6] + RSHIFT(c[6] + RSHIFT(b[7] + RSHIFT(c[7] + b[6])));
-            *(dst+240*8) = b[7] + RSHIFT(c[7] + RSHIFT(b[7] + RSHIFT(c[7] + b[8])));
-            *(dst+240*9) = b[8] + RSHIFT(c[8] + RSHIFT(c[8] + b[8]));
-            dst++;
-			//D0~D9
-            *dst         = c[0]<<1;
-            *(dst+240)   = c[1] + RSHIFT(c[1] + RSHIFT(c[1] + c[0]));
-            *(dst+240*2) = c[2] + RSHIFT(c[1] + c[2]);
-            *(dst+240*3) = c[3] + RSHIFT(c[2] + RSHIFT(c[2] + c[3]));
-            *(dst+240*4) = c[4] + RSHIFT(c[3] + RSHIFT(c[3] + RSHIFT(c[3] + c[4])));
-            *(dst+240*5) = c[4] + RSHIFT(c[5] + RSHIFT(c[5] + RSHIFT(c[5] + c[4])));
-            *(dst+240*6) = c[5] + RSHIFT(c[6] + RSHIFT(c[5] + c[6]));
-            *(dst+240*7) = c[6] + RSHIFT(c[6] + c[7]);
-            *(dst+240*8) = c[7] + RSHIFT(c[7] + RSHIFT(c[7] + c[8]));
-            *(dst+240*9) = c[8]<<1;
-            dst++;
+        //B9~B9
+            *d         = b[0] +RSHIFT(a[0] + RSHIFT(a[0] +  b[0]));
+            *(d+240)   = b[1] + RSHIFT(a[1] + RSHIFT(b[1] + RSHIFT(a[1] + b[0])));
+            *(d+240*2) = b[2] + RSHIFT(a[2] + RSHIFT(b[1] + RSHIFT(b[2] + a[1])));
+            *(d+240*3) = RSHIFT(a[3] + b[2]) + RSHIFT(b[3] + RSHIFT(a[2] + b[3]));
+            *(d+240*4) = RSHIFT(b[3] + b[4]) + RSHIFT(RSHIFT(a[3] + a[4]) + RSHIFT(b[4] + RSHIFT(a[4] + b[3])));
+            *(d+240*5) = RSHIFT(b[4] + b[5]) +RSHIFT(RSHIFT(a[4] + a[5]) + RSHIFT(b[4] + RSHIFT(b[5] + a[4])));
+            *(d+240*6) = RSHIFT(a[5] + b[5]) + RSHIFT(b[6] + RSHIFT(a[6] + b[5]));
+            *(d+240*7) = b[6] + RSHIFT(a[6]+ RSHIFT(b[7] + RSHIFT(a[7] + b[6])));
+            *(d+240*8) = b[7] + RSHIFT(a[7] + RSHIFT(b[7] + RSHIFT(b[8] + a[7])));
+            *(d+240*9) = b[8] + RSHIFT(a[8] + RSHIFT(a[8] + b[8]));
+            d++;
+        //C0~C9
+            *d         = b[0] + RSHIFT(c[0] + RSHIFT(c[0] + b[0]));
+            *(d+240)   = b[1] + RSHIFT(c[1] + RSHIFT(b[1] + RSHIFT(c[1] + b[0])));
+            *(d+240*2) = b[2] + RSHIFT(c[2] + RSHIFT(b[1] + RSHIFT(b[2] + c[1])));
+            *(d+240*3) = RSHIFT(c[3] + b[2]) + RSHIFT(b[3] + RSHIFT(c[2] + b[3]));
+            *(d+240*4) = RSHIFT(b[3] + b[4]) + RSHIFT(RSHIFT(b[4] + c[3]) + RSHIFT(c[4] + RSHIFT(c[4] + b[3])));
+            *(d+240*5) = RSHIFT(b[4] + b[5]) + RSHIFT(RSHIFT(b[4] + c[4]) + RSHIFT(c[5] + RSHIFT(b[5] + c[4])));
+            *(d+240*6) = RSHIFT(b[5] + b[6]) + RSHIFT(c[5] + RSHIFT(c[6] + b[5]));
+            *(d+240*7) = b[6] + RSHIFT(c[6] + RSHIFT(b[7] + RSHIFT(c[7] + b[6])));
+            *(d+240*8) = b[7] + RSHIFT(c[7] + RSHIFT(b[7] + RSHIFT(c[7] + b[8])));
+            *(d+240*9) = b[8] + RSHIFT(c[8] + RSHIFT(c[8] + b[8]));
+            d++;
+       //D0~D9
+            *d         = c[0]<<1;
+            *(d+240)   = c[1] + RSHIFT(c[1] + RSHIFT(c[1] + c[0]));
+            *(d+240*2) = c[2] + RSHIFT(c[1] + c[2]);
+            *(d+240*3) = c[3] + RSHIFT(c[2] + RSHIFT(c[2] + c[3]));
+            *(d+240*4) = c[4] + RSHIFT(c[3] + RSHIFT(c[3] + RSHIFT(c[3] + c[4])));
+            *(d+240*5) = c[4] + RSHIFT(c[5] + RSHIFT(c[5] + RSHIFT(c[5] + c[4])));
+            *(d+240*6) = c[5] + RSHIFT(c[6] + RSHIFT(c[5] + c[6]));
+            *(d+240*7) = c[6] + RSHIFT(c[6] + c[7]);
+            *(d+240*8) = c[7] + RSHIFT(c[7] + RSHIFT(c[7] + c[8]));
+            *(d+240*9) = c[8]<<1;
+            d++;
             x += ix;
         }
-		//last one line
-		uint16_t a[9];
-		for(uint_fast8_t i = 0; i < 9; i++)
-		{
-			a[i]=RSHIFT(buffer_mem[x + 256 * i]);
-		}
-		//A0~A9
-		*dst         = a[0]<<1;
-		*(dst+240)   = a[1] + RSHIFT(a[1] + RSHIFT(a[1]+ a[0]));
-		*(dst+240*2) = a[2] + RSHIFT(a[1] + a[2]);
-		*(dst+240*3) = a[3] + RSHIFT(a[2] + RSHIFT(a[2] + a[3]));
-		*(dst+240*4) = a[4] + RSHIFT(a[3] + RSHIFT(a[3] + RSHIFT(a[3] + a[4])));
-		*(dst+240*5) = a[4] + RSHIFT(a[5] + RSHIFT(a[5] + RSHIFT(a[5] + a[4])));
-		*(dst+240*6) = a[5] + RSHIFT(a[6] + RSHIFT(a[5] + a[6]));
-		*(dst+240*7) = a[6] + RSHIFT(a[6] + a[7]);
-		*(dst+240*8) = a[7] + RSHIFT(a[7] + RSHIFT(a[7] + a[8]));
-		*(dst+240*9) = a[8]<<1;
-		dst += 14 + 240 * 9;
+        //last one line
+        uint16_t a[9];
+        for(int i =0; i < 9; i++){
+            a[i]=RSHIFT(buffer_mem[x + 256 * i]);
+        }
+        //A0~A9
+        *d         = a[0]<<1;
+        *(d+240)   = a[1] + RSHIFT(a[1] + RSHIFT(a[1]+ a[0]));
+        *(d+240*2) = a[2] + RSHIFT(a[1] + a[2]);
+        *(d+240*3) = a[3] + RSHIFT(a[2] + RSHIFT(a[2] + a[3]));
+        *(d+240*4) = a[4] + RSHIFT(a[3] + RSHIFT(a[3] + RSHIFT(a[3] + a[4])));
+        *(d+240*5) = a[4] + RSHIFT(a[5] + RSHIFT(a[5] + RSHIFT(a[5] + a[4])));
+        *(d+240*6) = a[5] + RSHIFT(a[6] + RSHIFT(a[5] + a[6]));
+        *(d+240*7) = a[6] + RSHIFT(a[6] + a[7]);
+        *(d+240*8) = a[7] + RSHIFT(a[7] + RSHIFT(a[7] + a[8]));
+        *(d+240*9) = a[8]<<1;
+        
+        d+=14 + 240 * 9;
     }
 }
+
 
 /* alekmaul's scaler taken from mame4all */
 void bitmap_scale(uint32_t startx, uint32_t starty, uint32_t viswidth, uint32_t visheight, uint32_t newwidth, uint32_t newheight,uint32_t pitchsrc,uint32_t pitchdest, uint16_t* restrict src, uint16_t* restrict dst)
