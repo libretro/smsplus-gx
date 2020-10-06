@@ -29,6 +29,12 @@ static uint8_t save_slot = 0;
 static uint8_t quit = 0;
 static const uint32_t upscalers_available = 3;
 
+#ifndef NOYUV
+
+#ifndef SDL_YUV444
+#warning "YUV does not exist"
+#define SDL_YUV444 0
+#endif
 
 #define UINT16_16(val) ((uint32_t)(val * (float)(1<<16)))
 static const uint32_t YUV_MAT[3][3] = {
@@ -36,6 +42,8 @@ static const uint32_t YUV_MAT[3][3] = {
 	{UINT16_16(0.168736f), UINT16_16(0.331264f), UINT16_16(0.5f)},
 	{UINT16_16(0.5f),      UINT16_16(0.418688f), UINT16_16(0.081312f)}
 };
+
+#endif
 
 static void video_update(void)
 {
@@ -55,6 +63,7 @@ static void video_update(void)
 		}
 		
 		/* Set DRM palette */
+		#ifndef NOYUV
 		for (i = 0; i < 256; i++){
 			uint8_t r = palette_8bpp[i].r;
 			uint8_t g = palette_8bpp[i].g;
@@ -65,8 +74,14 @@ static void video_update(void)
 			/* [31:0] X:Y:Cb:Cr 8:8:8:8 little endian */
 			drm_palette[i] = (Yx << 16) | (Cb << 8) | Cr;
 		}
+		#else
+		SDL_SetPalette(sms_bitmap, SDL_LOGPAL|SDL_PHYSPAL, palette_8bpp, 0, 256);
+		#endif
 	}
 	
+	#ifdef NOYUV
+	SDL_BlitSurface(sms_bitmap, NULL, sdl_screen, NULL);
+	#else
 	uint32_t pitch_dst = sdl_screen->pitch;
 	uint32_t pitch_src = sdl_screen->w;
 
@@ -87,6 +102,7 @@ static void video_update(void)
 		dst_v += pitch_dst;
 		src += pitch_src;
 	}
+	#endif
 	SDL_Flip(sdl_screen);
 }
 
@@ -791,7 +807,11 @@ void Menu()
 	else
 	{
 		if(sdl_screen) SDL_FreeSurface(sdl_screen);
+#ifdef NOYUV
+		sdl_screen = SDL_SetVideoMode(VIDEO_WIDTH_SMS, 240, 8, SDL_HWSURFACE | SDL_HWPALETTE);
+#else
 		sdl_screen = SDL_SetVideoMode(VIDEO_WIDTH_SMS, 240, 24, SDL_HWSURFACE | SDL_YUV444);
+#endif
 	}
 }
 
@@ -922,7 +942,11 @@ int main (int argc, char *argv[])
 
 	SDL_Init(SDL_INIT_VIDEO);
 	
-	sdl_screen = SDL_SetVideoMode(VIDEO_WIDTH_SMS, 240, 24, SDL_HWSURFACE | SDL_TRIPLEBUF | SDL_YUV444);
+#ifdef NOYUV
+	sdl_screen = SDL_SetVideoMode(VIDEO_WIDTH_SMS, 240, 8, SDL_HWSURFACE | SDL_HWPALETTE);
+#else
+	sdl_screen = SDL_SetVideoMode(VIDEO_WIDTH_SMS, 240, 24, SDL_HWSURFACE | SDL_YUV444);
+#endif
 	if (!sdl_screen)
 	{
 		fprintf(stdout, "Could not create display, exiting\n");	
@@ -969,6 +993,10 @@ int main (int argc, char *argv[])
 			palette_8bpp[i].b = 0;
 		}
 	}
+	
+#ifdef NOYUV
+	SDL_SetPalette(sms_bitmap, SDL_LOGPAL|SDL_PHYSPAL, palette_8bpp, 0, 256);
+#endif
 	
 	// Loop until the user closes the window
 	while (!quit) 
