@@ -76,7 +76,7 @@ static void video_update(void)
 		pixels_shifting_remove = (vdp.reg[0] & 0x20) ? 8 : 0;
 		height = vdp.height;
 		width = 256 - pixels_shifting_remove;
-		if (remember_res_height != vdp.height || forcerefresh == 1)
+		if (width != width_remember || remember_res_height != vdp.height || forcerefresh == 1)
 		{
 			update_window_size(width, vdp.height);
 			forcerefresh = 0;
