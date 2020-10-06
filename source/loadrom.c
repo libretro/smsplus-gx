@@ -419,13 +419,19 @@ static uint32_t crc32(uint32_t crc, const uint8_t *ptr, size_t buf_len)
 }
 #endif
 
-uint32_t load_rom (char *filename)
+
+void free_rom(void)
 {
-	if(cart.rom)
+	if (cart.rom)
 	{
 		free(cart.rom);
 		cart.rom = NULL;
 	}
+}
+
+uint32_t load_rom (char *filename)
+{
+	free_rom();
 
 #ifndef NOZIP_SUPPORT
 	if(check_zip(filename))

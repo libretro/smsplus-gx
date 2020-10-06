@@ -27,6 +27,7 @@
 
 /* Function prototypes */
 uint32_t load_rom(char *filename);
+void free_rom(void);
 
 #ifndef NGC
 uint8_t *loadzip(char *archive, char *filename, int32_t *filesize);
