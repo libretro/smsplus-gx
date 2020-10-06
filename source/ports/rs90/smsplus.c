@@ -12,6 +12,9 @@
 #include "smsplus.h"
 #include "font_drawing.h"
 
+SDL_Color palette_8bpp[256];
+uint32_t drm_palette[256];
+
 static gamedata_t gdata;
 
 t_config option;
@@ -26,74 +29,67 @@ static uint8_t save_slot = 0;
 static uint8_t quit = 0;
 static const uint32_t upscalers_available = 3;
 
+
+#define UINT16_16(val) ((uint32_t)(val * (float)(1<<16)))
+static const uint32_t YUV_MAT[3][3] = {
+	{UINT16_16(0.2999f),   UINT16_16(0.587f),    UINT16_16(0.114f)},
+	{UINT16_16(0.168736f), UINT16_16(0.331264f), UINT16_16(0.5f)},
+	{UINT16_16(0.5f),      UINT16_16(0.418688f), UINT16_16(0.081312f)}
+};
+
 static void video_update(void)
 {
-	uint32_t dst_x, dst_w, dst_h;
-	SDL_LockSurface(sdl_screen);
-	switch(option.fullscreen)
-	{
-		case 0: //Scale Native
-		default:
-		if(sms.console == CONSOLE_GG) {
-			bitmap_scale(48,0,160,144,160,144,256,HOST_WIDTH_RESOLUTION-160,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-160)/2+(HOST_HEIGHT_RESOLUTION-144)/2*HOST_WIDTH_RESOLUTION);
-        }
-		else
-		{
-			uint32_t hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
-			dst_x = hide_left ? 8 : 0;
-			dst_w = (hide_left ? 248 : 256);
-			dst_h = vdp.height;
-			bitmap_scale(dst_x,0,dst_w,dst_h,sdl_screen->w,sdl_screen->h,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
+	uint16_t height = sdl_screen->h;
+	uint16_t width = sdl_screen->w;
+	uint16_t i, j, a;
+	if (bitmap.pal.update == 1){
+		uint_fast8_t i, a;
+		for(i = 0; i < PALETTE_SIZE; i += 1){
+			if(bitmap.pal.dirty[i]){
+				for(a=0;a<8;a++){
+					palette_8bpp[i+(a*32)].r = (bitmap.pal.color[i][0]);
+					palette_8bpp[i+(a*32)].g = (bitmap.pal.color[i][1]);
+					palette_8bpp[i+(a*32)].b = (bitmap.pal.color[i][2]);
+				}
+			}
 		}
-		break;
-		case 1: //Scale Full
-		if(sms.console == CONSOLE_GG) 
-		{
-			//dst_x = 48;
-			//dst_w = 160;
-			//dst_h = 144;
-            upscale_160x144_to_240x160((uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
+		
+		/* Set DRM palette */
+		for (i = 0; i < 256; i++){
+			uint8_t r = palette_8bpp[i].r;
+			uint8_t g = palette_8bpp[i].g;
+			uint8_t b = palette_8bpp[i].b;
+			uint8_t Yx = ( ( UINT16_16(  0) + YUV_MAT[0][0] * r + YUV_MAT[0][1] * g + YUV_MAT[0][2] * b) >> 16 );
+			uint8_t Cb = ( ( UINT16_16(128) - YUV_MAT[1][0] * r - YUV_MAT[1][1] * g + YUV_MAT[1][2] * b) >> 16 );
+			uint8_t Cr = ( ( UINT16_16(128) + YUV_MAT[2][0] * r - YUV_MAT[2][1] * g - YUV_MAT[2][2] * b) >> 16 );
+			/* [31:0] X:Y:Cb:Cr 8:8:8:8 little endian */
+			drm_palette[i] = (Yx << 16) | (Cb << 8) | Cr;
 		}
-		else
-		{
-			uint32_t hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
-			dst_x = hide_left ? 8 : 0;
-			dst_w = (hide_left ? 248 : 256);
-			dst_h = vdp.height;
-            bitmap_scale(dst_x,0,dst_w,dst_h,sdl_screen->w,sdl_screen->h,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
-			//downscale_240x192to240x160((uint32_t* restrict)sms_bitmap->pixels,(uint32_t* restrict)sdl_screen->pixels);
-		}
-		break;
-        case 2:  //Scale 4:3 for GG
-		if(sms.console == CONSOLE_GG) 
-            upscale_160x144_to_212x160((uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
-        else
-		{
-			uint32_t hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
-			dst_x = hide_left ? 8 : 0;
-			dst_w = (hide_left ? 248 : 256);
-			dst_h = vdp.height;
-            bitmap_scale(dst_x,0,dst_w,dst_h,sdl_screen->w,sdl_screen->h,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
-		}
-            
-        break;
-        case 3:  //Subpixel Scale for GG ( 4:3 New)
-		if(sms.console == CONSOLE_GG) 
-            upscale_160x144_to_212x144((uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
-        else
-		{
-			uint32_t hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
-			dst_x = hide_left ? 8 : 0;
-			dst_w = (hide_left ? 248 : 256);
-			dst_h = vdp.height;
-            bitmap_scale(dst_x,0,dst_w,dst_h,sdl_screen->w,sdl_screen->h,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels);
-		}       
-        break;
-            
 	}
-	SDL_UnlockSurface(sdl_screen);	
+	
+	uint32_t pitch_dst = sdl_screen->pitch;
+	uint32_t pitch_src = sdl_screen->w;
+
+	uint8_t *dst_y = sdl_screen->pixels;
+	uint8_t *dst_u = dst_y + height * sdl_screen->pitch;
+	uint8_t *dst_v = dst_u + height * sdl_screen->pitch;
+	uint8_t *src = sms_bitmap->pixels;
+
+	for (i = 0; i < height; i++) {
+		for (j = 0; j < width; j++) {
+			uint32_t yuv = drm_palette[src[j]];
+			dst_y[j] = (yuv >> 16) & 0xFF;
+			dst_u[j] = (yuv >> 8)  & 0xFF;
+			dst_v[j] =  yuv        & 0xFF;
+		}
+		dst_y += pitch_dst;
+		dst_u += pitch_dst;
+		dst_v += pitch_dst;
+		src += pitch_src;
+	}
 	SDL_Flip(sdl_screen);
 }
+
 
 void smsp_state(uint8_t slot_number, uint8_t mode)
 {
@@ -587,12 +583,16 @@ static void Input_Remapping()
 
 void Menu()
 {
+	uint_fast8_t i;
 	char text[50];
     int16_t pressed = 0;
     int16_t currentselection = 1;
 
     SDL_Rect dstRect;
     SDL_Event Event;
+    
+    if(sdl_screen) SDL_FreeSurface(sdl_screen);
+    sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
     
     while (((currentselection != 1) && (currentselection != 8)) || (!pressed))
     {
@@ -780,15 +780,19 @@ void Menu()
 		SDL_Flip(sdl_screen);
     }
     
-    SDL_FillRect(sdl_screen, NULL, 0);
-    SDL_Flip(sdl_screen);
-    #ifdef SDL_TRIPLEBUF
-    SDL_FillRect(sdl_screen, NULL, 0);
-    SDL_Flip(sdl_screen);
-    #endif
+    for(i=0;i<3;i++)
+    {
+		SDL_FillRect(sdl_screen, NULL, 0);
+		SDL_Flip(sdl_screen);
+	}
     
     if (currentselection == 8)
         quit = 1;
+	else
+	{
+		if(sdl_screen) SDL_FreeSurface(sdl_screen);
+		sdl_screen = SDL_SetVideoMode(VIDEO_WIDTH_SMS, 240, 24, SDL_HWSURFACE | SDL_YUV444);
+	}
 }
 
 
@@ -849,7 +853,6 @@ static void config_save()
 static void Cleanup(void)
 {
 	if (sdl_screen) SDL_FreeSurface(sdl_screen);
-	if (sms_bitmap) SDL_FreeSurface(sms_bitmap);
 
 	if (bios.rom) free(bios.rom);
 	
@@ -865,7 +868,7 @@ static void Cleanup(void)
 
 int main (int argc, char *argv[]) 
 {
-	uint_fast8_t i;
+	uint_fast32_t i;
 	SDL_Event event;
 	
 	if(argc < 2) 
@@ -906,22 +909,28 @@ int main (int argc, char *argv[])
 		Cleanup();
 		return 0;
 	}
+	
+	/* Force 50 Fps refresh rate for PAL only games */
+	if (sms.display == DISPLAY_PAL)
+	{
+		setenv("SDL_VIDEO_REFRESHRATE", "50", 0);
+	}
+	else
+	{
+		setenv("SDL_VIDEO_REFRESHRATE", "60", 0);
+	}
 
 	SDL_Init(SDL_INIT_VIDEO);
 	
-	sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_HWSURFACE);
+	sdl_screen = SDL_SetVideoMode(VIDEO_WIDTH_SMS, 240, 24, SDL_HWSURFACE | SDL_TRIPLEBUF | SDL_YUV444);
 	if (!sdl_screen)
 	{
 		fprintf(stdout, "Could not create display, exiting\n");	
 		Cleanup();
 		return 0;
 	}
-	SDL_FillRect(sdl_screen, NULL, 0);
-	SDL_Flip(sdl_screen);
-	
-	backbuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, 0, 0, 0, 0);
-	
-	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 240, 16, 0, 0, 0, 0);
+	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 240, 8, 0, 0, 0, 0);
+	backbuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 8, 0, 0, 0, 0);
 	SDL_WM_SetCaption("SMS Plus GX", NULL);
 	
 	fprintf(stdout, "CRC : %08X\n", cart.crc);
@@ -929,8 +938,8 @@ int main (int argc, char *argv[])
 	// Set parameters for internal bitmap
 	bitmap.width = VIDEO_WIDTH_SMS;
 	bitmap.height = VIDEO_HEIGHT_SMS;
-	bitmap.depth = 16;
-	bitmap.granularity = 2;
+	bitmap.depth = 8;
+	bitmap.granularity = 1;
 	bitmap.data = (uint8_t *)sms_bitmap->pixels;
 	bitmap.pitch = sms_bitmap->pitch;
 	bitmap.viewport.w = VIDEO_WIDTH_SMS;
@@ -950,6 +959,16 @@ int main (int argc, char *argv[])
 	
 	// Initialize all systems and power on
 	system_poweron();
+	
+	for(i = 0; i < PALETTE_SIZE; i += 1)
+	{
+		if(bitmap.pal.dirty[i])
+		{
+			palette_8bpp[i].r = 0;
+			palette_8bpp[i].g = 0;
+			palette_8bpp[i].b = 0;
+		}
+	}
 	
 	// Loop until the user closes the window
 	while (!quit) 

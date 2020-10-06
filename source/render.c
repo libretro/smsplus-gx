@@ -61,10 +61,11 @@ uint16_t bg_name_list[0x200];     /* List of modified pattern indices */
 uint16_t bg_list_index;           /* # of modified patterns in list */
 
 /* Internal buffer for drawing non 8-bit displays */
+#ifndef _8BPP_COLOR
 static uint8_t internal_buffer[0x200];
-
 /* Precalculated pixel table */
 static uint16_t pixel[PALETTE_SIZE];
+#endif
 
 static uint8_t bg_pattern_cache[0x20000];/* Cached and flipped patterns */
 
@@ -166,7 +167,9 @@ static uint32_t bp_lut[0x10000];
 
 static void parse_satb(int32_t line);
 static void update_bg_pattern_cache(void);
+#ifndef _8BPP_COLOR
 static void remap_8_to_16(int32_t line);
+#endif
 
 /* Macros to access memory 32-bits at a time (from MAME's drawgfx.c) */
 
@@ -337,6 +340,13 @@ void render_reset(void)
 	memset(bg_name_list, 0, sizeof(bg_name_list));
 	bg_list_index = 0;
 	memset(bg_pattern_cache, 0, sizeof(bg_pattern_cache));
+	
+#ifdef _8BPP_COLOR
+    /* Mark all colors as dirty */
+    bitmap.pal.update = 1;
+    memset(bitmap.pal.dirty, 1, PALETTE_SIZE);
+    memset(bitmap.pal.color, 0, PALETTE_SIZE * 3);
+#endif
 
 	/* Pick default render routine */
 	if (vdp.reg[0] & 4)
@@ -372,7 +382,11 @@ void render_line(int32_t line)
 	top_border = top_border + (vdp.height - bitmap.viewport.h) / 2;
 
 	/* Point to current line in output buffer */
+	#ifdef _8BPP_COLOR
+	linebuf = &bitmap.data[(line * bitmap.pitch)];
+	#else
 	linebuf = &internal_buffer[0];
+	#endif
 
 	/* Sprite limit flag is set at the beginning of the line */
 	if (vdp.spr_ovr)
@@ -456,7 +470,9 @@ void render_line(int32_t line)
 	{
 		/* adjust output line */
 		vline -= top_border;
+		#ifndef _8BPP_COLOR
 		remap_8_to_16(vline);
+		#endif
 	}
 }
 
@@ -659,7 +675,7 @@ void render_obj_sms(int32_t line)
 void palette_sync(int32_t index)
 {
 	int32_t r, g, b;
-
+	
 	/* VDP Mode */
 	if ((vdp.reg[0] & 4) || IS_GG)
 	{
@@ -675,7 +691,6 @@ void palette_sync(int32_t index)
 			r = gg_cram_expand_table[r];
 			g = gg_cram_expand_table[g];
 			b = gg_cram_expand_table[b];
-			pixel[index] = MAKE_PIXEL(r, g, b);
 		}
 		else
 		{
@@ -688,8 +703,6 @@ void palette_sync(int32_t index)
 			r = sms_cram_expand_table[r];
 			g = sms_cram_expand_table[g];
 			b = sms_cram_expand_table[b];
-			
-			pixel[index] = MAKE_PIXEL((r), (g), (b));
 		}
 	}
 	else
@@ -717,9 +730,17 @@ void palette_sync(int32_t index)
 			g = sms_cram_expand_table[g];
 			b = sms_cram_expand_table[b];
 		}
-		pixel[index] = MAKE_PIXEL(r, g, b);
 	}
-
+	
+	
+	#ifdef _8BPP_COLOR
+    bitmap.pal.color[index][0] = r;
+    bitmap.pal.color[index][1] = g;
+    bitmap.pal.color[index][2] = b;
+	bitmap.pal.dirty[index] = bitmap.pal.update = 1;
+	#else
+	pixel[index] = MAKE_PIXEL(r, g, b);
+	#endif
 }
 
 static void parse_satb(int32_t line)
@@ -827,6 +848,7 @@ static void update_bg_pattern_cache(void)
 	bg_list_index = 0;
 }
 
+#ifndef _8BPP_COLOR
 static void remap_8_to_16(int32_t line)
 {
 	int32_t i;
@@ -842,3 +864,4 @@ static void remap_8_to_16(int32_t line)
 	
 	UNLOCK_VIDEO
 }
+#endif
