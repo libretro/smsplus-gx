@@ -23,7 +23,7 @@ OBJS		= $(OBJ_C) $(OBJ_CP)
 
 CFLAGS		= -Ofast  -fdata-sections -ffunction-sections -mno-fp-exceptions -mno-check-zero-division -mplt -mframe-header-opt -fsingle-precision-constant -fno-common -march=mips32 -mtune=mips32 -flto
 CFLAGS		+= -falign-functions=1 -falign-jumps=1 -falign-loops=1 -falign-labels=1
-CFLAGS		+= -DALIGN_DWORD -DNOBLANKING_LEFTCOLUM
+CFLAGS		+= -DALIGN_DWORD -D_8BPP_COLOR
 CFLAGS		+= -DLSB_FIRST -std=gnu99
 CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/scalers -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
 
