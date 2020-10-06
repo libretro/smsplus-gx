@@ -141,6 +141,7 @@ void system_shutdown(void)
 	vdp_shutdown();
 	render_shutdown();
 	SMSPLUS_sound_shutdown();
+	free_rom();
 }
 
 void system_reset(void)

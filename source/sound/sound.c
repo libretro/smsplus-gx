@@ -196,6 +196,13 @@ void SMSPLUS_sound_shutdown(void)
 		}
 	}
 	
+	/* Free sample buffer position table if previously allocated */
+	if (smptab)
+	{
+		free(smptab);
+		smptab = NULL;
+	}
+	
 	/* Shut down SN76489 emulation */
     #ifdef MAXIM_PSG
     SN76489_Shutdown();
@@ -228,8 +235,8 @@ void SMSPLUS_sound_update(int32_t line)
 {
 	int16_t *fm[2], *psg[2];
 
-	if(!snd.enabled)
-		return;
+	/*if(!snd.enabled)
+		return;*/
 
 	/* Finish buffers at end of frame */
 	if(line == smptab_len - 1)
@@ -298,7 +305,7 @@ void SMSPLUS_sound_mixer_callback(int16_t **output, int32_t length)
 
 void psg_stereo_w(int32_t data)
 {
-	if(!snd.enabled) return;
+	/*if(!snd.enabled) return;*/
 	#ifdef MAXIM_PSG
 	SN76489_GGStereoWrite(0, data);
 	#else
@@ -309,7 +316,7 @@ void psg_stereo_w(int32_t data)
 
 void psg_write(int32_t data)
 {
-	if(!snd.enabled) return;
+	/*if(!snd.enabled) return;*/
 	#ifdef MAXIM_PSG
 	SN76489_Write(0, data);
 	#else
@@ -328,12 +335,12 @@ uint32_t fmunit_detect_r(void)
 
 void fmunit_detect_w(uint32_t data)
 {
-	if(!snd.enabled || !sms.use_fm) return;
+	if(/* !snd.enabled || */ !sms.use_fm) return;
 	sms.fm_detect = data;
 }
 
 void fmunit_write(uint32_t offset, uint8_t data)
 {
-	if(!snd.enabled || !sms.use_fm) return;
+	if(/* !snd.enabled || */ !sms.use_fm) return;
 	FM_Write(offset, data);
 }

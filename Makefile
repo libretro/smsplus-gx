@@ -2,7 +2,7 @@ PRGNAME     = sms.elf
 CC			= gcc
 
 # Possible choices : rs97, k3s (PAP K3S), sdl, amini, fbdev
-PORT = amini
+PORT = rs90
 # Possible choices : alsa, pulse (pulseaudio), oss, sdl12 (SDL 1.2 sound output), portaudio, libao
 SOUND_OUTPUT = alsa
 # Possible choices : crabemu_sn76489 (less accurate, GPLv2), maxim_sn76489 (somewhat problematic license but good accuracy)
@@ -22,12 +22,12 @@ OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
 OBJ_CP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CP)))
 OBJS		= $(OBJ_C) $(OBJ_CP)
 
-CFLAGS		= -O0 -g3 -Wextra -Wall
-CFLAGS		+= -DLSB_FIRST -std=gnu99 -DALIGN_DWORD
+CFLAGS		= -O0 -g -Wextra -Wall -D_8BPP_COLOR
+CFLAGS		+= -DLSB_FIRST -std=gnu99 -DALIGN_DWORD -DNONBLOCKING_AUDIO -DOPENDINGUX_GCD_16PIXELS_ISSUE -DNOYUV
 CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/scalers -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
 
-SRCDIR		+= ./source/text/sdl
-CFLAGS		+= -Isource/text/sdl
+SRCDIR		+= ./source/text/fb
+CFLAGS		+= -Isource/text/fb
 
 ifeq ($(PROFILE), YES)
 CFLAGS 		+= -fprofile-generate=/home/retrofw/profile

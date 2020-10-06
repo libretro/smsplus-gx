@@ -88,7 +88,13 @@ typedef struct
 		int32_t x, y, w, h;
 		int32_t ox, oy, ow, oh;
 		int32_t changed;
-	} viewport;    
+	} viewport;
+    struct
+    {
+        uint8_t color[PALETTE_SIZE][3];
+        uint8_t dirty[PALETTE_SIZE];
+        uint8_t update;
+    } pal;
 } bitmap_t;
 
 /* Global variables */

@@ -20,11 +20,11 @@ void downscale_240x192to240x160(uint32_t* restrict src, uint32_t* restrict dst)
  
     const uint16_t ix=1, iy=6;
     
-    for(int H = 0; H < 160 / 4; H++)
+    for(uint_fast8_t H = 0; H < 160 / 4; H++)
     {
 	    buffer_mem = &src[y*128];
         uint16_t x = 4;  //crop left&right 8px
-        for(int W = 0; W < 120; W++) 
+        for(uint_fast8_t W = 0; W < 120; W++) 
         {
             //Vertical Scaling (6px to 5px)
             uint32_t a,b,c,d,e,f;
