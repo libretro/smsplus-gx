@@ -27,6 +27,7 @@
 
 /* Function prototypes */
 uint32_t load_rom(char *filename);
+uint32_t load_rom_mem(const char *data, size_t size);
 void free_rom(void);
 
 #ifndef NGC
