@@ -682,7 +682,7 @@ int main (int argc, char *argv[])
 	
 	screensize = (320*240)*2;
 	buffer_fbdev[0] = mmap(0, screensize, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd, 0);
-	sms_bitmap = malloc((VIDEO_WIDTH_SMS*240)*sizeof(uint16_t));
+	sms_bitmap = malloc((VIDEO_WIDTH_SMS*267)*sizeof(uint16_t));
 
     vinfo.xoffset = 0;
     vinfo.yoffset = 0;

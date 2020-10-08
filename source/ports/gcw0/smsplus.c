@@ -909,8 +909,9 @@ static void Menu()
 		SDL_Flip(sdl_screen);
     }
     
-	Clear_video();
+	sms.use_fm = option.fm;
     
+	Clear_video();
     if (currentselection == 7)
         quit = 1;
 	else
@@ -1091,7 +1092,7 @@ int main (int argc, char *argv[])
 		return 0;
 	}
 	
-	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 240, 16, 0, 0, 0, 0);
+	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 267, 16, 0, 0, 0, 0);
 	backbuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, 0, 0, 0, 0);
 	miniscreen = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, 0, 0, 0, 0);
 	SDL_ShowCursor(0);
@@ -1128,7 +1129,7 @@ int main (int argc, char *argv[])
 	
 	//sms.territory = settings.misc_region;
 	if (sms.console == CONSOLE_SMS || sms.console == CONSOLE_SMS2)
-		sms.use_fm = 1; 
+		sms.use_fm = option.fm;
 	
 	bios_init();
 

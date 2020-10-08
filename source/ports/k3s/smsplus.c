@@ -785,7 +785,7 @@ int main (int argc, char *argv[])
 	SDL_FillRect( sdl_screen, NULL, 0 );
 	SDL_Flip(sdl_screen);
 	
-	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 240, 16, 0, 0, 0, 0);
+	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 267, 16, 0, 0, 0, 0);
 #ifdef SCALE2X_UPSCALER
 	scale2x_buf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS*2, 480, 16, 0, 0, 0, 0);
 #endif

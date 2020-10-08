@@ -956,7 +956,7 @@ int main (int argc, char *argv[])
 		return 0;
 	}
 	backbuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, 0, 0, 0, 0);
-	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 240, 8, 0, 0, 0, 0);
+	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 267, 8, 0, 0, 0, 0);
 	
 	SDL_FillRect(sms_bitmap, NULL, 0 );
 	for(i=0;i<3;i++)
