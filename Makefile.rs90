@@ -9,7 +9,7 @@ SOUND_OUTPUT = alsa
 SOUND_ENGINE = maxim_sn76489
 # Possible choices : z80 (accurate but proprietary), eighty (EightyZ80's core, GPLv2)
 Z80_CORE = z80
-PROFILE = APPLY
+PROFILE = 0
 ZIP_SUPPORT = 1
 
 SRCDIR		= ./source ./source/cpu_cores/$(Z80_CORE) ./source/sound ./source/unzip
@@ -21,7 +21,7 @@ OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
 OBJ_CP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CP)))
 OBJS		= $(OBJ_C) $(OBJ_CP)
 
-CFLAGS		= -O2 -fdata-sections -ffunction-sections -mplt -mframe-header-opt -fno-common -march=mips32 -mtune=mips32 -flto
+CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mplt -mframe-header-opt -fno-common -march=mips32 -mtune=mips32 -flto
 CFLAGS		+= -falign-functions=1 -falign-jumps=1 -falign-loops=1 -falign-labels=1 -fsingle-precision-constant 
 CFLAGS		+= -DALIGN_DWORD -D_8BPP_COLOR -DNOBLANKING_LEFTCOLUM
 CFLAGS		+= -DLSB_FIRST
