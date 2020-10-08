@@ -441,8 +441,8 @@ uint32_t load_rom (char *filename)
 		if (!cart.rom)
 			return 0;
 	}
-#endif
 	else
+#endif
 	{
 		FILE *fd = NULL;
 		fd = fopen(filename, "rb");
