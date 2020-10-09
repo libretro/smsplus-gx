@@ -73,6 +73,8 @@ static sms_input_t binds[MAX_BUTTONS] =
 #define NTSC_SVIDEO 3
 #define NTSC_RGB 4
 
+extern uint32_t load_rom_mem(const char *data, size_t size);
+
 static void filter_ntsc_init(void)
 {
    sms_ntsc = (sms_ntsc_t*)malloc(sizeof(sms_ntsc_t));
