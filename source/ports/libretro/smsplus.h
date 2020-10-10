@@ -15,5 +15,6 @@ typedef struct {
 } gamedata_t;
 
 #define SOUND_FREQUENCY 44100
+#define SOUND_SAMPLES_SIZE 2048
 
 #endif
