@@ -49,23 +49,6 @@ static sms_ntsc_t *sms_ntsc = NULL;
 #endif
 
 #define MAX_PORTS 2
-#define MAX_BUTTONS 6
-
-typedef struct
-{
-   unsigned retro;
-   unsigned sms;
-} sms_input_t;
-
-static sms_input_t binds[MAX_BUTTONS] =
-{
-   { RETRO_DEVICE_ID_JOYPAD_UP,    INPUT_UP },
-   { RETRO_DEVICE_ID_JOYPAD_DOWN,  INPUT_DOWN },
-   { RETRO_DEVICE_ID_JOYPAD_LEFT,  INPUT_LEFT },
-   { RETRO_DEVICE_ID_JOYPAD_RIGHT, INPUT_RIGHT },
-   { RETRO_DEVICE_ID_JOYPAD_B,     INPUT_BUTTON1 },
-   { RETRO_DEVICE_ID_JOYPAD_A,     INPUT_BUTTON2 }
-};
 
 #define NTSC_NONE 0
 #define NTSC_MONOCHROME 1
@@ -241,62 +224,86 @@ static void Cleanup(void)
 
 static void update_input(void)
 {
-#define KEYP(key) input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, key)
+#define JOYP(n)   (ret & (1 << (n)))
+#define KEYP(key) (input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, key))
 
    unsigned port;
    unsigned startpressed = 0;
 
    input_poll_cb();
 
-   input.pad[0] = 0;
-   input.pad[1] = 0;
-   input.system &= (sms.console == CONSOLE_GG) ? ~INPUT_START : ~INPUT_PAUSE;
+   input.pad[0]     = 0;
+   input.pad[1]     = 0;
 
-   if (sms.console == CONSOLE_COLECO)
-   {
-      coleco.keypad[0] = 0xff;
-      coleco.keypad[1] = 0xff;
+   coleco.keypad[0] = ~0;
+   coleco.keypad[1] = ~0;
 
-      if (KEYP(RETROK_1)) coleco.keypad[0] = 1;
-      else if (KEYP(RETROK_2)) coleco.keypad[0] = 2;
-      else if (KEYP(RETROK_3)) coleco.keypad[0] = 3;
-      else if (KEYP(RETROK_4)) coleco.keypad[0] = 4;
-      else if (KEYP(RETROK_5)) coleco.keypad[0] = 5;
-      else if (KEYP(RETROK_6)) coleco.keypad[0] = 6;
-      else if (KEYP(RETROK_7)) coleco.keypad[0] = 7;
-      else if (KEYP(RETROK_8)) coleco.keypad[0] = 8;
-      else if (KEYP(RETROK_9)) coleco.keypad[0] = 9;
-      else if (KEYP(RETROK_DOLLAR)) coleco.keypad[0] = 10;
-      else if (KEYP(RETROK_ASTERISK)) coleco.keypad[0] = 11;
-   }
+   input.system    &= (sms.console == CONSOLE_GG) ? ~INPUT_START : ~INPUT_PAUSE;
 
    for (port = 0; port < MAX_PORTS; port++)
    {
-      unsigned i;
+      unsigned ret = 0;
       if (libretro_supports_bitmasks)
       {
-         uint16_t ret = input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
-
-         for (i = 0; i < MAX_BUTTONS; i++)
-            input.pad[port] |= (ret & (1 << binds[i].retro)) ? binds[i].sms : 0;
-
-         if (!port && (ret & (1 << RETRO_DEVICE_ID_JOYPAD_START)))
-            startpressed = 1;
+         ret = input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
       }
       else
       {
-         for (i = 0; i < MAX_BUTTONS; i++)
-            input.pad[port] |= (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, binds[i].retro)) ? binds[i].sms : 0;
-
-         if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
-            startpressed = 1;
+         int i;
+         for (i = 0; i < (1 + RETRO_DEVICE_ID_JOYPAD_R3); i++)
+            ret |= input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, i);
       }
+
+      if (JOYP(RETRO_DEVICE_ID_JOYPAD_UP))
+         input.pad[port] |= INPUT_UP;
+      if (JOYP(RETRO_DEVICE_ID_JOYPAD_DOWN))
+         input.pad[port] |= INPUT_DOWN;
+      if (JOYP(RETRO_DEVICE_ID_JOYPAD_LEFT))
+         input.pad[port] |= INPUT_LEFT;
+      if (JOYP(RETRO_DEVICE_ID_JOYPAD_RIGHT))
+         input.pad[port] |= INPUT_RIGHT;
+      if (JOYP(RETRO_DEVICE_ID_JOYPAD_B))
+         input.pad[port] |= INPUT_BUTTON1;
+      if (JOYP(RETRO_DEVICE_ID_JOYPAD_A))
+         input.pad[port] |= INPUT_BUTTON2;
+      
+      if (sms.console == CONSOLE_COLECO)
+      {
+         if (KEYP(RETROK_1) || (JOYP(RETRO_DEVICE_ID_JOYPAD_X)))
+            coleco.keypad[port] = 1;
+         else if (KEYP(RETROK_2) || (JOYP(RETRO_DEVICE_ID_JOYPAD_Y)))
+            coleco.keypad[port] = 2;
+         else if (KEYP(RETROK_3) || (JOYP(RETRO_DEVICE_ID_JOYPAD_R)))
+            coleco.keypad[port] = 3;
+         else if (KEYP(RETROK_4) || (JOYP(RETRO_DEVICE_ID_JOYPAD_L)))
+            coleco.keypad[port] = 4;
+         else if (KEYP(RETROK_5) || (JOYP(RETRO_DEVICE_ID_JOYPAD_R2)))
+            coleco.keypad[port] = 5;
+         else if (KEYP(RETROK_6) || (JOYP(RETRO_DEVICE_ID_JOYPAD_L2)))
+            coleco.keypad[port] = 6;
+         else if (KEYP(RETROK_7) || (JOYP(RETRO_DEVICE_ID_JOYPAD_R3)))
+            coleco.keypad[port] = 7;
+         else if (KEYP(RETROK_8) || (JOYP(RETRO_DEVICE_ID_JOYPAD_L3)))
+            coleco.keypad[port] = 8;
+         else if (KEYP(RETROK_9))
+            coleco.keypad[port] = 9;
+         else if (KEYP(RETROK_DOLLAR) || (JOYP(RETRO_DEVICE_ID_JOYPAD_START)))
+            coleco.keypad[port] = 10;
+         else if (KEYP(RETROK_ASTERISK) || (JOYP(RETRO_DEVICE_ID_JOYPAD_SELECT)))
+            coleco.keypad[port] = 11;
+      }
+
+      if (!port && (JOYP(RETRO_DEVICE_ID_JOYPAD_START)))
+         startpressed = 1;
    }
 
    if (startpressed)
       input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
 
    if (sms.console == CONSOLE_COLECO) input.system = 0;
+
+#undef JOYP
+#undef KEYP
 }
 
 static void check_system_specs(void)
