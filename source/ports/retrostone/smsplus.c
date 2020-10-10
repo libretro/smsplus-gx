@@ -94,7 +94,7 @@ static void video_update(void)
 				dst_w = (hide_left ? 248 : 256)*2;
 				dst_h = vdp.height*2;
 			}
-			scale2x(sms_bitmap->pixels, scale2x_buf->pixels, 512, 1024, 256, 240);
+			scale2x(sms_bitmap->pixels, scale2x_buf->pixels, 512, 1024, 256, vdp.height);
 			bitmap_scale(dst_x,0,dst_w,dst_h,sdl_screen->w,sdl_screen->h,512,0,(uint16_t* restrict)scale2x_buf->pixels,(uint16_t* restrict)sdl_screen->pixels);
 			#endif
 			break;

@@ -28,6 +28,6 @@ typedef struct {
 void smsp_state(uint8_t slot_number, uint8_t mode);
 
 #define SOUND_FREQUENCY 44100
-#define SOUND_SAMPLES_SIZE 1024
+#define SOUND_SAMPLES_SIZE 2048
 
 #endif
