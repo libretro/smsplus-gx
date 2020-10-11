@@ -40,7 +40,7 @@ static unsigned system_height;
 /* blargg NTSC */
 static unsigned use_ntsc;
 static SMS_NTSC_IN_T *ntsc_screen = NULL;
-static sms_ntsc_t *sms_ntsc = NULL;
+static sms_ntsc_t sms_ntsc;
 
 #ifdef _WIN32
 #define path_default_slash_c() '\\'
@@ -56,22 +56,21 @@ static sms_ntsc_t *sms_ntsc = NULL;
 #define NTSC_SVIDEO 3
 #define NTSC_RGB 4
 
+#define MAX_NTSC_WIDTH (SMS_NTSC_OUT_WIDTH(VIDEO_WIDTH_SMS))
+
 extern uint32_t load_rom_mem(const char *data, size_t size);
 
 static void filter_ntsc_init(void)
 {
-   sms_ntsc = (sms_ntsc_t*)malloc(sizeof(sms_ntsc_t));
+   int pitch = MAX_NTSC_WIDTH * sizeof(SMS_NTSC_IN_T);
 
-   ntsc_screen = (SMS_NTSC_IN_T*)malloc(602 * 240 * sizeof(SMS_NTSC_IN_T));
-   memset(ntsc_screen, 0, sizeof(602 * 240 * sizeof(SMS_NTSC_IN_T)));
+   ntsc_screen = (SMS_NTSC_IN_T*)malloc(pitch * 240);
+   memset(ntsc_screen, 0, pitch * 240);
+   memset(&sms_ntsc, 0, sizeof(sms_ntsc_t));
 }
 
 static void filter_ntsc_cleanup(void)
 {
-   if (sms_ntsc)
-      free(sms_ntsc);
-   sms_ntsc = NULL;
-
    if (ntsc_screen)
       free(ntsc_screen);
    ntsc_screen = NULL;
@@ -89,63 +88,59 @@ static void filter_ntsc_set(void)
       default: return;
    }
 
-   sms_ntsc_init(sms_ntsc, &setup);
-}
-
-static void render_ntsc(void *vidbuf)
-{
-   int32_t output_width            = SMS_NTSC_OUT_WIDTH(system_width);
-   int32_t output_height           = system_height;
-   uint32_t output_pitch           = output_width << 1;
-
-   sms_ntsc_blit(sms_ntsc, vidbuf, bitmap.pitch / sizeof(uint16_t), system_width, system_height, ntsc_screen, output_pitch);
-   video_cb(ntsc_screen, output_width, output_height, output_pitch);
-}
-
-static void render_nofilter(void *vidbuf)
-{
-   video_cb(vidbuf, system_width, system_height, bitmap.pitch);
+   sms_ntsc_init(&sms_ntsc, &setup);
 }
 
 static void video_update(void)
 {
-   unsigned x = bitmap.viewport.x;
-   static int last_width, last_height;
+   static unsigned last_width, last_height;
+   int x         = bitmap.viewport.x;
 
-   system_width = bitmap.viewport.w;
+   system_width  = bitmap.viewport.w;
    system_height = bitmap.viewport.h;
 
    if (sms.console != CONSOLE_GG && remove_left_border)
    {
-      x = (vdp.reg[0] & 0x20) ? 8 : 0;
+      x            = (vdp.reg[0] & 0x20) ? 8 : 0;
       system_width = VIDEO_WIDTH_SMS - x;
    }
 
    if (system_width != last_width || system_height != last_height)
       bitmap.viewport.changed = 1;
 
-   last_width = system_width;
+   last_width  = system_width;
    last_height = system_height;
 
-   if (geometry_changed)
+   if (geometry_changed || bitmap.viewport.changed)
    {
       struct retro_system_av_info info;
+
       retro_get_system_av_info(&info);
-      environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &info);
-      geometry_changed = 0;
-   }
-   else if (bitmap.viewport.changed)
-   {
-      struct retro_system_av_info info;
-      retro_get_system_av_info(&info);
-      environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &info);
+      /* hard audio-video reset */
+      if (geometry_changed)
+         environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &info);
+      else
+         environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &info);
+
+      geometry_changed        = 0;
       bitmap.viewport.changed = 0;
    }
 
-   if (!use_ntsc)
-      render_nofilter(sms_bitmap + x);
+   if (use_ntsc)
+   {
+      const uint16_t *vidbuf  = sms_bitmap + x;
+      int32_t ntsc_out_width  = SMS_NTSC_OUT_WIDTH(system_width);
+      uint32_t ntsc_out_pitch = ntsc_out_width << 1;
+
+      sms_ntsc_blit(&sms_ntsc, vidbuf, bitmap.pitch / sizeof(uint16_t),
+            system_width, system_height, ntsc_screen, ntsc_out_pitch);
+      video_cb(ntsc_screen, ntsc_out_width, system_height, ntsc_out_pitch);
+   }
    else
-      render_ntsc(sms_bitmap + x);
+   {
+      const uint16_t *vidbuf = sms_bitmap + x;
+      video_cb(vidbuf, system_width, system_height, bitmap.pitch);
+   }
 }
 
 void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode)
@@ -266,7 +261,7 @@ static void update_input(void)
          input.pad[port] |= INPUT_BUTTON1;
       if (JOYP(RETRO_DEVICE_ID_JOYPAD_A))
          input.pad[port] |= INPUT_BUTTON2;
-      
+
       if (sms.console == CONSOLE_COLECO)
       {
          if (KEYP(RETROK_1) || (JOYP(RETRO_DEVICE_ID_JOYPAD_X)))
