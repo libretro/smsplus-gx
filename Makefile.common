@@ -4,9 +4,9 @@ LIBRETRO_COMMON   := $(SOURCE_DIR)/ports/libretro/libretro-common
 SOURCES_CXX       :=
 SOURCES_C         :=
 
-INCFLAGS	      += -I$(SOURCE_DIR)/ports/libretro -I$(LIBRETRO_COMMON)/include
-INCFLAGS	      += -I$(SOURCE_DIR)
-INCFLAGS	      += -I$(SOURCE_DIR)/sound -I$(SOURCE_DIR)/sound/$(SOUND_ENGINE) -I$(SOURCE_DIR)/sound_output
+INCFLAGS          += -I$(SOURCE_DIR)/ports/libretro -I$(LIBRETRO_COMMON)/include
+INCFLAGS          += -I$(SOURCE_DIR)
+INCFLAGS          += -I$(SOURCE_DIR)/sound -I$(SOURCE_DIR)/sound/$(SOUND_ENGINE) -I$(SOURCE_DIR)/sound_output
 
 ifeq ($(SOUND_ENGINE), crabemu_sn76489)
 SOURCES_C         += $(SOURCE_DIR)/sound/crabemu_sn76489/sn76489.c
@@ -18,7 +18,7 @@ endif
 ifeq ($(ZIP_SUPPORT), 0)
 CFLAGS            += -DNOZIP_SUPPORT
 else
-INCFLAGS	      += -I$(SOURCE_DIR)/unzip
+INCFLAGS          += -I$(SOURCE_DIR)/unzip
 SOURCES_C         += \
                   $(SOURCE_DIR)/unzip/fileio.c \
                   $(SOURCE_DIR)/unzip/ioapi.c \
