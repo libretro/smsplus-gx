@@ -32,7 +32,6 @@ static unsigned libretro_serialize_size;
 static unsigned geometry_changed;
 
 static unsigned remove_left_border;
-static unsigned use_fm_sound;
 
 static unsigned system_width;
 static unsigned system_height;
@@ -391,9 +390,9 @@ static void check_variables(bool startup)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && startup)
    {
       if (strcmp(var.value, "disabled") == 0)
-         use_fm_sound = 0;
+         option.fm = 0;
       else
-         use_fm_sound = 1;
+         option.fm = 1;
    }
 
    var.value = NULL;
@@ -494,15 +493,15 @@ bool retro_load_game(const struct retro_game_info *info)
 
    memset(&option, 0, sizeof(option));
 
-   option.fullscreen = 1;
-   option.fm = 1;
+   option.fullscreen  = 1;
+   option.fm          = 1;
    option.spritelimit = 1;
-   option.tms_pal = 2;
-   option.nosound = 0;
-   option.soundlevel = 2;
+   option.tms_pal     = 2;
+   option.nosound     = 0;
+   option.soundlevel  = 2;
 
-   option.country = 0;
-   option.console = 0;
+   option.country     = 0;
+   option.console     = 0;
 
    /* Force Colecovision mode if extension is .col */
 	if (strcmp(strrchr(info->path, '.'), ".col") == 0) option.console = 6;
@@ -538,7 +537,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
    /* sms.territory = settings.misc_region; */
    if (sms.console == CONSOLE_SMS || sms.console == CONSOLE_SMS2)
-      sms.use_fm = use_fm_sound;
+      sms.use_fm = option.fm;
 
    Sound_Init();
 
