@@ -33,7 +33,6 @@ SOURCES_C         += \
                   $(SOURCE_DIR)/pio.c \
                   $(SOURCE_DIR)/render.c \
                   $(SOURCE_DIR)/sms.c \
-                  $(SOURCE_DIR)/state.c \
                   $(SOURCE_DIR)/system.c \
                   $(SOURCE_DIR)/tms.c \
                   $(SOURCE_DIR)/vdp.c
