@@ -22,7 +22,8 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
                            void *userData )
 {
     /* Cast data passed through stream to our structure. */
-    uint16_t *out = (uint16_t*)snd.output;
+    snd.output = (int16_t*)outputBuffer;
+    int32_t i;
     (void) inputBuffer; /* Prevent unused variable warning. */
 	
     return 0;

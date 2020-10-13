@@ -21,6 +21,7 @@ void Sound_Init()
 	uint32_t channels = 2;
 	uint32_t format = AFMT_S16_LE;
 	int32_t err_ret;
+	int32_t tmp;
 	
 	tmp = option.sndrate;
 	
@@ -60,7 +61,7 @@ void Sound_Init()
 void Sound_Update(int16_t* sound_buffer, unsigned long len)
 {
 	if (!oss_audio_fd) return;
-	write(oss_audio_fd, sound_buffer, len);
+	write(oss_audio_fd, sound_buffer, len * 4);
 }
 
 void Sound_Close()

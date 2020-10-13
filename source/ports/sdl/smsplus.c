@@ -38,9 +38,8 @@ static const uint32_t upscalers_available = 1
 +1
 #endif
 ;
-uint16_t real_FPS;
+double real_FPS;
 Uint32 start;
-
 
 static void video_update(void)
 {
@@ -107,7 +106,9 @@ static void video_update(void)
 	}
 		
 	SDL_Flip(sdl_screen);
-	if(real_FPS > SDL_GetTicks()-start) SDL_Delay(real_FPS-(SDL_GetTicks()-start));
+#ifdef NONBLOCKING_AUDIO
+	if(real_FPS > SDL_GetTicks()-start) usleep((real_FPS-(SDL_GetTicks()-start))*1000);
+#endif
 }
 
 void smsp_state(uint8_t slot_number, uint8_t mode)
@@ -684,7 +685,7 @@ int main (int argc, char *argv[])
 	
 	SDL_Init(SDL_INIT_VIDEO);
 	
-	sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_HWSURFACE);
+	sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
 	if (!sdl_screen)
 	{
 		fprintf(stdout, "Could not create display, exiting\n");	
@@ -717,8 +718,8 @@ int main (int argc, char *argv[])
 		sms.use_fm = 1; 
 	}
 	
-	if (sms.display == DISPLAY_PAL) real_FPS = 1000 / 50;
-	else real_FPS = 1000 / 60;
+	if (sms.display == DISPLAY_PAL) real_FPS = 1000 / 49.701459;
+	else real_FPS = 1000 / 59.922743;
 	
 	printf("sms.display %d, PAL is %d\n", sms.display, DISPLAY_PAL);
 	
@@ -732,8 +733,9 @@ int main (int argc, char *argv[])
 	// Loop until the user closes the window
 	while (!quit) 
 	{
+#ifdef NONBLOCKING_AUDIO
 		start = SDL_GetTicks();
-		
+#endif
 		if (selectpressed == 1)
 		{
             Menu();

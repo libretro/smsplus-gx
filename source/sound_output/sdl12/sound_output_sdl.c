@@ -136,7 +136,7 @@ void Sound_Init()
 void Sound_Update(int16_t* sound_buffer, unsigned long len)
 {
 	SDL_LockAudio();
-	sdl_write_buffer(sound_buffer, len);
+	sdl_write_buffer(sound_buffer, len * 4);
 	SDL_UnlockAudio();
 }
 
