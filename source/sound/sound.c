@@ -126,10 +126,9 @@ uint32_t SMSPLUS_sound_init(void)
 	}
 
 	/* Allocate sound output streams */
-	snd.output[0] = malloc(snd.buffer_size);
-	snd.output[1] = malloc(snd.buffer_size);
+	snd.output = malloc(snd.buffer_size*2);
 	
-	if(!snd.output[0] || !snd.output[1])
+	if(!snd.output)
 		return 0;
 
 	/* Set up buffer pointers */
@@ -187,13 +186,10 @@ void SMSPLUS_sound_shutdown(void)
 	}
 
 	/* Free sound output buffers */
-	for(i = 0; i < 2; i++)
+	if(snd.output)
 	{
-		if(snd.output[i])
-		{
-			free(snd.output[i]);
-			snd.output[i] = NULL;
-		}
+		free(snd.output);
+		snd.output = NULL;
 	}
 	
 	/* Free sample buffer position table if previously allocated */
@@ -288,14 +284,14 @@ void SMSPLUS_sound_update(int32_t line)
 }
 
 /* Generic FM+PSG stereo mixer callback */
-void SMSPLUS_sound_mixer_callback(int16_t **output, int32_t length)
+void SMSPLUS_sound_mixer_callback(int16_t *output, int32_t length)
 {
 	int32_t i;
 	for(i = 0; i < length; i++)
 	{
 		int16_t temp = (fm_buffer[0][i] + fm_buffer[1][i]) / 2;
-		output[0][i] = temp + psg_buffer[0][i];
-		output[1][i] = temp + psg_buffer[1][i];
+		output[i * 2] = temp + psg_buffer[0][i];
+		output[i * 2 + 1] = temp + psg_buffer[1][i];
 	}
 }
 

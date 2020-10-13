@@ -108,8 +108,6 @@ static void video_update()
 		case 2: // Fullscreen (cropped)
 			if (sms.console == CONSOLE_GG) 
 			{
-				dst.x = 0;
-				dst.y = 0;
 				dst.w = sdl_screen->w;
 				dst.h = sdl_screen->h;
 				dstT.x = 48;
@@ -119,8 +117,6 @@ static void video_update()
 			}
 			else
 			{
-				dst.x = 0;
-				dst.y = 0;
 				dst.w = sdl_screen->w;
 				dst.h = sdl_screen->h;
 				dstT.x = (vdp.reg[0] & 0x20) ? 8 : 0;
@@ -807,7 +803,6 @@ int main (int argc, char *argv[])
 	bitmap.width = VIDEO_WIDTH_SMS;
 	bitmap.height = VIDEO_HEIGHT_SMS;
 	bitmap.depth = 16;
-	bitmap.granularity = 2;
 	bitmap.data = (uint8_t *)sms_bitmap->pixels;
 	bitmap.pitch = sms_bitmap->pitch;
 	bitmap.viewport.w = VIDEO_WIDTH_SMS;
@@ -823,10 +818,10 @@ int main (int argc, char *argv[])
 	
 	bios_init();
 
-	Sound_Init();
-	
 	// Initialize all systems and power on
 	system_poweron();
+	
+	Sound_Init();
 	
 	// Loop until the user closes the window
 	while (!quit) 
@@ -837,8 +832,8 @@ int main (int argc, char *argv[])
 		// Refresh video data
 		video_update();
 		
-		// Output audio
-		Sound_Update();
+		// Refresh sound data
+		Sound_Update(snd.output, snd.sample_count);
 		
 		if (sms.console == CONSOLE_COLECO)
 		{

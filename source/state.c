@@ -144,6 +144,6 @@ void system_load_state(FILE* fd)
 	}
 
 	/* Restore palette */
-	for(uint32_t i = 0; i < PALETTE_SIZE; i++)
+	for(int32_t i = 0; i < PALETTE_SIZE; i++)
 		palette_sync(i);
 }

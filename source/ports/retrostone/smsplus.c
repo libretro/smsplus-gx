@@ -974,7 +974,6 @@ int main (int argc, char *argv[])
 	bitmap.width = VIDEO_WIDTH_SMS;
 	bitmap.height = VIDEO_HEIGHT_SMS;
 	bitmap.depth = 16;
-	bitmap.granularity = 2;
 	bitmap.data = (uint8_t *)sms_bitmap->pixels;
 	bitmap.pitch = sms_bitmap->pitch;
 	bitmap.viewport.w = VIDEO_WIDTH_SMS;
@@ -997,11 +996,11 @@ int main (int argc, char *argv[])
 		// Execute frame(s)
 		system_frame(0);
 		
+		// Refresh sound data
+		Sound_Update(snd.output, snd.sample_count);
+		
 		// Refresh video data
 		video_update();
-		
-		// Output audio
-		Sound_Update();
 
 		if (selectpressed == 1)
 		{

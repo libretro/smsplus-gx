@@ -119,7 +119,7 @@ static void video_update()
 		}
 		else
 		{
-			uint32_t hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
+			hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
 			dst.x = hide_left ? 16 : 0;
 			dst.y = 0;
 			dst.w = (hide_left ? 248 : 256)*2;
@@ -1032,7 +1032,7 @@ int main (int argc, char *argv[])
 	
 	SDL_WM_SetCaption("SMS Plus GX Super", "SMS Plus GX Super");
 	
-	sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_HWSURFACE);
+	sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
 	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 267, 16, 0, 0, 0, 0);
 	backbuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, 0, 0, 0, 0);
 	miniscreen = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, 0, 0, 0, 0);
@@ -1040,8 +1040,6 @@ int main (int argc, char *argv[])
 	
 	sdl_joy[0] = SDL_JoystickOpen(0);
 	SDL_JoystickEventState(SDL_ENABLE);
-	
-	Sound_Init();
 
 #ifdef SCALE2X_UPSCALER
 	scale2x_buf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS*2, 480, 16, 0, 0, 0, 0);
@@ -1053,7 +1051,6 @@ int main (int argc, char *argv[])
 	bitmap.width = VIDEO_WIDTH_SMS;
 	bitmap.height = VIDEO_HEIGHT_SMS;
 	bitmap.depth = 16;
-	bitmap.granularity = 2;
 	bitmap.data = (uint8_t *)sms_bitmap->pixels;
 	bitmap.pitch = sms_bitmap->pitch;
 	bitmap.viewport.w = VIDEO_WIDTH_SMS;
@@ -1070,17 +1067,19 @@ int main (int argc, char *argv[])
 	// Initialize all systems and power on
 	system_poweron();
 	
+	Sound_Init();
+	
 	// Loop until the user closes the window
 	while (!quit) 
 	{
 		// Execute frame(s)
 		system_frame(0);
 		
+		// Refresh sound data
+		Sound_Update(snd.output, snd.sample_count);
+		
 		// Refresh video data
 		video_update();
-		
-		// Output audio
-		Sound_Update();
 		
 		if (selectpressed == 1)
 		{

@@ -12,11 +12,11 @@
 #include "smsplus.h"
 #include "font_drawing.h"
 
-/* TODO : We really need to do something about the tearing.
- * This is not the only port affected btw but still. */
-
+#ifdef NOYUV
 SDL_Color palette_8bpp[256];
-uint8_t drm_palette[3][256];
+#else
+static uint8_t drm_palette[3][256];
+#endif
 
 static gamedata_t gdata;
 
@@ -27,9 +27,8 @@ SDL_Surface *sms_bitmap;
 
 static char home_path[256];
 
-static uint8_t selectpressed = 0;
-static uint8_t save_slot = 0;
-static uint8_t quit = 0;
+static uint_fast8_t save_slot = 0;
+static uint_fast8_t quit = 0;
 
 #ifndef NOYUV
 #define UINT16_16(val) ((uint32_t)(val * (float)(1<<16)))
@@ -40,22 +39,18 @@ static const uint32_t YUV_MAT[3][3] = {
 };
 #endif
 
-uint_fast8_t forcerefresh = 0;
-uint_fast16_t remember_res_height = 240, width_remember = 256;
-uint_fast16_t pixels_shifting_remove;
-
+static uint_fast8_t forcerefresh = 0;
 static uint32_t update_window_size(uint32_t w, uint32_t h);
+
+static uint8_t* dst_yuv[3];
 
 /* This is solely relying on the IPU chip implemented in the kernel
  * for centering, scaling (with bilinear filtering) etc...
 */
 static void video_update(void)
 {
-	uint16_t height;
-	uint16_t width;
-	uint16_t i;
-	uint_fast8_t j, a, plane;
-	uint8_t* dst_yuv[3];
+	uint_fast16_t height, width, i, pixels_shifting_remove;
+	uint_fast8_t a, plane;
 	
 	if (sms.console == CONSOLE_GG)
 	{
@@ -65,7 +60,7 @@ static void video_update(void)
 		pixels_shifting_remove = (256 * 24) + 48;
 		height = 144;
 		width = 160;
-		if (remember_res_height != 144 || forcerefresh == 1)
+		if (sdl_screen->h != 144 || forcerefresh == 1)
 		{
 			update_window_size(160, 144);
 			forcerefresh = 0;
@@ -76,7 +71,7 @@ static void video_update(void)
 		pixels_shifting_remove = (vdp.reg[0] & 0x20) ? 8 : 0;
 		height = vdp.height;
 		width = 256 - pixels_shifting_remove;
-		if (width != width_remember || remember_res_height != vdp.height || forcerefresh == 1)
+		if (width != sdl_screen->w || sdl_screen->h != vdp.height || forcerefresh == 1)
 		{
 			update_window_size(width, vdp.height);
 			forcerefresh = 0;
@@ -85,24 +80,26 @@ static void video_update(void)
 	
 	/* Yes, this mess is really for the 8-bits palette mode.*/
 	if (bitmap.pal.update == 1){
-		for(i = 0; i < PALETTE_SIZE; i += 1){
-			if(bitmap.pal.dirty[i]){
-				for(a=0;a<8;a++){
+		for(i = 0; i < PALETTE_SIZE; i += 1)
+		{
+			if(bitmap.pal.dirty[i])
+			{
+				for(a=0;a<8;a++)
+				{
+					#ifdef NOYUV
 					palette_8bpp[i+(a*32)].r = (bitmap.pal.color[i][0]);
 					palette_8bpp[i+(a*32)].g = (bitmap.pal.color[i][1]);
 					palette_8bpp[i+(a*32)].b = (bitmap.pal.color[i][2]);
+					#else
+					/* Set DRM palette */
+					drm_palette[0][i+(a*32)] = ( ( UINT16_16(  0) + YUV_MAT[0][0] * bitmap.pal.color[i][0] + YUV_MAT[0][1] * bitmap.pal.color[i][1] + YUV_MAT[0][2] * bitmap.pal.color[i][2]) >> 16 );
+					drm_palette[1][i+(a*32)] = ( ( UINT16_16(128) - YUV_MAT[1][0] * bitmap.pal.color[i][0] - YUV_MAT[1][1] * bitmap.pal.color[i][1] + YUV_MAT[1][2] * bitmap.pal.color[i][2]) >> 16 );
+					drm_palette[2][i+(a*32)] = ( ( UINT16_16(128) + YUV_MAT[2][0] * bitmap.pal.color[i][0] - YUV_MAT[2][1] * bitmap.pal.color[i][1] - YUV_MAT[2][2] * bitmap.pal.color[i][2]) >> 16 );
+					#endif
 				}
 			}
 		}
-		
-		/* Set DRM palette */
-		#ifndef NOYUV
-		for (i = 0; i < 256; i++){
-			drm_palette[0][i] = ( ( UINT16_16(  0) + YUV_MAT[0][0] * palette_8bpp[i].r + YUV_MAT[0][1] * palette_8bpp[i].g + YUV_MAT[0][2] * palette_8bpp[i].b) >> 16 );
-			drm_palette[1][i] = ( ( UINT16_16(128) - YUV_MAT[1][0] * palette_8bpp[i].r - YUV_MAT[1][1] * palette_8bpp[i].g + YUV_MAT[1][2] * palette_8bpp[i].b) >> 16 );
-			drm_palette[2][i] = ( ( UINT16_16(128) + YUV_MAT[2][0] * palette_8bpp[i].r - YUV_MAT[2][1] * palette_8bpp[i].g - YUV_MAT[2][2] * palette_8bpp[i].b) >> 16 );
-		}
-		#else
+		#ifdef NOYUV
 		SDL_SetPalette(sms_bitmap, SDL_LOGPAL|SDL_PHYSPAL, palette_8bpp, 0, 256);
 		SDL_SetPalette(sdl_screen, SDL_LOGPAL|SDL_PHYSPAL, palette_8bpp, 0, 256);
 		#endif
@@ -118,7 +115,6 @@ static void video_update(void)
 	 * However Johnny's code is not used because during my testing it was slower.
 	 * He still helped me understand the YUV code though, so thanks.
 	 * */
-	uint32_t srcwidth = sms_bitmap->w;
 	uint8_t *srcbase = sms_bitmap->pixels + pixels_shifting_remove;
 	dst_yuv[0] = sdl_screen->pixels;
 	dst_yuv[1] = dst_yuv[0] + height * sdl_screen->pitch;
@@ -129,7 +125,7 @@ static void video_update(void)
         register uint8_t *pal = drm_palette[plane];
         for (y=0; y < height; y++)   /* The number of lines to copy */
         {
-            register uint8_t *src = srcbase + (y*srcwidth);
+            register uint8_t *src = srcbase + (y*sms_bitmap->w);
             register uint8_t *end = src + width;
             register uint32_t *dst = (uint32_t *)&dst_yuv[plane][width * y];
 
@@ -223,11 +219,41 @@ void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode)
 	}
 }
 
-static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
+static uint32_t sdl_controls_update_input_down(SDLKey k)
 {
+	if (k == option.config_buttons[CONFIG_BUTTON_UP])
+	{
+		input.pad[0] |= INPUT_UP;
+	}
+	else if (k == option.config_buttons[CONFIG_BUTTON_LEFT])
+	{
+		input.pad[0] |= INPUT_LEFT;
+	}
+	else if (k == option.config_buttons[CONFIG_BUTTON_RIGHT])
+	{
+		input.pad[0] |= INPUT_RIGHT;
+	}
+	else if (k == option.config_buttons[CONFIG_BUTTON_DOWN])
+	{
+		input.pad[0] |= INPUT_DOWN;
+	}
+	else if (k == option.config_buttons[CONFIG_BUTTON_BUTTON1])
+	{
+		input.pad[0] |= INPUT_BUTTON1;
+	}
+	else if (k == option.config_buttons[CONFIG_BUTTON_BUTTON2])
+	{
+		input.pad[0] |= INPUT_BUTTON2;
+	}
+	else if (k == option.config_buttons[CONFIG_BUTTON_START])
+	{
+		input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
+	}
+
 	/* We can't use switch... case because we are not using constants */
 	if (sms.console == CONSOLE_COLECO)
     {
+		input.system = 0;
 		coleco.keypad[0] = 0xff;
 		coleco.keypad[1] = 0xff;
 		
@@ -244,61 +270,38 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 		else if (k == option.config_buttons[CONFIG_BUTTON_ASTERISK]) coleco.keypad[0] = 11;
 	}
 	
+	return 1;
+}
+
+static uint32_t sdl_controls_update_input_release(SDLKey k)
+{
 	if (k == option.config_buttons[CONFIG_BUTTON_UP])
 	{
-		if (p)
-			input.pad[0] |= INPUT_UP;
-		else
-			input.pad[0] &= ~INPUT_UP;
+		input.pad[0] &= ~INPUT_UP;
 	}
 	else if (k == option.config_buttons[CONFIG_BUTTON_LEFT])
 	{
-		if (p)
-			input.pad[0] |= INPUT_LEFT;
-		else
-			input.pad[0] &= ~INPUT_LEFT;
+		input.pad[0] &= ~INPUT_LEFT;
 	}
 	else if (k == option.config_buttons[CONFIG_BUTTON_RIGHT])
 	{
-		if (p)
-			input.pad[0] |= INPUT_RIGHT;
-		else
-			input.pad[0] &= ~INPUT_RIGHT;
+		input.pad[0] &= ~INPUT_RIGHT;
 	}
 	else if (k == option.config_buttons[CONFIG_BUTTON_DOWN])
 	{
-		if (p)
-			input.pad[0] |= INPUT_DOWN;
-		else
-			input.pad[0] &= ~INPUT_DOWN;
+		input.pad[0] &= ~INPUT_DOWN;
 	}
 	else if (k == option.config_buttons[CONFIG_BUTTON_BUTTON1])
 	{
-		if (p)
-			input.pad[0] |= INPUT_BUTTON1;
-		else
-			input.pad[0] &= ~INPUT_BUTTON1;
+		input.pad[0] &= ~INPUT_BUTTON1;
 	}
 	else if (k == option.config_buttons[CONFIG_BUTTON_BUTTON2])
 	{
-		if (p)
-			input.pad[0] |= INPUT_BUTTON2;
-		else
-			input.pad[0] &= ~INPUT_BUTTON2;
+		input.pad[0] &= ~INPUT_BUTTON2;
 	}
 	else if (k == option.config_buttons[CONFIG_BUTTON_START])
 	{
-		if (p)
-			input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
-		else
-			input.system &= (sms.console == CONSOLE_GG) ? ~INPUT_START : ~INPUT_PAUSE;
-	}
-	else if (k == SDLK_RCTRL || k == SDLK_ESCAPE)
-	{
-		if (p)
-			selectpressed = 1;
-		else
-			selectpressed = 0;
+		input.system &= (sms.console == CONSOLE_GG) ? ~INPUT_START : ~INPUT_PAUSE;
 	}
 	
 	if (sms.console == CONSOLE_COLECO) input.system = 0;
@@ -399,53 +402,40 @@ static const char* Return_Text_Button(uint32_t button)
 		/* UP button */
 		case 273:
 			return "DPAD UP";
-		break;
 		/* DOWN button */
 		case 274:
 			return "DPAD DOWN";
-		break;
 		/* LEFT button */
 		case 276:
 			return "DPAD LEFT";
-		break;
 		/* RIGHT button */
 		case 275:
 			return "DPAD RIGHT";
-		break;
 		/* A button */
 		case 306:
 			return "A button";
-		break;
 		/* B button */
 		case 308:
 			return "B button";
-		break;
 		/* X button */
 		case 304:
 			return "X button";
-		break;
 		/* Y button */
 		case 32:
 			return "Y button";
-		break;
 		/* L button */
 		case 9:
 			return "L Shoulder";
-		break;
 		/* R button */
 		case 8:
 			return "R Shoulder";
-		break;
 		/* Start */
 		case 13:
 			return "Start button";
-		break;
 		case 27:
 			return "Select button";
-		break;
 		default:
 			return "...";
-		break;
 	}	
 }
 
@@ -540,7 +530,7 @@ static void Input_Remapping()
                 default:
 					SDL_FillRect( backbuffer, NULL, 0 );
 					print_string("Press button for mapping", TextWhite, TextBlue, 24, 64, backbuffer->pixels);
-					bitmap_scale(0,0,240,160,sdl_screen->w,sdl_screen->h,240,0,(uint16_t* restrict)backbuffer->pixels,(uint16_t* restrict)sdl_screen->pixels);
+					SDL_BlitSurface(backbuffer, NULL, sdl_screen, NULL);
 					SDL_Flip(sdl_screen);
 					exit_map = 0;
 					while( !exit_map )
@@ -636,26 +626,23 @@ static void Input_Remapping()
 			if (currentselection == 11) print_string(text, TextRed, 0, 145, 65, backbuffer->pixels);
 			else print_string(text, TextWhite, 0, 145, 65, backbuffer->pixels);
 		}
-			
-		bitmap_scale(0,0,240,160,sdl_screen->w,sdl_screen->h,240,0,(uint16_t* restrict)backbuffer->pixels,(uint16_t* restrict)sdl_screen->pixels);
+		SDL_BlitSurface(backbuffer, NULL, sdl_screen, NULL);
 		SDL_Flip(sdl_screen);
 	}
 	
 }
 
-void Menu()
+static void Menu()
 {
 	uint_fast8_t i;
 	char text[50];
     int16_t pressed = 0;
     int16_t currentselection = 1;
-
-    SDL_Rect dstRect;
     SDL_Event Event;
     
     sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_SWSURFACE);
     
-    while (((currentselection != 1) && (currentselection != 8)) || (!pressed))
+    while (((currentselection != 1) && (currentselection != 7)) || (!pressed))
     {
         pressed = 0;
  		SDL_FillRect( backbuffer, NULL, 0 );
@@ -674,25 +661,20 @@ void Menu()
 		
 		if (currentselection == 3) print_string(text, TextBlue, 0, 5, 51, backbuffer->pixels);
 		else print_string(text, TextWhite, 0, 5, 51, backbuffer->pixels);
-
-		snprintf(text, sizeof(text), "Sound volume : %d", option.soundlevel);
 		
-		if (currentselection == 4) print_string(text, TextBlue, 0, 5, 63, backbuffer->pixels);
-		else print_string(text, TextWhite, 0, 5, 63, backbuffer->pixels);
-		
-		if (currentselection == 5) print_string("Input remapping", TextBlue, 0, 5, 75, backbuffer->pixels);
-		else print_string("Input remapping", TextWhite, 0, 5, 75, backbuffer->pixels);
+		if (currentselection == 4) print_string("Input remapping", TextBlue, 0, 5, 63, backbuffer->pixels);
+		else print_string("Input remapping", TextWhite, 0, 5, 63, backbuffer->pixels);
 		
 		snprintf(text, sizeof(text), "FM Sound : %d", option.fm);
 		
-		if (currentselection == 6) print_string(text, TextBlue, 0, 5, 87, backbuffer->pixels);
-		else print_string(text, TextWhite, 0, 5, 87, backbuffer->pixels);
+		if (currentselection == 5) print_string(text, TextBlue, 0, 5, 75, backbuffer->pixels);
+		else print_string(text, TextWhite, 0, 5, 75, backbuffer->pixels);
 		
-		if (currentselection == 7) print_string("Reset", TextBlue, 0, 5, 99, backbuffer->pixels);
-		else print_string("Reset", TextWhite, 0, 5, 99, backbuffer->pixels);
+		if (currentselection == 6) print_string("Reset", TextBlue, 0, 5, 87, backbuffer->pixels);
+		else print_string("Reset", TextWhite, 0, 5, 87, backbuffer->pixels);
 
-        if (currentselection == 8) print_string("Quit", TextBlue, 0, 5, 111, backbuffer->pixels);
-		else print_string("Quit", TextWhite, 0, 5, 111, backbuffer->pixels);
+        if (currentselection == 7) print_string("Quit", TextBlue, 0, 5, 99, backbuffer->pixels);
+		else print_string("Quit", TextWhite, 0, 5, 99, backbuffer->pixels);
 
         
 		print_string("By gameblabla, ekeeke", TextWhite, 0, 5, 145, backbuffer->pixels);
@@ -706,11 +688,11 @@ void Menu()
                     case SDLK_UP:
                         currentselection--;
                         if (currentselection == 0)
-                            currentselection = 8;
+                            currentselection = 7;
                         break;
                     case SDLK_DOWN:
                         currentselection++;
-                        if (currentselection == 9)
+                        if (currentselection == 8)
                             currentselection = 1;
                         break;
                     case SDLK_LCTRL:
@@ -725,12 +707,7 @@ void Menu()
                             case 3:
                                 if (save_slot > 0) save_slot--;
 							break;
-							case 4:
-								option.soundlevel--;
-								if (option.soundlevel < 1)
-									option.soundlevel = 4;
-							break;
-							case 6:
+							case 5:
 								if (option.fm > 0) option.fm--;
 							break;
                         }
@@ -744,12 +721,7 @@ void Menu()
 								if (save_slot == 10)
 									save_slot = 9;
 							break;
-							case 4:
-								option.soundlevel++;
-								if (option.soundlevel > 4)
-									option.soundlevel = 1;
-							break;
-							case 6:
+							case 5:
 								if (option.fm < 1) option.fm++;
 							break;
                         }
@@ -768,20 +740,15 @@ void Menu()
         {
             switch(currentselection)
             {
-                case 7:
+                case 6:
                     //reset
                     Sound_Close();
                     Sound_Init();
                     system_poweron();
                     currentselection = 1;
                     break;
-				case 5:
-					Input_Remapping();
-				break;
 				case 4:
-					option.soundlevel++;
-					if (option.soundlevel > 4)
-						option.soundlevel = 1;
+					Input_Remapping();
 				break;
                 case 2 :
                     smsp_state(save_slot, 1);
@@ -806,7 +773,7 @@ void Menu()
 		SDL_Flip(sdl_screen);
 	}
     
-    if (currentselection == 8)
+    if (currentselection == 7)
         quit = 1;
 }
 
@@ -886,14 +853,10 @@ uint32_t update_window_size(uint32_t w, uint32_t h)
 {
 	if (h == 0) h = 192;
 #ifdef NOYUV
-	sdl_screen = SDL_SetVideoMode(w, h, 8, SDL_HWSURFACE | SDL_HWPALETTE);
+	sdl_screen = SDL_SetVideoMode(w, h, 8, SDL_HWSURFACE | SDL_TRIPLEBUF | SDL_HWPALETTE);
 #else
-	sdl_screen = SDL_SetVideoMode(w, h, 24, SDL_HWSURFACE | SDL_YUV444);
+	sdl_screen = SDL_SetVideoMode(w, h, 24, SDL_HWSURFACE | SDL_TRIPLEBUF | SDL_YUV444 | SDL_ANYFORMAT | SDL_FULLSCREEN);
 #endif
-			
-	width_remember = w;
-	remember_res_height = h;
-	
 	return 0;
 }
 
@@ -970,7 +933,6 @@ int main (int argc, char *argv[])
 	bitmap.width = VIDEO_WIDTH_SMS;
 	bitmap.height = VIDEO_HEIGHT_SMS;
 	bitmap.depth = 8;
-	bitmap.granularity = 1;
 	bitmap.data = (uint8_t *)sms_bitmap->pixels;
 	bitmap.pitch = sms_bitmap->pitch;
 	bitmap.viewport.w = VIDEO_WIDTH_SMS;
@@ -985,19 +947,27 @@ int main (int argc, char *argv[])
 	}
 	
 	bios_init();
-
-	Sound_Init();
+	
+	option.sndrate = SOUND_FREQUENCY;
 	
 	// Initialize all systems and power on
 	system_poweron();
+	
+	Sound_Init();
 	
 	for(i = 0; i < PALETTE_SIZE; i += 1)
 	{
 		if(bitmap.pal.dirty[i])
 		{
+			#ifdef NOYUV
 			palette_8bpp[i].r = 0;
 			palette_8bpp[i].g = 0;
 			palette_8bpp[i].b = 0;
+			#else
+			drm_palette[0][i] = 0;
+			drm_palette[1][i] = 0;
+			drm_palette[2][i] = 0;
+			#endif
 		}
 	}
 	
@@ -1010,38 +980,36 @@ int main (int argc, char *argv[])
 	// Loop until the user closes the window
 	while (!quit) 
 	{
-		// Execute frame(s)
-		system_frame(0);
-		
-		// Refresh video data
-		video_update();
-		
-		// Output audio
-		Sound_Update();
-
-		if (selectpressed == 1)
-		{
-            Menu();
-            input.system &= (IS_GG) ? ~INPUT_START : ~INPUT_PAUSE;
-            selectpressed = 0;
-            forcerefresh = 1;
-		}
-
 		if (SDL_PollEvent(&event)) 
 		{
 			switch(event.type) 
 			{
 				case SDL_KEYUP:
-					sdl_controls_update_input(event.key.keysym.sym, 0);
+					sdl_controls_update_input_release(event.key.keysym.sym);
 				break;
 				case SDL_KEYDOWN:
-					sdl_controls_update_input(event.key.keysym.sym, 1);
+					if (event.key.keysym.sym == SDLK_ESCAPE)
+					{
+						Menu();
+						input.system &= (IS_GG) ? ~INPUT_START : ~INPUT_PAUSE;
+						forcerefresh = 1;
+					}
+					sdl_controls_update_input_down(event.key.keysym.sym);
 				break;
 				case SDL_QUIT:
 					quit = 1;
 				break;
 			}
 		}
+
+		// Execute frame(s)
+		system_frame(0);
+		
+		// Refresh sound data
+		Sound_Update(snd.output, snd.sample_count);
+		
+		// Refresh video data
+		video_update();
 	}
 	
 	config_save();

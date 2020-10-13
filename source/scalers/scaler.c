@@ -63,7 +63,7 @@ void upscale_160x144_to_240x160(uint16_t* restrict src, uint16_t* restrict dst){
             uint16_t c[3][10];
             //stretch 2px to 3px(horizonal)
             for(int i=0; i<10; i++){
-                uint16_t r0,r1,g0,g1,b1,b2;
+                uint16_t r0,g0,g1,b1;
                 c[0][i] = buffer_mem[x + i * 256];
                 r0 = buffer_mem[x + i * 256]     & RMASK;
                 g0 = buffer_mem[x + i * 256]     & GMASK;

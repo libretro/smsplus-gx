@@ -15,16 +15,13 @@
 #include "shared.h"
 
 static pa_simple *pulse_stream;
-static int16_t buffer_snd[SOUND_FREQUENCY * 2];
 
 void Sound_Init()
 {
 	pa_sample_spec ss;
 	ss.format = PA_SAMPLE_S16LE;
 	ss.channels = 2;
-	ss.rate = SOUND_FREQUENCY;
-	
-	option.sndrate = SOUND_FREQUENCY;
+	ss.rate = option.sndrate;
 	
 	/* Create a new playback stream */
 	pulse_stream = pa_simple_new(NULL, "smsplusgx", PA_STREAM_PLAYBACK, NULL, "smsplusgx", &ss, NULL, NULL, NULL);
@@ -35,16 +32,9 @@ void Sound_Init()
 	return;
 }
 
-void Sound_Update()
+void Sound_Update(int16_t* sound_buffer, unsigned long len)
 {
-	size_t i;
-	size_t len = (SOUND_FREQUENCY / snd.fps);
-	for (i = 0; i < len; i++) 
-	{
-		buffer_snd[i * 2] = snd.output[1][i] * option.soundlevel;
-		buffer_snd[i * 2 + 1] = snd.output[0][i] * option.soundlevel;
-	}
-	if (pa_simple_write(pulse_stream, buffer_snd, len * 4, NULL) < 0)
+	if (pa_simple_write(pulse_stream, sound_buffer, len, NULL) < 0)
 	{
 		fprintf(stderr, "PulseAudio: pa_simple_write() failed!\n");
 	}
