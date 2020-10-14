@@ -14,7 +14,6 @@
 
 static ao_device *aodevice;
 static ao_sample_format aoformat;
-static int16_t buffer_snd[SOUND_FREQUENCY * 2];
 
 void Sound_Init()
 {
@@ -23,25 +22,17 @@ void Sound_Init()
 	
 	aoformat.bits = 16;
 	aoformat.channels = 2;
-	aoformat.rate = SOUND_FREQUENCY;
+	aoformat.rate = option.sndrate;
 	aoformat.byte_format = AO_FMT_LITTLE;
-	option.sndrate = SOUND_FREQUENCY;
 	
 	aodevice = ao_open_live(ao_default_driver_id(), &aoformat, NULL); // Live output
 	if (!aodevice)
 		aodevice = ao_open_live(ao_driver_id("null"), &aoformat, NULL);
 }
 
-void Sound_Update()
+void Sound_Update(int16_t* sound_buffer, unsigned long len)
 {
-	int32_t i;
-
-	for (i = 0; i < (SOUND_FREQUENCY / snd.fps); i++) 
-	{
-		buffer_snd[i * 2] = snd.output[1][i] * option.soundlevel;
-		buffer_snd[i * 2 + 1] = snd.output[0][i] * option.soundlevel;
-	}
-	ao_play(aodevice, (char*)buffer_snd, SOUND_FREQUENCY / snd.fps);
+	ao_play(aodevice, (char*)sound_buffer, len);
 }
 
 void Sound_Close()

@@ -1214,7 +1214,7 @@ INLINE void bit_xy(int bit, uint8_t value)
 /***************************************************************
  * RES  bit,r8
  ***************************************************************/
-INLINE uint8_t res(int bit, uint8_t value)
+INLINE uint8_t res_z80(int bit, uint8_t value)
 {
 	return value & ~(1<<bit);
 }
@@ -1624,77 +1624,77 @@ OP(cb,7d) { bit(7, L);              } /* BIT  7,L         */
 OP(cb,7e) { bit_hl(7, rm(HL));      } /* BIT  7,(HL)      */
 OP(cb,7f) { bit(7, A);              } /* BIT  7,A         */
 
-OP(cb,80) { B = res(0, B);          } /* RES  0,B         */
-OP(cb,81) { C = res(0, C);          } /* RES  0,C         */
-OP(cb,82) { D = res(0, D);          } /* RES  0,D         */
-OP(cb,83) { E = res(0, E);          } /* RES  0,E         */
-OP(cb,84) { H = res(0, H);          } /* RES  0,H         */
-OP(cb,85) { L = res(0, L);          } /* RES  0,L         */
-OP(cb,86) { wm(HL, res(0, rm(HL))); } /* RES  0,(HL)      */
-OP(cb,87) { A = res(0, A);          } /* RES  0,A         */
+OP(cb,80) { B = res_z80(0, B);          } /* RES  0,B         */
+OP(cb,81) { C = res_z80(0, C);          } /* RES  0,C         */
+OP(cb,82) { D = res_z80(0, D);          } /* RES  0,D         */
+OP(cb,83) { E = res_z80(0, E);          } /* RES  0,E         */
+OP(cb,84) { H = res_z80(0, H);          } /* RES  0,H         */
+OP(cb,85) { L = res_z80(0, L);          } /* RES  0,L         */
+OP(cb,86) { wm(HL, res_z80(0, rm(HL))); } /* RES  0,(HL)      */
+OP(cb,87) { A = res_z80(0, A);          } /* RES  0,A         */
 
-OP(cb,88) { B = res(1, B);          } /* RES  1,B         */
-OP(cb,89) { C = res(1, C);          } /* RES  1,C         */
-OP(cb,8a) { D = res(1, D);          } /* RES  1,D         */
-OP(cb,8b) { E = res(1, E);          } /* RES  1,E         */
-OP(cb,8c) { H = res(1, H);          } /* RES  1,H         */
-OP(cb,8d) { L = res(1, L);          } /* RES  1,L         */
-OP(cb,8e) { wm(HL, res(1, rm(HL))); } /* RES  1,(HL)      */
-OP(cb,8f) { A = res(1, A);          } /* RES  1,A         */
+OP(cb,88) { B = res_z80(1, B);          } /* RES  1,B         */
+OP(cb,89) { C = res_z80(1, C);          } /* RES  1,C         */
+OP(cb,8a) { D = res_z80(1, D);          } /* RES  1,D         */
+OP(cb,8b) { E = res_z80(1, E);          } /* RES  1,E         */
+OP(cb,8c) { H = res_z80(1, H);          } /* RES  1,H         */
+OP(cb,8d) { L = res_z80(1, L);          } /* RES  1,L         */
+OP(cb,8e) { wm(HL, res_z80(1, rm(HL))); } /* RES  1,(HL)      */
+OP(cb,8f) { A = res_z80(1, A);          } /* RES  1,A         */
 
-OP(cb,90) { B = res(2, B);          } /* RES  2,B         */
-OP(cb,91) { C = res(2, C);          } /* RES  2,C         */
-OP(cb,92) { D = res(2, D);          } /* RES  2,D         */
-OP(cb,93) { E = res(2, E);          } /* RES  2,E         */
-OP(cb,94) { H = res(2, H);          } /* RES  2,H         */
-OP(cb,95) { L = res(2, L);          } /* RES  2,L         */
-OP(cb,96) { wm(HL, res(2, rm(HL))); } /* RES  2,(HL)      */
-OP(cb,97) { A = res(2, A);          } /* RES  2,A         */
+OP(cb,90) { B = res_z80(2, B);          } /* RES  2,B         */
+OP(cb,91) { C = res_z80(2, C);          } /* RES  2,C         */
+OP(cb,92) { D = res_z80(2, D);          } /* RES  2,D         */
+OP(cb,93) { E = res_z80(2, E);          } /* RES  2,E         */
+OP(cb,94) { H = res_z80(2, H);          } /* RES  2,H         */
+OP(cb,95) { L = res_z80(2, L);          } /* RES  2,L         */
+OP(cb,96) { wm(HL, res_z80(2, rm(HL))); } /* RES  2,(HL)      */
+OP(cb,97) { A = res_z80(2, A);          } /* RES  2,A         */
 
-OP(cb,98) { B = res(3, B);          } /* RES  3,B         */
-OP(cb,99) { C = res(3, C);          } /* RES  3,C         */
-OP(cb,9a) { D = res(3, D);          } /* RES  3,D         */
-OP(cb,9b) { E = res(3, E);          } /* RES  3,E         */
-OP(cb,9c) { H = res(3, H);          } /* RES  3,H         */
-OP(cb,9d) { L = res(3, L);          } /* RES  3,L         */
-OP(cb,9e) { wm(HL, res(3, rm(HL))); } /* RES  3,(HL)      */
-OP(cb,9f) { A = res(3, A);          } /* RES  3,A         */
+OP(cb,98) { B = res_z80(3, B);          } /* RES  3,B         */
+OP(cb,99) { C = res_z80(3, C);          } /* RES  3,C         */
+OP(cb,9a) { D = res_z80(3, D);          } /* RES  3,D         */
+OP(cb,9b) { E = res_z80(3, E);          } /* RES  3,E         */
+OP(cb,9c) { H = res_z80(3, H);          } /* RES  3,H         */
+OP(cb,9d) { L = res_z80(3, L);          } /* RES  3,L         */
+OP(cb,9e) { wm(HL, res_z80(3, rm(HL))); } /* RES  3,(HL)      */
+OP(cb,9f) { A = res_z80(3, A);          } /* RES  3,A         */
 
-OP(cb,a0) { B = res(4, B);          } /* RES  4,B         */
-OP(cb,a1) { C = res(4, C);          } /* RES  4,C         */
-OP(cb,a2) { D = res(4, D);          } /* RES  4,D         */
-OP(cb,a3) { E = res(4, E);          } /* RES  4,E         */
-OP(cb,a4) { H = res(4, H);          } /* RES  4,H         */
-OP(cb,a5) { L = res(4, L);          } /* RES  4,L         */
-OP(cb,a6) { wm(HL, res(4, rm(HL))); } /* RES  4,(HL)      */
-OP(cb,a7) { A = res(4, A);          } /* RES  4,A         */
+OP(cb,a0) { B = res_z80(4, B);          } /* RES  4,B         */
+OP(cb,a1) { C = res_z80(4, C);          } /* RES  4,C         */
+OP(cb,a2) { D = res_z80(4, D);          } /* RES  4,D         */
+OP(cb,a3) { E = res_z80(4, E);          } /* RES  4,E         */
+OP(cb,a4) { H = res_z80(4, H);          } /* RES  4,H         */
+OP(cb,a5) { L = res_z80(4, L);          } /* RES  4,L         */
+OP(cb,a6) { wm(HL, res_z80(4, rm(HL))); } /* RES  4,(HL)      */
+OP(cb,a7) { A = res_z80(4, A);          } /* RES  4,A         */
 
-OP(cb,a8) { B = res(5, B);          } /* RES  5,B         */
-OP(cb,a9) { C = res(5, C);          } /* RES  5,C         */
-OP(cb,aa) { D = res(5, D);          } /* RES  5,D         */
-OP(cb,ab) { E = res(5, E);          } /* RES  5,E         */
-OP(cb,ac) { H = res(5, H);          } /* RES  5,H         */
-OP(cb,ad) { L = res(5, L);          } /* RES  5,L         */
-OP(cb,ae) { wm(HL, res(5, rm(HL))); } /* RES  5,(HL)      */
-OP(cb,af) { A = res(5, A);          } /* RES  5,A         */
+OP(cb,a8) { B = res_z80(5, B);          } /* RES  5,B         */
+OP(cb,a9) { C = res_z80(5, C);          } /* RES  5,C         */
+OP(cb,aa) { D = res_z80(5, D);          } /* RES  5,D         */
+OP(cb,ab) { E = res_z80(5, E);          } /* RES  5,E         */
+OP(cb,ac) { H = res_z80(5, H);          } /* RES  5,H         */
+OP(cb,ad) { L = res_z80(5, L);          } /* RES  5,L         */
+OP(cb,ae) { wm(HL, res_z80(5, rm(HL))); } /* RES  5,(HL)      */
+OP(cb,af) { A = res_z80(5, A);          } /* RES  5,A         */
 
-OP(cb,b0) { B = res(6, B);          } /* RES  6,B         */
-OP(cb,b1) { C = res(6, C);          } /* RES  6,C         */
-OP(cb,b2) { D = res(6, D);          } /* RES  6,D         */
-OP(cb,b3) { E = res(6, E);          } /* RES  6,E         */
-OP(cb,b4) { H = res(6, H);          } /* RES  6,H         */
-OP(cb,b5) { L = res(6, L);          } /* RES  6,L         */
-OP(cb,b6) { wm(HL, res(6, rm(HL))); } /* RES  6,(HL)      */
-OP(cb,b7) { A = res(6, A);          } /* RES  6,A         */
+OP(cb,b0) { B = res_z80(6, B);          } /* RES  6,B         */
+OP(cb,b1) { C = res_z80(6, C);          } /* RES  6,C         */
+OP(cb,b2) { D = res_z80(6, D);          } /* RES  6,D         */
+OP(cb,b3) { E = res_z80(6, E);          } /* RES  6,E         */
+OP(cb,b4) { H = res_z80(6, H);          } /* RES  6,H         */
+OP(cb,b5) { L = res_z80(6, L);          } /* RES  6,L         */
+OP(cb,b6) { wm(HL, res_z80(6, rm(HL))); } /* RES  6,(HL)      */
+OP(cb,b7) { A = res_z80(6, A);          } /* RES  6,A         */
 
-OP(cb,b8) { B = res(7, B);          } /* RES  7,B         */
-OP(cb,b9) { C = res(7, C);          } /* RES  7,C         */
-OP(cb,ba) { D = res(7, D);          } /* RES  7,D         */
-OP(cb,bb) { E = res(7, E);          } /* RES  7,E         */
-OP(cb,bc) { H = res(7, H);          } /* RES  7,H         */
-OP(cb,bd) { L = res(7, L);          } /* RES  7,L         */
-OP(cb,be) { wm(HL, res(7, rm(HL))); } /* RES  7,(HL)      */
-OP(cb,bf) { A = res(7, A);          } /* RES  7,A         */
+OP(cb,b8) { B = res_z80(7, B);          } /* RES  7,B         */
+OP(cb,b9) { C = res_z80(7, C);          } /* RES  7,C         */
+OP(cb,ba) { D = res_z80(7, D);          } /* RES  7,D         */
+OP(cb,bb) { E = res_z80(7, E);          } /* RES  7,E         */
+OP(cb,bc) { H = res_z80(7, H);          } /* RES  7,H         */
+OP(cb,bd) { L = res_z80(7, L);          } /* RES  7,L         */
+OP(cb,be) { wm(HL, res_z80(7, rm(HL))); } /* RES  7,(HL)      */
+OP(cb,bf) { A = res_z80(7, A);          } /* RES  7,A         */
 
 OP(cb,c0) { B = set(0, B);          } /* SET  0,B         */
 OP(cb,c1) { C = set(0, C);          } /* SET  0,C         */
@@ -1917,77 +1917,77 @@ OP(xycb,7d) { xycb_7e();                         } /* BIT  7,(XY+o)    */
 OP(xycb,7e) { bit_xy(7, rm(Z80.ea));               } /* BIT  7,(XY+o)    */
 OP(xycb,7f) { xycb_7e();                         } /* BIT  7,(XY+o)    */
 
-OP(xycb,80) { B = res(0, rm(Z80.ea)); wm(Z80.ea, B); } /* RES  0,B=(XY+o)  */
-OP(xycb,81) { C = res(0, rm(Z80.ea)); wm(Z80.ea, C); } /* RES  0,C=(XY+o)  */
-OP(xycb,82) { D = res(0, rm(Z80.ea)); wm(Z80.ea, D); } /* RES  0,D=(XY+o)  */
-OP(xycb,83) { E = res(0, rm(Z80.ea)); wm(Z80.ea, E); } /* RES  0,E=(XY+o)  */
-OP(xycb,84) { H = res(0, rm(Z80.ea)); wm(Z80.ea, H); } /* RES  0,H=(XY+o)  */
-OP(xycb,85) { L = res(0, rm(Z80.ea)); wm(Z80.ea, L); } /* RES  0,L=(XY+o)  */
-OP(xycb,86) { wm(Z80.ea, res(0, rm(Z80.ea)));        } /* RES  0,(XY+o)    */
-OP(xycb,87) { A = res(0, rm(Z80.ea)); wm(Z80.ea, A); } /* RES  0,A=(XY+o)  */
+OP(xycb,80) { B = res_z80(0, rm(Z80.ea)); wm(Z80.ea, B); } /* RES  0,B=(XY+o)  */
+OP(xycb,81) { C = res_z80(0, rm(Z80.ea)); wm(Z80.ea, C); } /* RES  0,C=(XY+o)  */
+OP(xycb,82) { D = res_z80(0, rm(Z80.ea)); wm(Z80.ea, D); } /* RES  0,D=(XY+o)  */
+OP(xycb,83) { E = res_z80(0, rm(Z80.ea)); wm(Z80.ea, E); } /* RES  0,E=(XY+o)  */
+OP(xycb,84) { H = res_z80(0, rm(Z80.ea)); wm(Z80.ea, H); } /* RES  0,H=(XY+o)  */
+OP(xycb,85) { L = res_z80(0, rm(Z80.ea)); wm(Z80.ea, L); } /* RES  0,L=(XY+o)  */
+OP(xycb,86) { wm(Z80.ea, res_z80(0, rm(Z80.ea)));        } /* RES  0,(XY+o)    */
+OP(xycb,87) { A = res_z80(0, rm(Z80.ea)); wm(Z80.ea, A); } /* RES  0,A=(XY+o)  */
 
-OP(xycb,88) { B = res(1, rm(Z80.ea)); wm(Z80.ea, B); } /* RES  1,B=(XY+o)  */
-OP(xycb,89) { C = res(1, rm(Z80.ea)); wm(Z80.ea, C); } /* RES  1,C=(XY+o)  */
-OP(xycb,8a) { D = res(1, rm(Z80.ea)); wm(Z80.ea, D); } /* RES  1,D=(XY+o)  */
-OP(xycb,8b) { E = res(1, rm(Z80.ea)); wm(Z80.ea, E); } /* RES  1,E=(XY+o)  */
-OP(xycb,8c) { H = res(1, rm(Z80.ea)); wm(Z80.ea, H); } /* RES  1,H=(XY+o)  */
-OP(xycb,8d) { L = res(1, rm(Z80.ea)); wm(Z80.ea, L); } /* RES  1,L=(XY+o)  */
-OP(xycb,8e) { wm(Z80.ea, res(1, rm(Z80.ea)));        } /* RES  1,(XY+o)    */
-OP(xycb,8f) { A = res(1, rm(Z80.ea)); wm(Z80.ea, A); } /* RES  1,A=(XY+o)  */
+OP(xycb,88) { B = res_z80(1, rm(Z80.ea)); wm(Z80.ea, B); } /* RES  1,B=(XY+o)  */
+OP(xycb,89) { C = res_z80(1, rm(Z80.ea)); wm(Z80.ea, C); } /* RES  1,C=(XY+o)  */
+OP(xycb,8a) { D = res_z80(1, rm(Z80.ea)); wm(Z80.ea, D); } /* RES  1,D=(XY+o)  */
+OP(xycb,8b) { E = res_z80(1, rm(Z80.ea)); wm(Z80.ea, E); } /* RES  1,E=(XY+o)  */
+OP(xycb,8c) { H = res_z80(1, rm(Z80.ea)); wm(Z80.ea, H); } /* RES  1,H=(XY+o)  */
+OP(xycb,8d) { L = res_z80(1, rm(Z80.ea)); wm(Z80.ea, L); } /* RES  1,L=(XY+o)  */
+OP(xycb,8e) { wm(Z80.ea, res_z80(1, rm(Z80.ea)));        } /* RES  1,(XY+o)    */
+OP(xycb,8f) { A = res_z80(1, rm(Z80.ea)); wm(Z80.ea, A); } /* RES  1,A=(XY+o)  */
 
-OP(xycb,90) { B = res(2, rm(Z80.ea)); wm(Z80.ea, B); } /* RES  2,B=(XY+o)  */
-OP(xycb,91) { C = res(2, rm(Z80.ea)); wm(Z80.ea, C); } /* RES  2,C=(XY+o)  */
-OP(xycb,92) { D = res(2, rm(Z80.ea)); wm(Z80.ea, D); } /* RES  2,D=(XY+o)  */
-OP(xycb,93) { E = res(2, rm(Z80.ea)); wm(Z80.ea, E); } /* RES  2,E=(XY+o)  */
-OP(xycb,94) { H = res(2, rm(Z80.ea)); wm(Z80.ea, H); } /* RES  2,H=(XY+o)  */
-OP(xycb,95) { L = res(2, rm(Z80.ea)); wm(Z80.ea, L); } /* RES  2,L=(XY+o)  */
-OP(xycb,96) { wm(Z80.ea, res(2, rm(Z80.ea)));        } /* RES  2,(XY+o)    */
-OP(xycb,97) { A = res(2, rm(Z80.ea)); wm(Z80.ea, A); } /* RES  2,A=(XY+o)  */
+OP(xycb,90) { B = res_z80(2, rm(Z80.ea)); wm(Z80.ea, B); } /* RES  2,B=(XY+o)  */
+OP(xycb,91) { C = res_z80(2, rm(Z80.ea)); wm(Z80.ea, C); } /* RES  2,C=(XY+o)  */
+OP(xycb,92) { D = res_z80(2, rm(Z80.ea)); wm(Z80.ea, D); } /* RES  2,D=(XY+o)  */
+OP(xycb,93) { E = res_z80(2, rm(Z80.ea)); wm(Z80.ea, E); } /* RES  2,E=(XY+o)  */
+OP(xycb,94) { H = res_z80(2, rm(Z80.ea)); wm(Z80.ea, H); } /* RES  2,H=(XY+o)  */
+OP(xycb,95) { L = res_z80(2, rm(Z80.ea)); wm(Z80.ea, L); } /* RES  2,L=(XY+o)  */
+OP(xycb,96) { wm(Z80.ea, res_z80(2, rm(Z80.ea)));        } /* RES  2,(XY+o)    */
+OP(xycb,97) { A = res_z80(2, rm(Z80.ea)); wm(Z80.ea, A); } /* RES  2,A=(XY+o)  */
 
-OP(xycb,98) { B = res(3, rm(Z80.ea)); wm(Z80.ea, B); } /* RES  3,B=(XY+o)  */
-OP(xycb,99) { C = res(3, rm(Z80.ea)); wm(Z80.ea, C); } /* RES  3,C=(XY+o)  */
-OP(xycb,9a) { D = res(3, rm(Z80.ea)); wm(Z80.ea, D); } /* RES  3,D=(XY+o)  */
-OP(xycb,9b) { E = res(3, rm(Z80.ea)); wm(Z80.ea, E); } /* RES  3,E=(XY+o)  */
-OP(xycb,9c) { H = res(3, rm(Z80.ea)); wm(Z80.ea, H); } /* RES  3,H=(XY+o)  */
-OP(xycb,9d) { L = res(3, rm(Z80.ea)); wm(Z80.ea, L); } /* RES  3,L=(XY+o)  */
-OP(xycb,9e) { wm(Z80.ea, res(3, rm(Z80.ea)));        } /* RES  3,(XY+o)    */
-OP(xycb,9f) { A = res(3, rm(Z80.ea)); wm(Z80.ea, A); } /* RES  3,A=(XY+o)  */
+OP(xycb,98) { B = res_z80(3, rm(Z80.ea)); wm(Z80.ea, B); } /* RES  3,B=(XY+o)  */
+OP(xycb,99) { C = res_z80(3, rm(Z80.ea)); wm(Z80.ea, C); } /* RES  3,C=(XY+o)  */
+OP(xycb,9a) { D = res_z80(3, rm(Z80.ea)); wm(Z80.ea, D); } /* RES  3,D=(XY+o)  */
+OP(xycb,9b) { E = res_z80(3, rm(Z80.ea)); wm(Z80.ea, E); } /* RES  3,E=(XY+o)  */
+OP(xycb,9c) { H = res_z80(3, rm(Z80.ea)); wm(Z80.ea, H); } /* RES  3,H=(XY+o)  */
+OP(xycb,9d) { L = res_z80(3, rm(Z80.ea)); wm(Z80.ea, L); } /* RES  3,L=(XY+o)  */
+OP(xycb,9e) { wm(Z80.ea, res_z80(3, rm(Z80.ea)));        } /* RES  3,(XY+o)    */
+OP(xycb,9f) { A = res_z80(3, rm(Z80.ea)); wm(Z80.ea, A); } /* RES  3,A=(XY+o)  */
 
-OP(xycb,a0) { B = res(4, rm(Z80.ea)); wm(Z80.ea, B); } /* RES  4,B=(XY+o)  */
-OP(xycb,a1) { C = res(4, rm(Z80.ea)); wm(Z80.ea, C); } /* RES  4,C=(XY+o)  */
-OP(xycb,a2) { D = res(4, rm(Z80.ea)); wm(Z80.ea, D); } /* RES  4,D=(XY+o)  */
-OP(xycb,a3) { E = res(4, rm(Z80.ea)); wm(Z80.ea, E); } /* RES  4,E=(XY+o)  */
-OP(xycb,a4) { H = res(4, rm(Z80.ea)); wm(Z80.ea, H); } /* RES  4,H=(XY+o)  */
-OP(xycb,a5) { L = res(4, rm(Z80.ea)); wm(Z80.ea, L); } /* RES  4,L=(XY+o)  */
-OP(xycb,a6) { wm(Z80.ea, res(4, rm(Z80.ea)));        } /* RES  4,(XY+o)    */
-OP(xycb,a7) { A = res(4, rm(Z80.ea)); wm(Z80.ea, A); } /* RES  4,A=(XY+o)  */
+OP(xycb,a0) { B = res_z80(4, rm(Z80.ea)); wm(Z80.ea, B); } /* RES  4,B=(XY+o)  */
+OP(xycb,a1) { C = res_z80(4, rm(Z80.ea)); wm(Z80.ea, C); } /* RES  4,C=(XY+o)  */
+OP(xycb,a2) { D = res_z80(4, rm(Z80.ea)); wm(Z80.ea, D); } /* RES  4,D=(XY+o)  */
+OP(xycb,a3) { E = res_z80(4, rm(Z80.ea)); wm(Z80.ea, E); } /* RES  4,E=(XY+o)  */
+OP(xycb,a4) { H = res_z80(4, rm(Z80.ea)); wm(Z80.ea, H); } /* RES  4,H=(XY+o)  */
+OP(xycb,a5) { L = res_z80(4, rm(Z80.ea)); wm(Z80.ea, L); } /* RES  4,L=(XY+o)  */
+OP(xycb,a6) { wm(Z80.ea, res_z80(4, rm(Z80.ea)));        } /* RES  4,(XY+o)    */
+OP(xycb,a7) { A = res_z80(4, rm(Z80.ea)); wm(Z80.ea, A); } /* RES  4,A=(XY+o)  */
 
-OP(xycb,a8) { B = res(5, rm(Z80.ea)); wm(Z80.ea, B); } /* RES  5,B=(XY+o)  */
-OP(xycb,a9) { C = res(5, rm(Z80.ea)); wm(Z80.ea, C); } /* RES  5,C=(XY+o)  */
-OP(xycb,aa) { D = res(5, rm(Z80.ea)); wm(Z80.ea, D); } /* RES  5,D=(XY+o)  */
-OP(xycb,ab) { E = res(5, rm(Z80.ea)); wm(Z80.ea, E); } /* RES  5,E=(XY+o)  */
-OP(xycb,ac) { H = res(5, rm(Z80.ea)); wm(Z80.ea, H); } /* RES  5,H=(XY+o)  */
-OP(xycb,ad) { L = res(5, rm(Z80.ea)); wm(Z80.ea, L); } /* RES  5,L=(XY+o)  */
-OP(xycb,ae) { wm(Z80.ea, res(5, rm(Z80.ea)));        } /* RES  5,(XY+o)    */
-OP(xycb,af) { A = res(5, rm(Z80.ea)); wm(Z80.ea, A); } /* RES  5,A=(XY+o)  */
+OP(xycb,a8) { B = res_z80(5, rm(Z80.ea)); wm(Z80.ea, B); } /* RES  5,B=(XY+o)  */
+OP(xycb,a9) { C = res_z80(5, rm(Z80.ea)); wm(Z80.ea, C); } /* RES  5,C=(XY+o)  */
+OP(xycb,aa) { D = res_z80(5, rm(Z80.ea)); wm(Z80.ea, D); } /* RES  5,D=(XY+o)  */
+OP(xycb,ab) { E = res_z80(5, rm(Z80.ea)); wm(Z80.ea, E); } /* RES  5,E=(XY+o)  */
+OP(xycb,ac) { H = res_z80(5, rm(Z80.ea)); wm(Z80.ea, H); } /* RES  5,H=(XY+o)  */
+OP(xycb,ad) { L = res_z80(5, rm(Z80.ea)); wm(Z80.ea, L); } /* RES  5,L=(XY+o)  */
+OP(xycb,ae) { wm(Z80.ea, res_z80(5, rm(Z80.ea)));        } /* RES  5,(XY+o)    */
+OP(xycb,af) { A = res_z80(5, rm(Z80.ea)); wm(Z80.ea, A); } /* RES  5,A=(XY+o)  */
 
-OP(xycb,b0) { B = res(6, rm(Z80.ea)); wm(Z80.ea, B); } /* RES  6,B=(XY+o)  */
-OP(xycb,b1) { C = res(6, rm(Z80.ea)); wm(Z80.ea, C); } /* RES  6,C=(XY+o)  */
-OP(xycb,b2) { D = res(6, rm(Z80.ea)); wm(Z80.ea, D); } /* RES  6,D=(XY+o)  */
-OP(xycb,b3) { E = res(6, rm(Z80.ea)); wm(Z80.ea, E); } /* RES  6,E=(XY+o)  */
-OP(xycb,b4) { H = res(6, rm(Z80.ea)); wm(Z80.ea, H); } /* RES  6,H=(XY+o)  */
-OP(xycb,b5) { L = res(6, rm(Z80.ea)); wm(Z80.ea, L); } /* RES  6,L=(XY+o)  */
-OP(xycb,b6) { wm(Z80.ea, res(6, rm(Z80.ea)));        } /* RES  6,(XY+o)    */
-OP(xycb,b7) { A = res(6, rm(Z80.ea)); wm(Z80.ea, A); } /* RES  6,A=(XY+o)  */
+OP(xycb,b0) { B = res_z80(6, rm(Z80.ea)); wm(Z80.ea, B); } /* RES  6,B=(XY+o)  */
+OP(xycb,b1) { C = res_z80(6, rm(Z80.ea)); wm(Z80.ea, C); } /* RES  6,C=(XY+o)  */
+OP(xycb,b2) { D = res_z80(6, rm(Z80.ea)); wm(Z80.ea, D); } /* RES  6,D=(XY+o)  */
+OP(xycb,b3) { E = res_z80(6, rm(Z80.ea)); wm(Z80.ea, E); } /* RES  6,E=(XY+o)  */
+OP(xycb,b4) { H = res_z80(6, rm(Z80.ea)); wm(Z80.ea, H); } /* RES  6,H=(XY+o)  */
+OP(xycb,b5) { L = res_z80(6, rm(Z80.ea)); wm(Z80.ea, L); } /* RES  6,L=(XY+o)  */
+OP(xycb,b6) { wm(Z80.ea, res_z80(6, rm(Z80.ea)));        } /* RES  6,(XY+o)    */
+OP(xycb,b7) { A = res_z80(6, rm(Z80.ea)); wm(Z80.ea, A); } /* RES  6,A=(XY+o)  */
 
-OP(xycb,b8) { B = res(7, rm(Z80.ea)); wm(Z80.ea, B); } /* RES  7,B=(XY+o)  */
-OP(xycb,b9) { C = res(7, rm(Z80.ea)); wm(Z80.ea, C); } /* RES  7,C=(XY+o)  */
-OP(xycb,ba) { D = res(7, rm(Z80.ea)); wm(Z80.ea, D); } /* RES  7,D=(XY+o)  */
-OP(xycb,bb) { E = res(7, rm(Z80.ea)); wm(Z80.ea, E); } /* RES  7,E=(XY+o)  */
-OP(xycb,bc) { H = res(7, rm(Z80.ea)); wm(Z80.ea, H); } /* RES  7,H=(XY+o)  */
-OP(xycb,bd) { L = res(7, rm(Z80.ea)); wm(Z80.ea, L); } /* RES  7,L=(XY+o)  */
-OP(xycb,be) { wm(Z80.ea, res(7, rm(Z80.ea)));        } /* RES  7,(XY+o)    */
-OP(xycb,bf) { A = res(7, rm(Z80.ea)); wm(Z80.ea, A); } /* RES  7,A=(XY+o)  */
+OP(xycb,b8) { B = res_z80(7, rm(Z80.ea)); wm(Z80.ea, B); } /* RES  7,B=(XY+o)  */
+OP(xycb,b9) { C = res_z80(7, rm(Z80.ea)); wm(Z80.ea, C); } /* RES  7,C=(XY+o)  */
+OP(xycb,ba) { D = res_z80(7, rm(Z80.ea)); wm(Z80.ea, D); } /* RES  7,D=(XY+o)  */
+OP(xycb,bb) { E = res_z80(7, rm(Z80.ea)); wm(Z80.ea, E); } /* RES  7,E=(XY+o)  */
+OP(xycb,bc) { H = res_z80(7, rm(Z80.ea)); wm(Z80.ea, H); } /* RES  7,H=(XY+o)  */
+OP(xycb,bd) { L = res_z80(7, rm(Z80.ea)); wm(Z80.ea, L); } /* RES  7,L=(XY+o)  */
+OP(xycb,be) { wm(Z80.ea, res_z80(7, rm(Z80.ea)));        } /* RES  7,(XY+o)    */
+OP(xycb,bf) { A = res_z80(7, rm(Z80.ea)); wm(Z80.ea, A); } /* RES  7,A=(XY+o)  */
 
 OP(xycb,c0) { B = set(0, rm(Z80.ea)); wm(Z80.ea, B); } /* SET  0,B=(XY+o)  */
 OP(xycb,c1) { C = set(0, rm(Z80.ea)); wm(Z80.ea, C); } /* SET  0,C=(XY+o)  */

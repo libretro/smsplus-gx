@@ -14,8 +14,11 @@
 #include "font_drawing.h"
 #include "sound_output.h"
 
+#ifndef SDL_TRIPLEBUF
+#define SDL_TRIPLEBUF SDL_DOUBLEBUF
+#endif
 
-#define SDL_FLAGS SDL_HWSURFACE
+#define SDL_FLAGS SDL_HWSURFACE | SDL_TRIPLEBUF
 
 static SDL_Joystick * sdl_joy[3];
 #define joy_commit_range 8192
@@ -40,7 +43,7 @@ static uint8_t selectpressed = 0;
 static uint8_t save_slot = 0;
 static uint8_t quit = 0;
 
-static const int8_t upscalers_available = 2
+static const int8_t upscalers_available = 1
 #ifdef SCALE2X_UPSCALER
 +1
 #endif
@@ -53,10 +56,10 @@ static uint_fast8_t remember_res_height;
 
 static uint_fast8_t scale2x_res = 1;
 static uint_fast8_t forcerefresh = 0;
-
 static uint_fast8_t dpad_input[4] = {0, 0, 0, 0};
+uint_fast16_t pixels_shifting_remove = 0;
 
-uint32_t update_window_size(uint32_t w, uint32_t h);
+uint32_t update_window_size(uint32_t w, uint32_t h, uint32_t scale_ratio);
 
 static void Clear_video()
 {
@@ -80,16 +83,16 @@ static void video_update()
 	{
 		remember_res_height = vdp.height;
 		
-		if (option.fullscreen == 3) scale2x_res = 2;
+		if (option.fullscreen == 2) scale2x_res = 2;
 		else scale2x_res = 1;
 		
 		if(sms.console == CONSOLE_GG) 
 		{
-			update_window_size(160*scale2x_res, 144*scale2x_res);
+			update_window_size(160*scale2x_res, 144*scale2x_res, scale2x_res);
 		}
 		else
 		{
-			update_window_size(width_hold*scale2x_res, vdp.height*scale2x_res);
+			update_window_size(width_hold*scale2x_res, vdp.height*scale2x_res, scale2x_res);
 		}
 		forcerefresh = 0;
 		width_remember = width_hold;
@@ -117,7 +120,6 @@ static void video_update()
 		SDL_BlitSurface(sms_bitmap,&dst,sdl_screen,&dst2);
 		break;
         case 1:
-        case 2:
 			if(sms.console == CONSOLE_GG) 
 			{
 				dst.x = 48;
@@ -145,24 +147,21 @@ static void video_update()
 			);
 		break;
 		// Hqx
-		case 3:
+		case 2:
 #ifdef SCALE2X_UPSCALER
 		if(sms.console == CONSOLE_GG) 
 		{
-			dst.x = 96;
-			dst.y = 0;
-			dst.w = 320;
-			dst.h = 288;
+			dst.w = 160;
+			dst.h = 144;
+			pixels_shifting_remove = 48 * 2;
 		}
 		else
 		{
-			dst.x = width_remove*2;
-			dst.y = 0;
-			dst.w = width_hold*2;
-			dst.h = vdp.height*2;
+			dst.w = width_hold;
+			dst.h = vdp.height;
+			pixels_shifting_remove = width_remove * 2;
 		}
-		scale2x(sms_bitmap->pixels, scale2x_buf->pixels, 512, 1024, 256, 240);
-		SDL_BlitSurface(scale2x_buf,&dst,sdl_screen,NULL);
+		scale2x(sms_bitmap->pixels+pixels_shifting_remove, sdl_screen->pixels, sms_bitmap->pitch, sdl_screen->pitch, dst.w, dst.h);
 #endif
 		break;
 	}
@@ -752,12 +751,9 @@ static void Menu()
 					print_string("Scaling : Native", TextRed, 0, 5, 105, backbuffer->pixels);
 				break;
 				case 1:
-					print_string("Scaling : Fit", TextRed, 0, 5, 105, backbuffer->pixels);
+					print_string("Scaling : IPU/Hardware", TextRed, 0, 5, 105, backbuffer->pixels);
 				break;
 				case 2:
-					print_string("Scaling : Fullscreen", TextRed, 0, 5, 105, backbuffer->pixels);
-				break;
-				case 3:
 					print_string("Scaling : EPX/Scale2x", TextRed, 0, 5, 105, backbuffer->pixels);
 				break;
 			}
@@ -770,12 +766,9 @@ static void Menu()
 					print_string("Scaling : Native", TextWhite, 0, 5, 105, backbuffer->pixels);
 				break;
 				case 1:
-					print_string("Scaling : Fit", TextWhite, 0, 5, 105, backbuffer->pixels);
+					print_string("Scaling : IPU/Hardware", TextWhite, 0, 5, 105, backbuffer->pixels);
 				break;
 				case 2:
-					print_string("Scaling : Fullscreen", TextWhite, 0, 5, 105, backbuffer->pixels);
-				break;
-				case 3:
 					print_string("Scaling : EPX/Scale2x", TextWhite, 0, 5, 105, backbuffer->pixels);
 				break;
 			}
@@ -1009,7 +1002,7 @@ static void Cleanup(void)
 	system_shutdown();	
 }
 
-uint32_t update_window_size(uint32_t w, uint32_t h)
+uint32_t update_window_size(uint32_t w, uint32_t h, uint32_t scale_ratio)
 {
 	if (sdl_screen) SDL_FreeSurface(sdl_screen);
 	
@@ -1020,7 +1013,7 @@ uint32_t update_window_size(uint32_t w, uint32_t h)
 	else
 	{
 		#ifdef OPENDINGUX_GCD_16PIXELS_ISSUE
-		if (w == 248 && h == 192) w = 256;
+		if (w == (248) && h == (192)) w = 256;
 		#endif
 		sdl_screen = SDL_SetVideoMode(w, h, 16, SDL_FLAGS);
 	}
@@ -1073,7 +1066,6 @@ int main (int argc, char *argv[])
 	else if (strcmp(strrchr(argv[1], '.'), ".gg") == 0) option.console = 3;
 	
 	if (option.fullscreen < 0 && option.fullscreen > upscalers_available) option.fullscreen = 1;
-	if (option.console != 3 && option.fullscreen > 1) option.fullscreen = 1;
 	
 	// Load ROM
 	if(!load_rom(argv[1])) 
@@ -1085,7 +1077,7 @@ int main (int argc, char *argv[])
 	
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
 	
-	if (update_window_size(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION) == 1)
+	if (update_window_size(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 1) == 1)
 	{
 		fprintf(stderr, "Error: Failed to init video window\n");
 		Cleanup();
@@ -1119,7 +1111,6 @@ int main (int argc, char *argv[])
 	bitmap.width = VIDEO_WIDTH_SMS;
 	bitmap.height = VIDEO_HEIGHT_SMS;
 	bitmap.depth = 16;
-	bitmap.granularity = 2;
 	bitmap.data = (uint8_t *)sms_bitmap->pixels;
 	bitmap.pitch = sms_bitmap->pitch;
 	bitmap.viewport.w = VIDEO_WIDTH_SMS;
@@ -1146,7 +1137,14 @@ int main (int argc, char *argv[])
 				case SDL_KEYUP:
 					switch(event.key.keysym.sym) 
 					{
+						/*
+						 * HOME is for OpenDingux
+						 * 3 is for RetroFW
+						 * RCTRL is for PocketGo v2
+						 * ESCAPE is mapped to Select
+						*/
 						case SDLK_HOME:
+						case SDLK_3:
 						case SDLK_RCTRL:
 						case SDLK_ESCAPE:
 							selectpressed = 1;
@@ -1198,12 +1196,9 @@ int main (int argc, char *argv[])
 		// Refresh video data
 		video_update();
 		
-		// Output audio
-		Sound_Update();
-		
 		if (selectpressed == 1)
 		{
-			update_window_size(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION);
+			update_window_size(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 1);
             Menu();
 			Clear_video();
             input.system &= (IS_GG) ? ~INPUT_START : ~INPUT_PAUSE;

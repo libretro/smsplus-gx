@@ -91,11 +91,11 @@ static void drawChar(uint16_t* restrict buffer, int32_t *x, int32_t *y, int32_t 
 			{
 				if((charSprite[i] >> j) & 1)
 				{
-					setPixel(buffer, *x + (7 - j), *y + i, fc);
+					setPixel(buffer, *x + (7 - j), *y + i, fc)
 				}
 				else if(isOutlinePixel(charSprite, 7 - j, i))
 				{
-					setPixel(buffer, *x + (7 - j), *y + i, olc);
+					setPixel(buffer, *x + (7 - j), *y + i, olc)
 				}
 			}
 		}

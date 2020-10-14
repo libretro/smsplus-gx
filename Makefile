@@ -4,7 +4,7 @@ CC			= gcc
 # Possible choices : rs97, k3s (PAP K3S), sdl, amini, fbdev
 PORT = sdl
 # Possible choices : alsa, pulse (pulseaudio), oss, sdl12 (SDL 1.2 sound output), portaudio, libao
-SOUND_OUTPUT = alsa
+SOUND_OUTPUT = pulse
 # Possible choices : crabemu_sn76489 (less accurate, GPLv2), maxim_sn76489 (somewhat problematic license but good accuracy)
 SOUND_ENGINE = maxim_sn76489
 # Possible choices : z80 (accurate but proprietary), eighty (EightyZ80's core, GPLv2)
@@ -22,8 +22,8 @@ OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
 OBJ_CP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CP)))
 OBJS		= $(OBJ_C) $(OBJ_CP)
 
-CFLAGS		= -O0 -g -Wextra -Wall
-CFLAGS		+= -DLSB_FIRST -std=gnu99 -DALIGN_DWORD
+CFLAGS		= -O0 -g3 -Wall -Wextra
+CFLAGS		+= -DLSB_FIRST -std=gnu99 -DALIGN_DWORD -DNOYUV
 CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/scalers -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
 
 SRCDIR		+= ./source/text/fb

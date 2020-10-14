@@ -520,7 +520,6 @@ bool retro_load_game(const struct retro_game_info *info)
    bitmap.width       = VIDEO_WIDTH_SMS;
    bitmap.height      = 240;
    bitmap.depth       = 16;
-   bitmap.granularity = 2;
    bitmap.data        = (uint8_t *)sms_bitmap;
    bitmap.pitch       = VIDEO_WIDTH_SMS * sizeof(uint16_t);
    bitmap.viewport.w  = VIDEO_WIDTH_SMS;
@@ -575,7 +574,7 @@ void retro_run(void)
    video_update();
 
    /* Output audio */
-   Sound_Update();
+   Sound_Update(snd.output, snd.sample_count);
 }
 
 void retro_get_system_info(struct retro_system_info *info)

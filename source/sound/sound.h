@@ -36,8 +36,8 @@ enum {
 /* Sound emulation structure */
 typedef struct
 {
-	void (*mixer_callback)(int16_t **output, int32_t length);
-	int16_t *output[2];
+	void (*mixer_callback)(int16_t *output, int32_t length);
+	int16_t *output;
 	int16_t *stream[STREAM_MAX];
 	int32_t fm_which;
 	int32_t enabled;
@@ -64,6 +64,6 @@ uint32_t SMSPLUS_sound_init(void);
 void SMSPLUS_sound_shutdown(void);
 void SMSPLUS_sound_reset(void);
 void SMSPLUS_sound_update(int32_t line);
-void SMSPLUS_sound_mixer_callback(int16_t **output, int32_t length);
+void SMSPLUS_sound_mixer_callback(int16_t *output, int32_t length);
 
 #endif /* SOUND_H_ */

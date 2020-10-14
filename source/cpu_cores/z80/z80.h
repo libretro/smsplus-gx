@@ -70,7 +70,7 @@ void z80_init(int32_t (*irqcallback)(int32_t));
 void z80_reset (void);
 void z80_exit (void);
 int32_t z80_execute(int32_t cycles);
-void z80_set_irq_line(int32_t irqline, int32_t state);
+void z80_set_irq_line(int32_t inputnum, int32_t state);
 void z80_reset_cycle_count(void);
 int32_t z80_get_elapsed_cycles(void);
 
