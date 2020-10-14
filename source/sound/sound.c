@@ -290,8 +290,8 @@ void SMSPLUS_sound_mixer_callback(int16_t *output, int32_t length)
 	for(i = 0; i < length; i++)
 	{
 		int16_t temp = (fm_buffer[0][i] + fm_buffer[1][i]) / 2;
-		output[i * 2] = temp + psg_buffer[0][i];
-		output[i * 2 + 1] = temp + psg_buffer[1][i];
+		output[i * 2] = (temp + psg_buffer[0][i]) * option.soundlevel;
+		output[i * 2 + 1] = (temp + psg_buffer[1][i]) * option.soundlevel;
 	}
 }
 
