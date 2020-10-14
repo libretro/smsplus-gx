@@ -38,6 +38,8 @@ static const uint32_t upscalers_available = 1
 +1
 #endif
 ;
+double real_FPS;
+Uint32 start;
 
 static void video_update(void)
 {
@@ -102,7 +104,11 @@ static void video_update(void)
 		}
 		SDL_UnlockSurface(sdl_screen);
 	}
+		
 	SDL_Flip(sdl_screen);
+#ifdef NONBLOCKING_AUDIO
+	if(real_FPS > SDL_GetTicks()-start) usleep((real_FPS-(SDL_GetTicks()-start))*1000);
+#endif
 }
 
 void smsp_state(uint8_t slot_number, uint8_t mode)
@@ -679,7 +685,7 @@ int main (int argc, char *argv[])
 	
 	SDL_Init(SDL_INIT_VIDEO);
 	
-	sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_HWSURFACE);
+	sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
 	if (!sdl_screen)
 	{
 		fprintf(stdout, "Could not create display, exiting\n");	
@@ -699,7 +705,6 @@ int main (int argc, char *argv[])
 	bitmap.width = VIDEO_WIDTH_SMS;
 	bitmap.height = VIDEO_HEIGHT_SMS;
 	bitmap.depth = 16;
-	bitmap.granularity = 2;
 	bitmap.data = (uint8_t *)sms_bitmap->pixels;
 	bitmap.pitch = sms_bitmap->pitch;
 	bitmap.viewport.w = VIDEO_WIDTH_SMS;
@@ -713,25 +718,24 @@ int main (int argc, char *argv[])
 		sms.use_fm = 1; 
 	}
 	
+	if (sms.display == DISPLAY_PAL) real_FPS = 1000 / 49.701459;
+	else real_FPS = 1000 / 59.922743;
+	
+	printf("sms.display %d, PAL is %d\n", sms.display, DISPLAY_PAL);
+	
 	bios_init();
 
-	Sound_Init();
-	
 	// Initialize all systems and power on
 	system_poweron();
+
+	Sound_Init();
 	
 	// Loop until the user closes the window
 	while (!quit) 
 	{
-		// Execute frame(s)
-		system_frame(0);
-		
-		// Refresh video data
-		video_update();
-		
-		// Output audio
-		Sound_Update();
-
+#ifdef NONBLOCKING_AUDIO
+		start = SDL_GetTicks();
+#endif
 		if (selectpressed == 1)
 		{
             Menu();
@@ -755,6 +759,15 @@ int main (int argc, char *argv[])
 				break;
 			}
 		}
+		
+		// Execute frame(s)
+		system_frame(0);
+		
+		// Refresh sound data
+		Sound_Update(snd.output, snd.sample_count);
+		
+		// Refresh video data
+		video_update();
 	}
 	
 	config_save();

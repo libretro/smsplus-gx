@@ -12,7 +12,6 @@
 #include "shared.h"
 
 static snd_pcm_t *handle;
-static int16_t buffer_snd[SOUND_FREQUENCY * 2];
 
 void Sound_Init(void)
 {
@@ -20,8 +19,6 @@ void Sound_Init(void)
 	uint32_t val;
 	int32_t dir = -1;
 	snd_pcm_uframes_t frames;
-	
-	option.sndrate = SOUND_FREQUENCY;
 	
 	/* Open PCM device for playback. */
 	int32_t rc = snd_pcm_open(&handle, "default", SND_PCM_STREAM_PLAYBACK, 0);
@@ -51,6 +48,8 @@ void Sound_Init(void)
 
 #ifdef NONBLOCKING_AUDIO
 	snd_pcm_nonblock(handle, 1);
+#else
+	snd_pcm_nonblock(handle, 0);
 #endif
 
 	/* Allocate a hardware parameters object. */
@@ -90,7 +89,7 @@ void Sound_Init(void)
 		return;
 	}
 	
-	val = SOUND_FREQUENCY;
+	val = snd.sample_rate;
 	rc=snd_pcm_hw_params_set_rate_near(handle, params, &val, &dir);
 	if (rc < 0)
 	{
@@ -99,7 +98,7 @@ void Sound_Init(void)
 	}
 
 	/* Set period size to settings.aica.BufferSize frames. */
-	frames = SOUND_SAMPLES_SIZE;
+	frames = snd.buffer_size;
 	rc = snd_pcm_hw_params_set_period_size_near(handle, params, &frames, &dir);
 	if (rc < 0)
 	{
@@ -121,29 +120,20 @@ void Sound_Init(void)
 		fprintf(stderr, "Unable to set hw parameters: %s\n", snd_strerror(rc));
 		return;
 	}
+
 	
 	return;
 }
 
-void Sound_Update(void)
+void Sound_Update(int16_t* sound_buffer, unsigned long len)
 {
-	uint32_t i;
-	long len = SOUND_FREQUENCY / snd.fps, ret;
-
-	if (!handle) return;
-
-	for (i = 0; i < (SOUND_FREQUENCY / snd.fps); i++) 
-	{
-		buffer_snd[i * 2] = snd.output[1][i] * option.soundlevel;
-		buffer_snd[i * 2 + 1] = snd.output[0][i] * option.soundlevel;
-	}
-	
-	ret = snd_pcm_writei(handle, buffer_snd, len);
+	long ret;
+	ret = snd_pcm_writei(handle, sound_buffer, len);
 	while(ret != len) 
 	{
 		if (ret < 0) snd_pcm_prepare( handle );
 		else len -= ret;
-		ret = snd_pcm_writei(handle, buffer_snd, len);
+		ret = snd_pcm_writei(handle, sound_buffer, len);
 	}
 }
 

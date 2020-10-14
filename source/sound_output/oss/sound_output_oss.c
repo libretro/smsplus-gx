@@ -15,19 +15,17 @@
 #include "shared.h"
 
 static int32_t oss_audio_fd = -1;
-static int16_t buffer_snd[SOUND_FREQUENCY * 2];
 
 void Sound_Init()
 {
 	uint32_t channels = 2;
 	uint32_t format = AFMT_S16_LE;
-	uint32_t tmp = SOUND_FREQUENCY;
 	int32_t err_ret;
+	int32_t tmp;
 	
-	option.sndrate = SOUND_FREQUENCY;
+	tmp = option.sndrate;
 	
 	oss_audio_fd = open("/dev/dsp", O_WRONLY 
-	/* Probably shouldn't be used now ? */
 #ifdef NONBLOCKING_AUDIO
 	| O_NONBLOCK
 #endif
@@ -60,18 +58,10 @@ void Sound_Init()
 	return;
 }
 
-void Sound_Update()
+void Sound_Update(int16_t* sound_buffer, unsigned long len)
 {
-	int32_t i;
-	
 	if (!oss_audio_fd) return;
-	
-	for (i = 0; i < (SOUND_FREQUENCY / snd.fps); i++) 
-	{
-		buffer_snd[i * 2] = snd.output[1][i] * option.soundlevel;
-		buffer_snd[i * 2 + 1] = snd.output[0][i] * option.soundlevel;
-	}
-	write(oss_audio_fd, buffer_snd, 4 * (SOUND_FREQUENCY / snd.fps) );
+	write(oss_audio_fd, sound_buffer, len * 4);
 }
 
 void Sound_Close()

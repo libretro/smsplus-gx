@@ -7,9 +7,8 @@
 
 /* Most of the sound code was taken from FBA-SDL by DmitrySmagin so many thanks to him ! */
 
-static int16_t buffer_snd[SOUND_FREQUENCY * 2];
-SDL_mutex *sound_mutex;
-SDL_cond *sound_cv;
+static SDL_mutex *sound_mutex;
+static SDL_cond *sound_cv;
 
 /* Using Mutexes by default but allowing disabling them on compilation */
 #ifdef SDLAUDIO_NOMUTEXES
@@ -24,7 +23,7 @@ static uint32_t buf_read_pos = 0;
 static uint32_t buf_write_pos = 0;
 static int32_t buffered_bytes = 0;
 
-static int32_t sdl_write_buffer_m(uint8_t* data, int32_t len)
+static int32_t sdl_write_buffer_m(uint8_t* data, unsigned long len)
 {
 	SDL_LockMutex(sound_mutex);
 	for(uint8_t i = 0; i < len; i += 4) 
@@ -92,9 +91,8 @@ void sdl_callback(void *unused, uint8_t *stream, int32_t len)
 void Sound_Init()
 {
 	SDL_AudioSpec aspec, obtained;
-	option.sndrate = SOUND_FREQUENCY;
 
-	BUFFSIZE = SOUND_SAMPLES_SIZE * 2 * 2 * 8;
+	BUFFSIZE = snd.buffer_size * 2 * 2 * 8;
 	buffer = (uint8_t *) malloc(BUFFSIZE);
 
 	/* Add some silence to the buffer */
@@ -102,10 +100,10 @@ void Sound_Init()
 	buf_read_pos = 0;
 	buf_write_pos = 0;
 
-	aspec.format   = AUDIO_S16;
-	aspec.freq     = SOUND_FREQUENCY;
+	aspec.format   = AUDIO_S16SYS;
+	aspec.freq     = option.sndrate;
 	aspec.channels = 2;
-	aspec.samples  = SOUND_SAMPLES_SIZE;
+	aspec.samples  = snd.buffer_size;
 	aspec.callback = (mutex ? sdl_callback_m : sdl_callback);
 	aspec.userdata = NULL;
 
@@ -135,17 +133,10 @@ void Sound_Init()
 	return;
 }
 
-void Sound_Update()
+void Sound_Update(int16_t* sound_buffer, unsigned long len)
 {
-	int32_t i;
-	for (i = 0; i < (SOUND_FREQUENCY / snd.fps); i++) 
-	{
-		buffer_snd[i * 2] = snd.output[1][i] * option.soundlevel;
-		buffer_snd[i * 2 + 1] = snd.output[0][i] * option.soundlevel;
-	}
-	
 	SDL_LockAudio();
-	sdl_write_buffer((int16_t*)buffer_snd, (SOUND_FREQUENCY / snd.fps));
+	sdl_write_buffer(sound_buffer, len * 4);
 	SDL_UnlockAudio();
 }
 

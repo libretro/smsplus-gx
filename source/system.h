@@ -82,7 +82,6 @@ typedef struct
 	uint32_t height;
 	uint32_t pitch;
 	uint32_t depth;
-	uint32_t granularity;
 	struct 
 	{
 		int32_t x, y, w, h;

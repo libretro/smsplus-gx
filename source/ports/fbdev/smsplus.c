@@ -103,7 +103,7 @@ static void video_update()
 			dst_w = (hide_left ? 248 : 256)*2;
 			dst_h = vdp.height*2;
 		}
-		scale2x(sms_bitmap, scale2x_buf, 512, 1024, 256, 240);
+		scale2x(sms_bitmap, scale2x_buf, 512, 1024, dst_w, vdp.height);
 		bitmap_scale(dst_x,0,dst_w,dst_h,HOST_WIDTH_RESOLUTION,HOST_HEIGHT_RESOLUTION,512,0,scale2x_buf,buffer_fbdev[0]);
 #endif
 		break;
@@ -688,8 +688,6 @@ int main (int argc, char *argv[])
     vinfo.yoffset = 0;
 	ioctl(fbfd, FBIOPAN_DISPLAY, &vinfo); 
 
-	Sound_Init();
-
 #ifdef SCALE2X_UPSCALER
 	scale2x_buf = malloc(((VIDEO_WIDTH_SMS*2)*480)*sizeof(uint16_t));
 #endif
@@ -700,7 +698,6 @@ int main (int argc, char *argv[])
 	bitmap.width = VIDEO_WIDTH_SMS;
 	bitmap.height = VIDEO_HEIGHT_SMS;
 	bitmap.depth = 16;
-	bitmap.granularity = 2;
 	bitmap.data = (uint8_t *)sms_bitmap;
 	bitmap.pitch = 512;
 	bitmap.viewport.w = VIDEO_WIDTH_SMS;
@@ -716,6 +713,8 @@ int main (int argc, char *argv[])
 
 	// Initialize all systems and power on
 	system_poweron();
+
+	Sound_Init();
 	
 	Clear_buffers();
 	
@@ -724,6 +723,9 @@ int main (int argc, char *argv[])
 	{
 		// Execute frame(s)
 		system_frame(0);
+		
+		// Refresh sound data
+		Sound_Update(snd.output, snd.sample_count);
 		
 		// Refresh video data
 		video_update();
@@ -736,9 +738,6 @@ int main (int argc, char *argv[])
 		}
 		
 		Controls();
-		
-		// Output audio
-		Sound_Update();
 	}
 	
 	config_save();

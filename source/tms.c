@@ -309,23 +309,12 @@ void make_tms_tables(void)
             uint8_t bs = (bx & 0x40);
 /*          uint8_t bt = (bd == 0) ? 1 : 0; */
             uint8_t sd = (sx & 0x0F);
-/*          uint8_t st = (sd == 0) ? 1 : 0; */
 
             /* opaque sprite pixel, choose 2nd pal and set sprite marker */
             if(sd && !bs)
-            {
                 tms_obj_lut[(sx<<8)|(bx)] = sd | 0x10 | 0x40;
-            }
             else
-            if(sd && bs)
-            {
-                /* writing over a sprite */
-                tms_obj_lut[(sx<<8)|(bx)] = bx;
-            }
-            else
-            {
-                tms_obj_lut[(sx<<8)|(bx)] = bx;
-            }
+				tms_obj_lut[(sx<<8)|(bx)] = bx;
         }
     }
 

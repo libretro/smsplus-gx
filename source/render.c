@@ -403,7 +403,6 @@ void render_line(int32_t line)
 		/* Sprites are still processed offscreen */
 		if ((vdp.mode > 7) && (vdp.reg[1] & 0x40)) 
 			render_obj(line);
-
 		/* Line is only displayed where overscan is emulated */
 		view = 0;
 	}
