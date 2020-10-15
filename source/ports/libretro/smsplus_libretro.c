@@ -10,6 +10,9 @@
 #include "shared.h"
 #include "smsplus.h"
 #include "ntsc/sms_ntsc.h"
+#include "sound_output.h"
+
+#define SOUND_FREQUENCY 44100
 
 static gamedata_t gdata;
 
@@ -57,7 +60,19 @@ static sms_ntsc_t sms_ntsc;
 
 #define MAX_NTSC_WIDTH (SMS_NTSC_OUT_WIDTH(VIDEO_WIDTH_SMS))
 
-extern uint32_t load_rom_mem(const char *data, size_t size);
+extern uint32_t load_rom_mem(const char *, size_t);
+
+void Sound_Init(void)
+{
+}
+
+void Sound_Update(int16_t* sound_buffer, unsigned long len)
+{
+}
+
+void Sound_Close(void)
+{
+}
 
 static void filter_ntsc_init(void)
 {
@@ -499,6 +514,7 @@ bool retro_load_game(const struct retro_game_info *info)
    option.tms_pal     = 2;
    option.nosound     = 0;
    option.soundlevel  = 2;
+   option.sndrate     = SOUND_FREQUENCY;
 
    option.country     = 0;
    option.console     = 0;
@@ -538,8 +554,6 @@ bool retro_load_game(const struct retro_game_info *info)
    if (sms.console == CONSOLE_SMS || sms.console == CONSOLE_SMS2)
       sms.use_fm = option.fm;
 
-   Sound_Init();
-
    /* Initialize all systems and power on */
    system_poweron();
 
@@ -574,7 +588,7 @@ void retro_run(void)
    video_update();
 
    /* Output audio */
-   Sound_Update(snd.output, snd.sample_count);
+   audio_batch_cb((const int16_t*)snd.output, (size_t)snd.sample_count);
 }
 
 void retro_get_system_info(struct retro_system_info *info)
