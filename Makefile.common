@@ -58,6 +58,4 @@ else
 SOURCES_C         += $(LIBRETRO_COMMON)/streams/memory_stream.c
 endif
 
-SOURCES_C         += \
-                  $(SOURCE_DIR)/ports/libretro/libretro_state.c \
-                  $(SOURCE_DIR)/ports/libretro/smsplus_libretro.c
+SOURCES_C         += $(SOURCE_DIR)/ports/libretro/smsplus_libretro.c
