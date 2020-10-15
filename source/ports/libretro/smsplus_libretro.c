@@ -5,7 +5,6 @@
 #include "shared.h"
 #include "smsplus.h"
 #include "sound_output.h"
-#include "ntsc/sms_ntsc.h"
 
 #define SOUND_FREQUENCY 44100
 
@@ -34,11 +33,6 @@ static unsigned remove_left_border;
 static unsigned system_width;
 static unsigned system_height;
 
-/* blargg NTSC */
-static unsigned use_ntsc;
-static SMS_NTSC_IN_T *ntsc_screen = NULL;
-static sms_ntsc_t sms_ntsc;
-
 #ifdef _WIN32
 #define path_default_slash_c() '\\'
 #else
@@ -46,14 +40,6 @@ static sms_ntsc_t sms_ntsc;
 #endif
 
 #define MAX_PORTS 2
-
-#define NTSC_NONE 0
-#define NTSC_MONOCHROME 1
-#define NTSC_COMPOSITE 2
-#define NTSC_SVIDEO 3
-#define NTSC_RGB 4
-
-#define MAX_NTSC_WIDTH (SMS_NTSC_OUT_WIDTH(VIDEO_WIDTH_SMS))
 
 extern uint32_t load_rom_mem(const char *, size_t);
 
@@ -203,6 +189,22 @@ static void system_load_state_mem(void)
       palette_sync(i);
 }
 
+/* blargg NTSC filter */
+#ifdef HAVE_NTSC
+#include "ntsc/sms_ntsc.h"
+
+#define NTSC_NONE 0
+#define NTSC_MONOCHROME 1
+#define NTSC_COMPOSITE 2
+#define NTSC_SVIDEO 3
+#define NTSC_RGB 4
+
+#define MAX_NTSC_WIDTH (SMS_NTSC_OUT_WIDTH(VIDEO_WIDTH_SMS))
+
+static unsigned use_ntsc;
+static SMS_NTSC_IN_T *ntsc_screen = NULL;
+static sms_ntsc_t sms_ntsc;
+
 static void filter_ntsc_init(void)
 {
    int pitch = MAX_NTSC_WIDTH * sizeof(SMS_NTSC_IN_T);
@@ -233,6 +235,7 @@ static void filter_ntsc_set(void)
 
    sms_ntsc_init(&sms_ntsc, &setup);
 }
+#endif /* HAVE_NTSC */
 
 static void video_update(void)
 {
@@ -269,6 +272,7 @@ static void video_update(void)
       bitmap.viewport.changed = 0;
    }
 
+#ifdef HAVE_NTSC
    if (use_ntsc)
    {
       const uint16_t *vidbuf  = sms_bitmap + x;
@@ -280,6 +284,7 @@ static void video_update(void)
       video_cb(ntsc_screen, ntsc_out_width, system_height, ntsc_out_pitch);
    }
    else
+#endif /* HAVE_NTSC */
    {
       const uint16_t *vidbuf = sms_bitmap + x;
       video_cb(vidbuf, system_width, system_height, bitmap.pitch);
@@ -483,7 +488,9 @@ static void check_variables(bool startup)
 {
    struct retro_variable var = { 0 };
 
+   #ifdef HAVE_NTSC
    unsigned old_ntsc   = use_ntsc;
+   #endif
    unsigned old_border = remove_left_border;
 
    var.value = NULL;
@@ -550,6 +557,7 @@ static void check_variables(bool startup)
          remove_left_border = 0;
    }
 
+   #ifdef HAVE_NTSC
    var.value = NULL;
    var.key   = "smsplus_ntsc_filter";
 
@@ -572,6 +580,7 @@ static void check_variables(bool startup)
       geometry_changed = 1;
       filter_ntsc_set();
    }
+   #endif
 
    if (old_border != remove_left_border)
       bitmap.viewport.changed = 1;
@@ -672,7 +681,9 @@ bool retro_load_game(const struct retro_game_info *info)
    bitmap.viewport.x  = 0x00;
    bitmap.viewport.y  = 0x00;
 
+   #ifdef HAVE_NTSC
    filter_ntsc_init();
+   #endif
 
    check_variables(true);
 
@@ -736,25 +747,30 @@ void retro_get_system_info(struct retro_system_info *info)
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
-   double fps = retro_get_region() ? FPS_PAL : FPS_NTSC;
-   double rate = (double)option.sndrate;
-
    memset(info, 0, sizeof(*info));
 
-   info->timing.fps            = fps;
-   info->timing.sample_rate    = rate;
+#ifdef HAVE_NTSC
    info->geometry.base_width   = !use_ntsc ? system_width : SMS_NTSC_OUT_WIDTH (system_width);
+   info->geometry.max_width    = SMS_NTSC_OUT_WIDTH(VIDEO_WIDTH_SMS);
+#else
+   info->geometry.base_width   = system_width;
+   info->geometry.max_width    = VIDEO_WIDTH_SMS;
+#endif
+
    info->geometry.base_height  = system_height;
-   info->geometry.max_width    = !use_ntsc ? VIDEO_WIDTH_SMS : SMS_NTSC_OUT_WIDTH(VIDEO_WIDTH_SMS);
    info->geometry.max_height   = 240;
    info->geometry.aspect_ratio = 4.0 / 3.0;
+   info->timing.fps            = (double)(retro_get_region() ? FPS_PAL : FPS_NTSC);
+   info->timing.sample_rate    = (double)option.sndrate;
 }
 
 void retro_deinit()
 {
    Cleanup();
 
+#ifdef HAVE_NTSC
    filter_ntsc_cleanup();
+#endif
 
    libretro_serialize_size = 0;
    libretro_supports_bitmasks = 0;
