@@ -99,6 +99,7 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "disabled"
    },
+   #ifdef HAVE_NTSC
    {
       "smsplus_ntsc_filter",
       "Blargg NTSC Filter",
@@ -113,6 +114,7 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "disabled"
    },
+   #endif
 
    { NULL, NULL, NULL, {{0}}, NULL },
 };
