@@ -37,55 +37,65 @@ static const int8_t upscalers_available = 2
 #endif
 ;
 
+#ifdef NONBLOCKING_AUDIO
+float real_FPS;
+Uint32 start;
+#endif
+
 static void video_update()
 {
 #ifdef SCALE2X_UPSCALER
 	SDL_Rect dst;
 #endif
-	SDL_LockSurface(sdl_screen);
-	switch(option.fullscreen) 
+	if (SDL_LockSurface(sdl_screen) == 0)
 	{
-		// Native
-        case 0: 
-		if(sms.console == CONSOLE_GG) 
-			bitmap_scale(48,0,160,144,160,144,256,HOST_WIDTH_RESOLUTION-160,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-160)/2+(HOST_HEIGHT_RESOLUTION-144)/2*HOST_WIDTH_RESOLUTION);
-		else 
-			bitmap_scale(0,0,256,vdp.height,256,(vdp.height),256,HOST_WIDTH_RESOLUTION-256,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-256)/2+(HOST_HEIGHT_RESOLUTION-(vdp.height))/2*HOST_WIDTH_RESOLUTION);
-		break;
-		// Fullscreen
-		case 1:
-		if(sms.console == CONSOLE_GG) 
-			upscale_160x144_to_320x240((uint32_t* restrict)sdl_screen->pixels, (uint32_t* restrict)sms_bitmap->pixels+24);
-		else 
-			upscale_SMS_to_320x240((uint32_t* restrict)sdl_screen->pixels, (uint32_t* restrict)sms_bitmap->pixels, vdp.height);
-		break;
-		case 2:
-			bitmap_scale(48,0,160,144,267,240,256,HOST_WIDTH_RESOLUTION-267,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-267)/2+(HOST_HEIGHT_RESOLUTION-240)/2*HOST_WIDTH_RESOLUTION);
-		break;
-		// Hqx
-		case 3:
-#ifdef SCALE2X_UPSCALER
-		if(sms.console == CONSOLE_GG) 
+		switch(option.fullscreen) 
 		{
-			dst.x = 96;
-			dst.y = 0;
-			dst.w = 320;
-			dst.h = 144*2;
+			// Native
+			case 0: 
+			if(sms.console == CONSOLE_GG) 
+				bitmap_scale(48,0,160,144,160,144,256,HOST_WIDTH_RESOLUTION-160,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-160)/2+(HOST_HEIGHT_RESOLUTION-144)/2*HOST_WIDTH_RESOLUTION);
+			else 
+				bitmap_scale(0,0,256,vdp.height,256,(vdp.height),256,HOST_WIDTH_RESOLUTION-256,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-256)/2+(HOST_HEIGHT_RESOLUTION-(vdp.height))/2*HOST_WIDTH_RESOLUTION);
+			break;
+			// Fullscreen
+			case 1:
+			if(sms.console == CONSOLE_GG) 
+				upscale_160x144_to_320x240((uint32_t* restrict)sdl_screen->pixels, (uint32_t* restrict)sms_bitmap->pixels+24);
+			else 
+				upscale_SMS_to_320x240((uint32_t* restrict)sdl_screen->pixels, (uint32_t* restrict)sms_bitmap->pixels, vdp.height);
+			break;
+			case 2:
+				bitmap_scale(48,0,160,144,267,240,256,HOST_WIDTH_RESOLUTION-267,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-267)/2+(HOST_HEIGHT_RESOLUTION-240)/2*HOST_WIDTH_RESOLUTION);
+			break;
+			// Hqx
+			case 3:
+	#ifdef SCALE2X_UPSCALER
+			if(sms.console == CONSOLE_GG) 
+			{
+				dst.x = 96;
+				dst.y = 0;
+				dst.w = 320;
+				dst.h = 144*2;
+			}
+			else
+			{
+				uint32_t hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
+				dst.x = hide_left ? 16 : 0;
+				dst.y = 0;
+				dst.w = (hide_left ? 248 : 256)*2;
+				dst.h = vdp.height*2;
+			}
+			scale2x(sms_bitmap->pixels, scale2x_buf->pixels, 512, 1024, 256, 240);
+			bitmap_scale(dst.x,0,dst.w,dst.h,HOST_WIDTH_RESOLUTION,HOST_HEIGHT_RESOLUTION,512,0,scale2x_buf->pixels,sdl_screen->pixels);
+	#endif
+			break;
 		}
-		else
-		{
-			uint32_t hide_left = (vdp.reg[0] & 0x20) ? 1 : 0;
-			dst.x = hide_left ? 16 : 0;
-			dst.y = 0;
-			dst.w = (hide_left ? 248 : 256)*2;
-			dst.h = vdp.height*2;
-		}
-		scale2x(sms_bitmap->pixels, scale2x_buf->pixels, 512, 1024, 256, 240);
-		bitmap_scale(dst.x,0,dst.w,dst.h,HOST_WIDTH_RESOLUTION,HOST_HEIGHT_RESOLUTION,512,0,scale2x_buf->pixels,sdl_screen->pixels);
-#endif
-		break;
+		SDL_UnlockSurface(sdl_screen);
 	}
-	SDL_UnlockSurface(sdl_screen);	
+#ifdef NONBLOCKING_AUDIO
+	if(real_FPS > SDL_GetTicks()-start) usleep((real_FPS-(SDL_GetTicks()-start))*1000);
+#endif
 	SDL_Flip(sdl_screen);
 }
 
@@ -199,16 +209,16 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 	else if (k == option.config_buttons[CONFIG_BUTTON_BUTTON1])
 	{
 		if (p)
-			input.pad[0] |= INPUT_BUTTON1;
+			input.pad[0] |= INPUT_BUTTON2;
 		else
-			input.pad[0] &= ~INPUT_BUTTON1;
+			input.pad[0] &= ~INPUT_BUTTON2;
 	}
 	else if (k == option.config_buttons[CONFIG_BUTTON_BUTTON2])
 	{
 		if (p)
-			input.pad[0] |= INPUT_BUTTON2;
+			input.pad[0] |= INPUT_BUTTON1;
 		else
-			input.pad[0] &= ~INPUT_BUTTON2;
+			input.pad[0] &= ~INPUT_BUTTON1;
 	}
 	else if (k == option.config_buttons[CONFIG_BUTTON_START])
 	{
@@ -686,10 +696,9 @@ static void Menu()
 		if (currentselection == 7) print_string("Quit", TextRed, 0, 5, 165, backbuffer->pixels);
 		else print_string("Quit", TextWhite, 0, 5, 165, backbuffer->pixels);
 
-		print_string("Build " __DATE__ ", " __TIME__, TextWhite, 0, 5, 175, sdl_screen->pixels);
-		print_string("Based on SMS Plus by Charles Mcdonald", TextWhite, 0, 5, 195, sdl_screen->pixels);
-		print_string("Fork of SMS Plus GX by gameblabla", TextWhite, 0, 5, 210, sdl_screen->pixels);
-		print_string("Extra code from Alekmaul, n2DLib", TextWhite, 0, 5, 225, sdl_screen->pixels);
+		print_string("Build " __DATE__ ", " __TIME__, TextWhite, 0, 5, 195, backbuffer->pixels);
+		print_string("Fork of SMS Plus GX by gameblabla", TextWhite, 0, 5, 210, backbuffer->pixels);
+		print_string("Extra code from Alekmaul, n2DLib", TextWhite, 0, 5, 225, backbuffer->pixels);
 
         while (SDL_PollEvent(&Event))
         {
@@ -734,9 +743,10 @@ static void Menu()
 								option.fullscreen = upscalers_available;
 							break;
 							case 5:
-								option.soundlevel--;
-								if (option.soundlevel < 0)
+								if (option.soundlevel == 0)
 									option.soundlevel = 4;
+								else
+									option.soundlevel--;
 							break;
                         }
                         break;
@@ -786,7 +796,7 @@ static void Menu()
 				case 5:
 					option.soundlevel++;
 					if (option.soundlevel > 4)
-						option.soundlevel = 1;
+						option.soundlevel = 0;
 				break;
                 case 4 :
                     option.fullscreen++;
@@ -899,7 +909,7 @@ int main (int argc, char *argv[])
 {
 	SDL_Event event;
 	
-	if(argc < 2) 
+	if (argc < 2) 
 	{
 		fprintf(stderr, "Usage: ./smsplus [FILE]\n");
 		return 0;
@@ -940,12 +950,10 @@ int main (int argc, char *argv[])
 	}
 	
 	SDL_Init(SDL_INIT_VIDEO);
-	sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
+	sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_HWSURFACE);
 	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 267, 16, 0, 0, 0, 0);
 	backbuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, 0, 0, 0, 0);
 	SDL_ShowCursor(0);
-	
-	Sound_Init();
 
 #ifdef SCALE2X_UPSCALER
 	scale2x_buf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS*2, 480, 16, 0, 0, 0, 0);
@@ -973,26 +981,19 @@ int main (int argc, char *argv[])
 	// Initialize all systems and power on
 	system_poweron();
 	
+	Sound_Init();
+	
+#ifdef NONBLOCKING_AUDIO
+	if (sms.display == DISPLAY_PAL) real_FPS = 1000 / 49.701459;
+	else real_FPS = 1000 / 59.922743;
+#endif
+	
 	// Loop until the user closes the window
 	while (!quit) 
 	{
-		// Execute frame(s)
-		system_frame(0);
-		
-		// Refresh sound data
-		Sound_Update(snd.output, snd.sample_count);
-		
-		// Refresh video data
-		video_update();
-
-		if (selectpressed == 1)
-		{
-            Menu();
-            SDL_FillRect(sdl_screen, NULL, 0);
-            input.system &= (IS_GG) ? ~INPUT_START : ~INPUT_PAUSE;
-            selectpressed = 0;
-		}
-		
+#ifdef NONBLOCKING_AUDIO
+		start = SDL_GetTicks();
+#endif
 		if (SDL_PollEvent(&event)) 
 		{
 			switch(event.type) 
@@ -1008,6 +1009,23 @@ int main (int argc, char *argv[])
 				break;
 			}
 		}
+		
+		if (selectpressed == 1)
+		{
+            Menu();
+            SDL_FillRect(sdl_screen, NULL, 0);
+            input.system &= (IS_GG) ? ~INPUT_START : ~INPUT_PAUSE;
+            selectpressed = 0;
+		}
+		
+		// Execute frame(s)
+		system_frame(0);
+		
+		// Refresh sound data
+		Sound_Update(snd.output, snd.sample_count);
+		
+		// Refresh video data
+		video_update();
 	}
 	
 	config_save();

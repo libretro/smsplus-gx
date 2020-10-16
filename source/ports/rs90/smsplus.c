@@ -239,11 +239,11 @@ static uint32_t sdl_controls_update_input_down(SDLKey k)
 	}
 	else if (k == option.config_buttons[CONFIG_BUTTON_BUTTON1])
 	{
-		input.pad[0] |= INPUT_BUTTON1;
+		input.pad[0] |= INPUT_BUTTON2;
 	}
 	else if (k == option.config_buttons[CONFIG_BUTTON_BUTTON2])
 	{
-		input.pad[0] |= INPUT_BUTTON2;
+		input.pad[0] |= INPUT_BUTTON1;
 	}
 	else if (k == option.config_buttons[CONFIG_BUTTON_START])
 	{
@@ -293,11 +293,11 @@ static uint32_t sdl_controls_update_input_release(SDLKey k)
 	}
 	else if (k == option.config_buttons[CONFIG_BUTTON_BUTTON1])
 	{
-		input.pad[0] &= ~INPUT_BUTTON1;
+		input.pad[0] &= ~INPUT_BUTTON2;
 	}
 	else if (k == option.config_buttons[CONFIG_BUTTON_BUTTON2])
 	{
-		input.pad[0] &= ~INPUT_BUTTON2;
+		input.pad[0] &= ~INPUT_BUTTON1;
 	}
 	else if (k == option.config_buttons[CONFIG_BUTTON_START])
 	{
@@ -795,6 +795,11 @@ static void config_load()
 	else
 	{
         printf("Config NOT loaded. >%s\n",config_path);
+        
+		for (i = 0; i < 19; i++)
+		{
+			option.config_buttons[i] = 0;
+		}
 
 		/* Default mapping for the Bittboy in case loading configuration file fails */
 		option.config_buttons[CONFIG_BUTTON_UP] = SDLK_UP;
@@ -806,11 +811,6 @@ static void config_load()
 		option.config_buttons[CONFIG_BUTTON_BUTTON2] = SDLK_LALT;
 		
 		option.config_buttons[CONFIG_BUTTON_START] = SDLK_RETURN;
-		
-		for (i = 7; i < 19; i++)
-		{
-			option.config_buttons[i] = 0;
-		}
 	}
 }
 

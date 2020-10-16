@@ -239,16 +239,16 @@ static void Controls()
 			case 56:
 			case 42:
 				if (data.value == 1 && bytes > 0)
-					input.pad[0] |= INPUT_BUTTON1;
+					input.pad[0] |= INPUT_BUTTON2;
 				else if (data.value == 0)
-					input.pad[0] &= ~INPUT_BUTTON1;
+					input.pad[0] &= ~INPUT_BUTTON2;
 			break;
 			case 29:
 			case 57:
 				if (data.value == 1 && bytes > 0)
-					input.pad[0] |= INPUT_BUTTON2;
+					input.pad[0] |= INPUT_BUTTON1;
 				else if (data.value == 0)
-					input.pad[0] &= ~INPUT_BUTTON2;
+					input.pad[0] &= ~INPUT_BUTTON1;
 			break;
 			default:
 			break;

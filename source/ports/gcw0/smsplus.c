@@ -302,16 +302,16 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 	else if (k == option.config_buttons[CONFIG_BUTTON_BUTTON1])
 	{
 		if (p)
-			input.pad[0] |= INPUT_BUTTON1;
+			input.pad[0] |= INPUT_BUTTON2;
 		else
-			input.pad[0] &= ~INPUT_BUTTON1;
+			input.pad[0] &= ~INPUT_BUTTON2;
 	}
 	else if (k == option.config_buttons[CONFIG_BUTTON_BUTTON2])
 	{
 		if (p)
-			input.pad[0] |= INPUT_BUTTON2;
+			input.pad[0] |= INPUT_BUTTON1;
 		else
-			input.pad[0] &= ~INPUT_BUTTON2;
+			input.pad[0] &= ~INPUT_BUTTON1;
 	}
 	else if (k == option.config_buttons[CONFIG_BUTTON_START])
 	{
@@ -1099,8 +1099,6 @@ int main (int argc, char *argv[])
 		sdl_joy[i] = SDL_JoystickOpen(i);
 	}
 
-	Sound_Init();
-
 #ifdef SCALE2X_UPSCALER
 	scale2x_buf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS*2, 480, 16, 0, 0, 0, 0);
 #endif
@@ -1126,6 +1124,8 @@ int main (int argc, char *argv[])
 
 	// Initialize all systems and power on
 	system_poweron();
+	
+	Sound_Init();
 
 	// Loop until the user closes the window
 	while (!quit) 
