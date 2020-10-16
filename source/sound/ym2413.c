@@ -430,16 +430,14 @@ static const uint8_t table[19][8] = {
 #define SLOT8_1 (&fm->P_CH[8].SLOT[SLOT1])
 #define SLOT8_2 (&fm->P_CH[8].SLOT[SLOT2])
 
-INLINE int16_t limit( int16_t val, int16_t max, int16_t min )
+INLINE int_fast32_t _clip_short_ret(int_fast32_t sample)
 {
-	if ( val > max )
-		val = max;
-	else if ( val < min )
-		val = min;
-
-	return val;
+    if ( (int16_t)sample != sample )
+    {
+        sample = (sample >> 31) ^ 0x7FFF;
+    }
+    return sample;
 }
-
 
 /* advance LFO to next sample */
 static void advance_lfo(YM2413 *fm)
@@ -717,7 +715,7 @@ static int32_t op_calc1(YM2413 *fm, int32_t phase, int32_t env, int32_t pm, int3
 #define volume_calc(fm, OP) ((OP)->TLL + ((int32_t)(OP)->volume) + (fm->LFO_AM & (OP)->AMmask))
 
 /* calculate output */
-static void chan_calc(YM2413 *fm, struct OPLL_CH *CH)
+INLINE void chan_calc(YM2413 *fm, struct OPLL_CH *CH)
 {
 	struct OPLL_SLOT *SLOT;
 	int32_t env;
@@ -1489,8 +1487,8 @@ static void sound_stream_update(YM2413 *fm, int16_t **buf, int32_t samples)
             rhythm_calc(fm, &fm->P_CH[0], fm->noise_rng & 1 );
         }
 
-        buf[0][i] = limit(fm->output[0], 32767, -32767);
-        buf[1][i] = limit(fm->output[1], 32767, -32767);
+        buf[0][i] = _clip_short_ret(fm->output[0], 32767, -32767);
+        buf[1][i] = _clip_short_ret(fm->output[1], 32767, -32767);
         advance(fm);
     }
 }
