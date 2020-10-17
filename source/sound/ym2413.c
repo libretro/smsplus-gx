@@ -1487,8 +1487,8 @@ static void sound_stream_update(YM2413 *fm, int16_t **buf, int32_t samples)
             rhythm_calc(fm, &fm->P_CH[0], fm->noise_rng & 1 );
         }
 
-        buf[0][i] = _clip_short_ret(fm->output[0], 32767, -32767);
-        buf[1][i] = _clip_short_ret(fm->output[1], 32767, -32767);
+        buf[0][i] = _clip_short_ret(fm->output[0]);
+        buf[1][i] = _clip_short_ret(fm->output[1]);
         advance(fm);
     }
 }
