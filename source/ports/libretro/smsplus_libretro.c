@@ -277,7 +277,7 @@ static void update_input(void)
       {
          unsigned i;
          for (i = 0; i < (1 + RETRO_DEVICE_ID_JOYPAD_R3); i++)
-            ret |= input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, i);
+            ret |= (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, i) ? (1 << i) : 0);
       }
 
       if (JOYP(RETRO_DEVICE_ID_JOYPAD_UP))
@@ -341,12 +341,13 @@ static void check_system_specs(void)
 void retro_init(void)
 {
    struct retro_log_callback log;
+   bool achievements = true;
+
    if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log))
       log_cb = log.log;
    else
       log_cb = NULL;
 
-   bool achievements = true;
    environ_cb(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, &achievements);
 
    libretro_supports_bitmasks = 0;
@@ -354,7 +355,6 @@ void retro_init(void)
       libretro_supports_bitmasks = 1;
 
    check_system_specs();
-   libretro_set_core_options(environ_cb);
 }
 
 void retro_reset(void)
@@ -761,6 +761,7 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 void retro_set_environment(retro_environment_t cb)
 {
    environ_cb = cb;
+   libretro_set_core_options(environ_cb);
 }
 
 void retro_set_audio_sample(retro_audio_sample_t cb)
