@@ -206,6 +206,7 @@ static int bios_init(void)
    sprintf(bios_path, "%s%c%s", gdata.biosdir, path_default_slash_c(), "bios.sms");
 
    fd = fopen(bios_path, "rb");
+
    if(fd)
    {
       uint32_t size;
@@ -227,37 +228,22 @@ static int bios_init(void)
    {
       sprintf(bios_path, "%s%c%s", gdata.biosdir, path_default_slash_c(), "BIOS.col");
       fd = fopen(bios_path, "rb");
-      if(fd)
-      {
-         /* Seek to end of file, and get size */
-         fread(coleco.rom, 0x2000, 1, fd);
-         fclose(fd);
 
-         log_cb(RETRO_LOG_INFO, "bios loaded:      %s\n", bios_path);
-      }
-      else
+      if(!fd)
       {
          /* Coleco bios is required when running coleco roms */
          log_cb(RETRO_LOG_ERROR, "Cannot load required colero rom: %s\n", bios_path);
          return 0;
       }
+
+      /* Seek to end of file, and get size */
+      fread(coleco.rom, 0x2000, 1, fd);
+      fclose(fd);
+
+      log_cb(RETRO_LOG_INFO, "bios loaded:      %s\n", bios_path);
    }
+
    return 1;
-}
-
-static void Cleanup(void)
-{
-   if (sms_bitmap)
-      free(sms_bitmap);
-   sms_bitmap = NULL;
-
-   if (bios.rom)
-      free(bios.rom);
-   bios.rom = NULL;
-
-   /* Shut down */
-   system_poweroff();
-   system_shutdown();
 }
 
 /* Libretro implementation */
@@ -727,7 +713,17 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
 void retro_deinit()
 {
-   Cleanup();
+   if (sms_bitmap)
+      free(sms_bitmap);
+   sms_bitmap = NULL;
+
+   if (bios.rom)
+      free(bios.rom);
+   bios.rom = NULL;
+
+   /* Shut down */
+   system_poweroff();
+   system_shutdown();
 
 #ifdef HAVE_NTSC
    if (ntsc_screen)
