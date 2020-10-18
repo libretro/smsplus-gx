@@ -560,6 +560,9 @@ bool retro_load_game(const struct retro_game_info *info)
    /* Force Colecovision mode if extension is .col */
 	if (strcmp(strrchr(info->path, '.'), ".col") == 0)
       option.console = 6;
+   /* Force SG-1000 */
+   if (strcmp(strrchr(info->path, '.'), ".sg") == 0)
+      option.console = 5;
 
    /* Load ROM */
    load_rom_mem((const char*)info->data, info->size);
@@ -688,7 +691,7 @@ void retro_get_system_info(struct retro_system_info *info)
    info->library_name      = APP_NAME;
    info->library_version   = APP_VERSION GIT_VERSION;
    info->need_fullpath     = false;
-   info->valid_extensions  = "sms|bin|rom|col|gg";
+   info->valid_extensions  = "sms|bin|rom|col|gg|sg";
    info->block_extract     = false;
 }
 
