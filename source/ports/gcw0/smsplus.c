@@ -1144,7 +1144,7 @@ int main (int argc, char *argv[])
 						 * ESCAPE is mapped to Select
 						*/
 						case SDLK_HOME:
-						case SDLK_3:
+						case SDLK_END:
 						case SDLK_RCTRL:
 						case SDLK_ESCAPE:
 							selectpressed = 1;
@@ -1192,6 +1192,9 @@ int main (int argc, char *argv[])
 
 		// Execute frame(s)
 		system_frame(0);
+		
+		// Refresh sound data
+		Sound_Update(snd.output, snd.sample_count);
 		
 		// Refresh video data
 		video_update();
