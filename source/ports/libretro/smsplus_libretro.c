@@ -6,32 +6,43 @@
 #include "smsplus.h"
 #include "sound_output.h"
 
-#define SOUND_FREQUENCY 44100
+#ifdef HAVE_NTSC
+#include "ntsc/sms_ntsc.h"
+#endif
 
-static gamedata_t gdata;
+t_config option                                    = { 0 };
+static gamedata_t gdata                            = { 0 };
+static uint16_t *sms_bitmap                        = NULL;
 
-t_config option;
+static retro_log_printf_t log_cb                   = NULL;
+static retro_video_refresh_t video_cb              = NULL;
+static retro_audio_sample_t audio_cb               = NULL;
+static retro_environment_t environ_cb              = NULL;
+static retro_input_poll_t input_poll_cb            = NULL;
+static retro_input_state_t input_state_cb          = NULL;
+static retro_audio_sample_batch_t audio_batch_cb   = NULL;
 
-static uint16_t *sms_bitmap = NULL;
+static unsigned libretro_supports_bitmasks         = 0;
+static unsigned libretro_serialize_size            = 0;
+static unsigned geometry_changed                   = 0;
+static unsigned remove_left_border                 = 0;
 
-struct retro_perf_callback perf_cb;
-static retro_get_cpu_features_t perf_get_cpu_features_cb = NULL;
-static retro_log_printf_t log_cb;
-static retro_video_refresh_t video_cb;
-static retro_audio_sample_t audio_cb;
-static retro_environment_t environ_cb;
-static retro_input_poll_t input_poll_cb;
-static retro_input_state_t input_state_cb;
-static retro_audio_sample_batch_t audio_batch_cb;
+static unsigned system_width                       = VIDEO_WIDTH_SMS;
+static unsigned system_height                      = VIDEO_HEIGHT_SMS;
 
-static unsigned libretro_supports_bitmasks;
-static unsigned libretro_serialize_size;
-static unsigned geometry_changed;
+#ifdef HAVE_NTSC
+static SMS_NTSC_IN_T *ntsc_screen                  = NULL;
+static sms_ntsc_t *sms_ntsc                        = NULL;
+static unsigned use_ntsc                           = 0;
 
-static unsigned remove_left_border;
-
-static unsigned system_width;
-static unsigned system_height;
+enum {
+   NTSC_NONE = 0,
+   NTSC_MONOCHROME,
+   NTSC_COMPOSITE,
+   NTSC_SVIDEO,
+   NTSC_RGB,
+};
+#endif /* HAVE_NTSC */
 
 #ifdef _WIN32
 #define path_default_slash_c() '\\'
@@ -42,18 +53,6 @@ static unsigned system_height;
 #define MAX_PORTS 2
 
 extern uint32_t load_rom_mem(const char *, size_t);
-
-void Sound_Init(void)
-{
-}
-
-void Sound_Update(int16_t* sound_buffer, unsigned long len)
-{
-}
-
-void Sound_Close(void)
-{
-}
 
 #ifndef MAXIM_PSG
 extern sn76489_t psg_sn;
@@ -98,9 +97,9 @@ static uint32_t system_save_state_mem(void)
 
 static void system_load_state_mem(void)
 {
-   uint8_t *buf;
-   uint32_t i;
-   memstream_t *stream = memstream_open(0);
+   unsigned i           = 0;
+   uint8_t *buf         = NULL;
+   memstream_t *stream  = memstream_open(0);
 
    /* Initialize everything */
    system_reset();
@@ -155,140 +154,38 @@ static void system_load_state_mem(void)
       slot.rom    = cart.rom;
       slot.pages  = cart.pages;
       slot.mapper = cart.mapper;
-      slot.fcr = &cart.fcr[0];
+      slot.fcr    = &cart.fcr[0];
 
       /* Restore mapping */
       mapper_reset();
-      cpu_readmap[0]  = &slot.rom[0];
+      cpu_readmap[0] = &slot.rom[0];
       if (slot.mapper != MAPPER_KOREA_MSX)
       {
-         mapper_16k_w(0,slot.fcr[0]);
-         mapper_16k_w(1,slot.fcr[1]);
-         mapper_16k_w(2,slot.fcr[2]);
-         mapper_16k_w(3,slot.fcr[3]);
+         mapper_16k_w(0, slot.fcr[0]);
+         mapper_16k_w(1, slot.fcr[1]);
+         mapper_16k_w(2, slot.fcr[2]);
+         mapper_16k_w(3, slot.fcr[3]);
       }
       else
       {
-         mapper_8k_w(0,slot.fcr[0]);
-         mapper_8k_w(1,slot.fcr[1]);
-         mapper_8k_w(2,slot.fcr[2]);
-         mapper_8k_w(3,slot.fcr[3]);
+         mapper_8k_w(0, slot.fcr[0]);
+         mapper_8k_w(1, slot.fcr[1]);
+         mapper_8k_w(2, slot.fcr[2]);
+         mapper_8k_w(3, slot.fcr[3]);
       }
    }
 
    /* Force full pattern cache update */
    bg_list_index = 0x200;
-   for(i = 0; i < 0x200; i++)
+   for (i = 0; i < 0x200; i++)
    {
-      bg_name_list[i] = i;
+      bg_name_list[i]  = i;
       bg_name_dirty[i] = 255;
    }
 
    /* Restore palette */
-   for(i = 0; i < PALETTE_SIZE; i++)
+   for (i = 0; i < PALETTE_SIZE; i++)
       palette_sync(i);
-}
-
-/* blargg NTSC filter */
-#ifdef HAVE_NTSC
-#include "ntsc/sms_ntsc.h"
-
-#define NTSC_NONE 0
-#define NTSC_MONOCHROME 1
-#define NTSC_COMPOSITE 2
-#define NTSC_SVIDEO 3
-#define NTSC_RGB 4
-
-#define MAX_NTSC_WIDTH (SMS_NTSC_OUT_WIDTH(VIDEO_WIDTH_SMS))
-
-static unsigned use_ntsc;
-static SMS_NTSC_IN_T *ntsc_screen = NULL;
-static sms_ntsc_t sms_ntsc;
-
-static void filter_ntsc_init(void)
-{
-   int pitch = MAX_NTSC_WIDTH * sizeof(SMS_NTSC_IN_T);
-
-   ntsc_screen = (SMS_NTSC_IN_T*)malloc(pitch * 240);
-   memset(ntsc_screen, 0, pitch * 240);
-   memset(&sms_ntsc, 0, sizeof(sms_ntsc_t));
-}
-
-static void filter_ntsc_cleanup(void)
-{
-   if (ntsc_screen)
-      free(ntsc_screen);
-   ntsc_screen = NULL;
-}
-
-static void filter_ntsc_set(void)
-{
-   sms_ntsc_setup_t setup;
-   switch (use_ntsc)
-   {
-      case NTSC_MONOCHROME: setup = sms_ntsc_monochrome; break;
-      case NTSC_COMPOSITE: setup = sms_ntsc_composite; break;
-      case NTSC_SVIDEO: setup = sms_ntsc_svideo; break;
-      case NTSC_RGB: setup = sms_ntsc_rgb; break;
-      default: return;
-   }
-
-   sms_ntsc_init(&sms_ntsc, &setup);
-}
-#endif /* HAVE_NTSC */
-
-static void video_update(void)
-{
-   static unsigned last_width, last_height;
-   int x         = bitmap.viewport.x;
-
-   system_width  = bitmap.viewport.w;
-   system_height = bitmap.viewport.h;
-
-   if (sms.console != CONSOLE_GG && remove_left_border)
-   {
-      x            = (vdp.reg[0] & 0x20) ? 8 : 0;
-      system_width = VIDEO_WIDTH_SMS - x;
-   }
-
-   if (system_width != last_width || system_height != last_height)
-      bitmap.viewport.changed = 1;
-
-   last_width  = system_width;
-   last_height = system_height;
-
-   if (geometry_changed || bitmap.viewport.changed)
-   {
-      struct retro_system_av_info info;
-
-      retro_get_system_av_info(&info);
-      /* hard audio-video reset */
-      if (geometry_changed)
-         environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &info);
-      else
-         environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &info);
-
-      geometry_changed        = 0;
-      bitmap.viewport.changed = 0;
-   }
-
-#ifdef HAVE_NTSC
-   if (use_ntsc)
-   {
-      const uint16_t *vidbuf  = sms_bitmap + x;
-      int32_t ntsc_out_width  = SMS_NTSC_OUT_WIDTH(system_width);
-      uint32_t ntsc_out_pitch = ntsc_out_width << 1;
-
-      sms_ntsc_blit(&sms_ntsc, vidbuf, bitmap.pitch / sizeof(uint16_t),
-            system_width, system_height, ntsc_screen, ntsc_out_pitch);
-      video_cb(ntsc_screen, ntsc_out_width, system_height, ntsc_out_pitch);
-   }
-   else
-#endif /* HAVE_NTSC */
-   {
-      const uint16_t *vidbuf = sms_bitmap + x;
-      video_cb(vidbuf, system_width, system_height, bitmap.pitch);
-   }
 }
 
 void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode)
@@ -303,12 +200,13 @@ static int bios_init(void)
    FILE *fd;
    char bios_path[1024];
 
-   bios.rom = malloc(0x100000);
+   bios.rom     = malloc(0x100000);
    bios.enabled = 0;
 
-   sprintf(bios_path, "%s%s", gdata.biosdir, "bios.sms");
+   sprintf(bios_path, "%s%c%s", gdata.biosdir, path_default_slash_c(), "bios.sms");
 
    fd = fopen(bios_path, "rb");
+
    if(fd)
    {
       uint32_t size;
@@ -316,60 +214,45 @@ static int bios_init(void)
       fseek(fd, 0, SEEK_END);
       size = ftell(fd);
       fseek(fd, 0, SEEK_SET);
-      if (size < 0x4000) size = 0x4000;
+      if (size < 0x4000)
+         size = 0x4000;
       fread(bios.rom, size, 1, fd);
       bios.enabled = 2;
-      bios.pages = size / 0x4000;
+      bios.pages   = size / 0x4000;
       fclose(fd);
+
       log_cb(RETRO_LOG_INFO, "bios loaded:      %s\n", bios_path);
    }
 
    if (sms.console == CONSOLE_COLECO)
    {
-      sprintf(bios_path, "%s%s", gdata.biosdir, "BIOS.col");
+      sprintf(bios_path, "%s%c%s", gdata.biosdir, path_default_slash_c(), "BIOS.col");
       fd = fopen(bios_path, "rb");
-      if(fd)
-      {
-         /* Seek to end of file, and get size */
-         fread(coleco.rom, 0x2000, 1, fd);
-         fclose(fd);
-         log_cb(RETRO_LOG_INFO, "bios loaded:      %s\n", bios_path);
-      }
-      else
+
+      if(!fd)
       {
          /* Coleco bios is required when running coleco roms */
          log_cb(RETRO_LOG_ERROR, "Cannot load required colero rom: %s\n", bios_path);
          return 0;
       }
+
+      /* Seek to end of file, and get size */
+      fread(coleco.rom, 0x2000, 1, fd);
+      fclose(fd);
+
+      log_cb(RETRO_LOG_INFO, "bios loaded:      %s\n", bios_path);
    }
+
    return 1;
-}
-
-static void Cleanup(void)
-{
-   if (sms_bitmap)
-      free(sms_bitmap);
-   sms_bitmap = NULL;
-
-   if (bios.rom)
-      free(bios.rom);
-   bios.rom = NULL;
-
-   /* Deinitialize audio and video output */
-   Sound_Close();
-
-   /* Shut down */
-   system_poweroff();
-   system_shutdown();
 }
 
 /* Libretro implementation */
 
-static void update_input(void)
-{
 #define JOYP(n)   (ret & (1 << (n)))
 #define KEYP(key) (input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, key))
 
+static void update_input(void)
+{
    unsigned port;
    unsigned startpressed = 0;
 
@@ -385,16 +268,16 @@ static void update_input(void)
 
    for (port = 0; port < MAX_PORTS; port++)
    {
-      unsigned ret = 0;
+      int32_t ret = 0;
       if (libretro_supports_bitmasks)
       {
          ret = input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
       }
       else
       {
-         int i;
+         unsigned i;
          for (i = 0; i < (1 + RETRO_DEVICE_ID_JOYPAD_R3); i++)
-            ret |= input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, i);
+            ret |= (input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, i) ? (1 << i) : 0);
       }
 
       if (JOYP(RETRO_DEVICE_ID_JOYPAD_UP))
@@ -444,10 +327,10 @@ static void update_input(void)
       input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
 
    if (sms.console == CONSOLE_COLECO) input.system = 0;
+}
 
 #undef JOYP
 #undef KEYP
-}
 
 static void check_system_specs(void)
 {
@@ -458,12 +341,13 @@ static void check_system_specs(void)
 void retro_init(void)
 {
    struct retro_log_callback log;
+   bool achievements = true;
+
    if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log))
       log_cb = log.log;
    else
       log_cb = NULL;
 
-   bool achievements = true;
    environ_cb(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, &achievements);
 
    libretro_supports_bitmasks = 0;
@@ -471,7 +355,6 @@ void retro_init(void)
       libretro_supports_bitmasks = 1;
 
    check_system_specs();
-   libretro_set_core_options(environ_cb);
 }
 
 void retro_reset(void)
@@ -487,11 +370,10 @@ bool retro_load_game_special(unsigned id, const struct retro_game_info *info, si
 static void check_variables(bool startup)
 {
    struct retro_variable var = { 0 };
-
+   unsigned old_border = remove_left_border;
    #ifdef HAVE_NTSC
    unsigned old_ntsc   = use_ntsc;
    #endif
-   unsigned old_border = remove_left_border;
 
    var.value = NULL;
    var.key   = "smsplus_hardware";
@@ -520,17 +402,17 @@ static void check_variables(bool startup)
    {
       if (strcmp(var.value, "ntsc-u") == 0)
       {
-         sms.display = DISPLAY_NTSC;
+         sms.display   = DISPLAY_NTSC;
 			sms.territory = TERRITORY_EXPORT;
       }
       else if (strcmp(var.value, "pal") == 0)
       {
-         sms.display = DISPLAY_PAL;
+         sms.display   = DISPLAY_PAL;
 			sms.territory = TERRITORY_EXPORT;
       }
       else if (strcmp(var.value, "ntsc-j") == 0)
       {
-         sms.display = DISPLAY_NTSC;
+         sms.display   = DISPLAY_NTSC;
 			sms.territory = TERRITORY_DOMESTIC;
       }
    }
@@ -577,10 +459,31 @@ static void check_variables(bool startup)
 
    if (old_ntsc != use_ntsc)
    {
+      sms_ntsc_setup_t setup;
+
+      switch (use_ntsc)
+      {
+      case NTSC_MONOCHROME:
+         setup = sms_ntsc_monochrome;
+         break;
+      case NTSC_COMPOSITE:
+         setup = sms_ntsc_composite;
+         break;
+      case NTSC_SVIDEO:
+         setup = sms_ntsc_svideo;
+         break;
+      case NTSC_RGB:
+         setup = sms_ntsc_rgb;
+         break;
+      default:
+         break;
+      }
+
+      if (use_ntsc)
+         sms_ntsc_init(sms_ntsc, &setup);
       geometry_changed = 1;
-      filter_ntsc_set();
    }
-   #endif
+   #endif /* HAVE_NTSC */
 
    if (old_border != remove_left_border)
       bitmap.viewport.changed = 1;
@@ -588,9 +491,8 @@ static void check_variables(bool startup)
 
 bool retro_load_game(const struct retro_game_info *info)
 {
-   enum retro_pixel_format rgb565 = RETRO_PIXEL_FORMAT_RGB565;
-   const char *dir = NULL;
-   char retro_system_directory[256];
+   enum retro_pixel_format rgb565   = RETRO_PIXEL_FORMAT_RGB565;
+   const char *dir                  = NULL;
 
    struct retro_input_descriptor desc[] = {
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
@@ -638,11 +540,9 @@ bool retro_load_game(const struct retro_game_info *info)
    if (environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565) && log_cb)
       log_cb(RETRO_LOG_INFO, "Frontend supports RGB565 - will use that instead of XRGB1555.\n");
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
-      sprintf(retro_system_directory, "%s", dir);
-
    /* Set up the bios directory */
-   sprintf(gdata.biosdir, "%s%c", retro_system_directory, path_default_slash_c());
+   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
+      sprintf(gdata.biosdir, "%s", dir);
 
    memset(&option, 0, sizeof(option));
 
@@ -652,21 +552,27 @@ bool retro_load_game(const struct retro_game_info *info)
    option.tms_pal     = 2;
    option.nosound     = 0;
    option.soundlevel  = 2;
-   option.sndrate     = SOUND_FREQUENCY;
+   option.sndrate     = 44100;
 
    option.country     = 0;
    option.console     = 0;
 
    /* Force Colecovision mode if extension is .col */
-	if (strcmp(strrchr(info->path, '.'), ".col") == 0) option.console = 6;
+	if (strcmp(strrchr(info->path, '.'), ".col") == 0)
+      option.console = 6;
+   /* Force SG-1000 */
+   if (strcmp(strrchr(info->path, '.'), ".sg") == 0)
+      option.console = 5;
 
    /* Load ROM */
-   if (!load_rom_mem((const char*)info->data, info->size))
-   {
-      log_cb(RETRO_LOG_ERROR, "Error: Failed to load %s.\n", info->path);
-      Cleanup();
-      return false;
-   }
+   load_rom_mem((const char*)info->data, info->size);
+
+   log_cb(RETRO_LOG_INFO, "CRC : 0x%08X\n", cart.crc);
+
+   #ifdef HAVE_NTSC
+   ntsc_screen = (SMS_NTSC_IN_T*)calloc(1, SMS_NTSC_OUT_WIDTH(VIDEO_WIDTH_SMS) * 240 * sizeof(SMS_NTSC_IN_T));
+   sms_ntsc    = (sms_ntsc_t*)calloc(1, sizeof(sms_ntsc_t));
+   #endif
 
    sms_bitmap  = (uint16_t*)malloc(VIDEO_WIDTH_SMS * 240 * sizeof(uint16_t));
 
@@ -681,10 +587,6 @@ bool retro_load_game(const struct retro_game_info *info)
    bitmap.viewport.x  = 0x00;
    bitmap.viewport.y  = 0x00;
 
-   #ifdef HAVE_NTSC
-   filter_ntsc_init();
-   #endif
-
    check_variables(true);
 
    if (!bios_init()) /* This only fails when running coleco roms and coleco bios is not found */
@@ -697,9 +599,7 @@ bool retro_load_game(const struct retro_game_info *info)
    /* Initialize all systems and power on */
    system_poweron();
 
-   log_cb(RETRO_LOG_INFO, "CRC : 0x%08X\n", cart.crc);
-
-   system_width = bitmap.viewport.w;
+   system_width  = bitmap.viewport.w;
    system_height = bitmap.viewport.h;
 
    libretro_serialize_size = 0;
@@ -713,7 +613,10 @@ void retro_unload_game(void)
 
 void retro_run(void)
 {
-   bool updated = false;
+   bool updated   = false;
+   bool skip      = false;
+   int32_t x      = 0;
+   static unsigned last_width, last_height;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       check_variables(false);
@@ -722,10 +625,56 @@ void retro_run(void)
    update_input();
 
    /* Execute frame(s) */
-   system_frame(0);
+   system_frame(skip);
 
    /* Refresh video data */
-   video_update();
+   x                 = bitmap.viewport.x;
+   system_width      = bitmap.viewport.w;
+   system_height     = bitmap.viewport.h;
+
+   if (sms.console != CONSOLE_GG && remove_left_border)
+   {
+      x              = (vdp.reg[0] & 0x20) ? 8 : 0;
+      system_width   = VIDEO_WIDTH_SMS - x;
+   }
+
+   if (system_width != last_width || system_height != last_height)
+      bitmap.viewport.changed = 1;
+
+   last_width  = system_width;
+   last_height = system_height;
+
+   if (geometry_changed || bitmap.viewport.changed)
+   {
+      struct retro_system_av_info info;
+
+      retro_get_system_av_info(&info);
+      /* hard audio-video reset */
+      if (geometry_changed)
+         environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &info);
+      else
+         environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &info);
+
+      geometry_changed        = 0;
+      bitmap.viewport.changed = 0;
+   }
+
+   #ifdef HAVE_NTSC
+   if (use_ntsc)
+   {
+      int32_t ntsc_out_width  = SMS_NTSC_OUT_WIDTH(system_width);
+      uint32_t ntsc_out_pitch = ntsc_out_width << 1;
+
+      sms_ntsc_blit(sms_ntsc, sms_bitmap + x, bitmap.pitch / sizeof(uint16_t),
+            system_width, system_height, ntsc_screen, ntsc_out_pitch);
+
+      video_cb(ntsc_screen, ntsc_out_width, system_height, ntsc_out_pitch);
+   }
+   else
+   #endif
+   {
+      video_cb((const uint16_t *)sms_bitmap + x, system_width, system_height, bitmap.pitch);
+   }
 
    /* Output audio */
    audio_batch_cb((const int16_t*)snd.output, (size_t)snd.sample_count);
@@ -738,11 +687,12 @@ void retro_get_system_info(struct retro_system_info *info)
 #endif
 
    memset(info, 0, sizeof(*info));
-   info->library_name = APP_NAME;
-   info->library_version = APP_VERSION GIT_VERSION;
-   info->need_fullpath = false;
-   info->valid_extensions = "sms|bin|rom|col|gg";
-   info->block_extract = false;
+
+   info->library_name      = APP_NAME;
+   info->library_version   = APP_VERSION GIT_VERSION;
+   info->need_fullpath     = false;
+   info->valid_extensions  = "sms|bin|rom|col|gg|sg";
+   info->block_extract     = false;
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
@@ -760,19 +710,35 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->geometry.base_height  = system_height;
    info->geometry.max_height   = 240;
    info->geometry.aspect_ratio = 4.0 / 3.0;
-   info->timing.fps            = (double)(retro_get_region() ? FPS_PAL : FPS_NTSC);
+   info->timing.fps            = (double)((sms.display == DISPLAY_PAL) ? FPS_PAL : FPS_NTSC);
    info->timing.sample_rate    = (double)option.sndrate;
 }
 
 void retro_deinit()
 {
-   Cleanup();
+   if (sms_bitmap)
+      free(sms_bitmap);
+   sms_bitmap = NULL;
+
+   if (bios.rom)
+      free(bios.rom);
+   bios.rom = NULL;
+
+   /* Shut down */
+   system_poweroff();
+   system_shutdown();
 
 #ifdef HAVE_NTSC
-   filter_ntsc_cleanup();
+   if (ntsc_screen)
+      free(ntsc_screen);
+   ntsc_screen = NULL;
+
+   if (sms_ntsc)
+      free(sms_ntsc);
+   sms_ntsc = NULL;
 #endif
 
-   libretro_serialize_size = 0;
+   libretro_serialize_size    = 0;
    libretro_supports_bitmasks = 0;
 }
 
@@ -795,6 +761,7 @@ void retro_set_controller_port_device(unsigned in_port, unsigned device)
 void retro_set_environment(retro_environment_t cb)
 {
    environ_cb = cb;
+   libretro_set_core_options(environ_cb);
 }
 
 void retro_set_audio_sample(retro_audio_sample_t cb)
