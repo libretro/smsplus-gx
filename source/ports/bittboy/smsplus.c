@@ -237,10 +237,7 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 	}
 	else if (k == option.config_buttons[CONFIG_BUTTON_FF])
 	{
-		if (p)
-			fastforward = 1;
-		else
-			fastforward = 0;
+		if (p) fastforward ^= 1;
 	}
 	
 	if (sms.console == CONSOLE_COLECO) input.system = 0;
