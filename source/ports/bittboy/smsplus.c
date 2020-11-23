@@ -30,6 +30,7 @@ extern SDL_Surface *bigfontwhite;
 static uint8_t selectpressed = 0;
 static uint8_t save_slot = 0;
 static uint8_t quit = 0;
+static uint8_t fastforward = 0;
 
 static const int8_t upscalers_available = 2
 #ifdef SCALE2X_UPSCALER
@@ -234,6 +235,13 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 		else
 			selectpressed = 0;
 	}
+	else if (k == option.config_buttons[CONFIG_BUTTON_FF])
+	{
+		if (p)
+			fastforward = 1;
+		else
+			fastforward = 0;
+	}
 	
 	if (sms.console == CONSOLE_COLECO) input.system = 0;
 	
@@ -378,6 +386,16 @@ static const char* Return_Text_Button(uint32_t button)
 		case 34:
 			return "Brightness";
 		break;
+		
+		/* L2 */
+		case SDLK_PAGEUP:
+			return "L2";
+		break;
+		/* R2 */
+		case SDLK_PAGEDOWN:
+			return "R2";
+		break;
+		
 		/* Volume - */
 		case 38:
 			return "Volume -";
@@ -391,6 +409,9 @@ static const char* Return_Text_Button(uint32_t button)
 			return "Start button";
 		break;
 		default:
+			return "Unknown key";
+		break;
+		case 0:
 			return "...";
 		break;
 	}	
@@ -430,7 +451,7 @@ static void Input_Remapping()
 	int32_t currentselection = 1;
 	int32_t exit_input = 0;
 	uint32_t exit_map = 0;
-	
+
 	while(!exit_input)
 	{
 		pressed = 0;
@@ -448,18 +469,18 @@ static void Input_Remapping()
                         {
 							if (sms.console == CONSOLE_COLECO)
 							{
-								currentselection = 18;
+								currentselection = 19;
 							}
-							else currentselection = 7;
+							else currentselection = 8;
 						}
                         break;
                     case SDLK_DOWN:
                         currentselection++;
-                        if (currentselection == 19 && sms.console == CONSOLE_COLECO)
+                        if (currentselection == 20 && sms.console == CONSOLE_COLECO)
                         {
 							currentselection = 1;
 						}
-                        else if (currentselection == 8 && sms.console != CONSOLE_COLECO)
+                        else if (currentselection == 9 && sms.console != CONSOLE_COLECO)
                         {
 							currentselection = 1;
 						}
@@ -474,7 +495,7 @@ static void Input_Remapping()
                     case SDLK_LEFT:
 						if (sms.console == CONSOLE_COLECO)
 						{
-							if (currentselection > 8) currentselection -= 9;
+							if (currentselection > 9) currentselection -= 9;
 						}
 					break;
                     case SDLK_RIGHT:
@@ -518,9 +539,7 @@ static void Input_Remapping()
         }
 		
 		print_string("Input remapping", TextWhite, 0, 100, 10, backbuffer->pixels);
-		
-		print_string("Press [A] to map to a button", TextWhite, TextBlue, 50, 210, backbuffer->pixels);
-		print_string("Press [TA] to Exit", TextWhite, TextBlue, 85, 225, backbuffer->pixels);
+		print_string("[A] = Map, [TA] = Exit", TextWhite, TextBlue, 5, 225, backbuffer->pixels);
 		
 		snprintf(text, sizeof(text), "  UP  : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_UP]));
 		if (currentselection == 1) print_string(text, TextRed, 0, 5, 25+2, backbuffer->pixels);
@@ -550,51 +569,55 @@ static void Input_Remapping()
 		if (currentselection == 7) print_string(text, TextRed, 0, 5, 145+2, backbuffer->pixels);
 		else print_string(text, TextWhite, 0, 5, 145+2, backbuffer->pixels);
 		
+		snprintf(text, sizeof(text), "FAST F: %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_FF]));
+		if (currentselection == 8) print_string(text, TextRed, 0, 5, 165+2, backbuffer->pixels);
+		else print_string(text, TextWhite, 0, 5, 165+2, backbuffer->pixels);	
+			
 		if (sms.console == CONSOLE_COLECO)
 		{
 			snprintf(text, sizeof(text), " [*]  : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_DOLLARS]));
-			if (currentselection == 8) print_string(text, TextRed, 0, 5, 165+2, backbuffer->pixels);
-			else print_string(text, TextWhite, 0, 5, 165+2, backbuffer->pixels);
-			
-			snprintf(text, sizeof(text), " [#]  : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_ASTERISK]));
 			if (currentselection == 9) print_string(text, TextRed, 0, 5, 185+2, backbuffer->pixels);
 			else print_string(text, TextWhite, 0, 5, 185+2, backbuffer->pixels);
 			
-			snprintf(text, sizeof(text), "  [1] : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_ONE]));
+			snprintf(text, sizeof(text), "  [#] : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_ASTERISK]));
 			if (currentselection == 10) print_string(text, TextRed, 0, 165, 25+2, backbuffer->pixels);
 			else print_string(text, TextWhite, 0, 165, 25+2, backbuffer->pixels);
 			
-			snprintf(text, sizeof(text), "  [2] : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_TWO]));
+			snprintf(text, sizeof(text), "  [1] : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_ONE]));
 			if (currentselection == 11) print_string(text, TextRed, 0, 165, 45+2, backbuffer->pixels);
 			else print_string(text, TextWhite, 0, 165, 45+2, backbuffer->pixels);
 			
-			snprintf(text, sizeof(text), "  [3] : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_THREE]));
+			snprintf(text, sizeof(text), "  [2] : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_TWO]));
 			if (currentselection == 12) print_string(text, TextRed, 0, 165, 65+2, backbuffer->pixels);
 			else print_string(text, TextWhite, 0, 165, 65+2, backbuffer->pixels);
 			
-			snprintf(text, sizeof(text), "  [4] : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_FOUR]));
+			snprintf(text, sizeof(text), "  [3] : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_THREE]));
 			if (currentselection == 13) print_string(text, TextRed, 0, 165, 85+2, backbuffer->pixels);
 			else print_string(text, TextWhite, 0, 165, 85+2, backbuffer->pixels);
 			
-			snprintf(text, sizeof(text), "  [5] : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_FIVE]));
+			snprintf(text, sizeof(text), "  [4] : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_FOUR]));
 			if (currentselection == 14) print_string(text, TextRed, 0, 165, 105+2, backbuffer->pixels);
 			else print_string(text, TextWhite, 0, 165, 105+2, backbuffer->pixels);
 			
-			snprintf(text, sizeof(text), "  [6] : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_SIX]));
+			snprintf(text, sizeof(text), "  [5] : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_FIVE]));
 			if (currentselection == 15) print_string(text, TextRed, 0, 165, 125+2, backbuffer->pixels);
 			else print_string(text, TextWhite, 0, 165, 125+2, backbuffer->pixels);
 			
-			snprintf(text, sizeof(text), "  [7] : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_SEVEN]));
+			snprintf(text, sizeof(text), "  [6] : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_SIX]));
 			if (currentselection == 16) print_string(text, TextRed, 0, 165, 145+2, backbuffer->pixels);
 			else print_string(text, TextWhite, 0, 165, 145+2, backbuffer->pixels);
 			
-			snprintf(text, sizeof(text), "  [8] : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_EIGHT]));
+			snprintf(text, sizeof(text), "  [7] : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_SEVEN]));
 			if (currentselection == 17) print_string(text, TextRed, 0, 165, 165+2, backbuffer->pixels);
 			else print_string(text, TextWhite, 0, 165, 165+2, backbuffer->pixels);
 			
-			snprintf(text, sizeof(text), "  [9] : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_NINE]));
+			snprintf(text, sizeof(text), "  [8] : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_EIGHT]));
 			if (currentselection == 18) print_string(text, TextRed, 0, 165, 185+2, backbuffer->pixels);
 			else print_string(text, TextWhite, 0, 165, 185+2, backbuffer->pixels);
+			
+			snprintf(text, sizeof(text), "  [9] : %s\n", Return_Text_Button(option.config_buttons[CONFIG_BUTTON_NINE]));
+			if (currentselection == 19) print_string(text, TextRed, 0, 165, 205+2, backbuffer->pixels);
+			else print_string(text, TextWhite, 0, 165, 205+2, backbuffer->pixels);
 		}
 		
 		bitmap_scale(0,0,320,240,sdl_screen->w,sdl_screen->h,320,0,(uint16_t* restrict)backbuffer->pixels,(uint16_t* restrict)sdl_screen->pixels);
@@ -852,21 +875,20 @@ static void config_load()
 	}
 	else
 	{
-		/* Default mapping for the Bittboy in case loading configuration file fails */
-		option.config_buttons[CONFIG_BUTTON_UP] = 273;
-		option.config_buttons[CONFIG_BUTTON_DOWN] = 274;
-		option.config_buttons[CONFIG_BUTTON_LEFT] = 276;
-		option.config_buttons[CONFIG_BUTTON_RIGHT] = 275;
-		
-		option.config_buttons[CONFIG_BUTTON_BUTTON1] = 306;
-		option.config_buttons[CONFIG_BUTTON_BUTTON2] = 308;
-		
-		option.config_buttons[CONFIG_BUTTON_START] = 13;
-		
-		for (i = 7; i < 19; i++)
+		for (i = 0; i < 19; i++)
 		{
 			option.config_buttons[i] = 0;
 		}
+		/* Default mapping for the Bittboy in case loading configuration file fails */
+		option.config_buttons[CONFIG_BUTTON_UP] = SDLK_UP;
+		option.config_buttons[CONFIG_BUTTON_DOWN] = SDLK_UP;
+		option.config_buttons[CONFIG_BUTTON_LEFT] = SDLK_LEFT;
+		option.config_buttons[CONFIG_BUTTON_RIGHT] = SDLK_RIGHT;
+		
+		option.config_buttons[CONFIG_BUTTON_BUTTON1] = SDLK_LCTRL;
+		option.config_buttons[CONFIG_BUTTON_BUTTON2] = SDLK_LALT;
+		
+		option.config_buttons[CONFIG_BUTTON_START] = SDLK_RETURN;
 	}
 }
 
@@ -1022,7 +1044,7 @@ int main (int argc, char *argv[])
 		system_frame(0);
 		
 		// Refresh sound data
-		Sound_Update(snd.output, snd.sample_count);
+		if (fastforward == 0) Sound_Update(snd.output, snd.sample_count);
 		
 		// Refresh video data
 		video_update();
