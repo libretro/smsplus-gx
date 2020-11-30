@@ -975,20 +975,38 @@ static void Cleanup(void)
 {
 	uint_fast8_t i;
 #ifdef SCALE2X_UPSCALER
-	if (scale2x_buf) SDL_FreeSurface(scale2x_buf);
-	scale2x_buf = NULL;
+	if (scale2x_buf != NULL)
+	{
+		SDL_FreeSurface(scale2x_buf);
+		scale2x_buf = NULL;
+	}
 #endif
-	if (sdl_screen) SDL_FreeSurface(sdl_screen);
-	if (backbuffer) SDL_FreeSurface(backbuffer);
-	if (sms_bitmap) SDL_FreeSurface(sms_bitmap);
-	if (miniscreen) SDL_FreeSurface(miniscreen);
+	if (sdl_screen != NULL)
+	{
+		SDL_FreeSurface(sdl_screen);
+		sdl_screen = NULL;
+	}
+	if (backbuffer != NULL)
+	{
+		SDL_FreeSurface(backbuffer);
+		backbuffer = NULL;
+	}
+	if (sms_bitmap != NULL)
+	{
+		SDL_FreeSurface(sms_bitmap);
+		sms_bitmap = NULL;
+	}
+	if (miniscreen != NULL)
+	{
+		SDL_FreeSurface(miniscreen);
+		miniscreen = NULL;
+	}
 	
-	backbuffer = NULL;
-	sms_bitmap = NULL;
-	miniscreen = NULL;
-	
-	if (bios.rom) free(bios.rom);
-	bios.rom = NULL;
+	if (bios.rom != NULL)
+	{
+		free(bios.rom);
+		bios.rom = NULL;
+	}
 	
 	for(i=0;i<joy_numb;i++)
 	{
@@ -1004,7 +1022,11 @@ static void Cleanup(void)
 
 uint32_t update_window_size(uint32_t w, uint32_t h, uint32_t scale_ratio)
 {
-	if (sdl_screen) SDL_FreeSurface(sdl_screen);
+	if (sdl_screen != NULL)
+	{
+		SDL_FreeSurface(sdl_screen);
+		sdl_screen = NULL;
+	}
 	
 	if (option.fullscreen == 0)
 	{
@@ -1100,7 +1122,7 @@ int main (int argc, char *argv[])
 	}
 
 #ifdef SCALE2X_UPSCALER
-	scale2x_buf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS*2, 480, 16, 0, 0, 0, 0);
+	scale2x_buf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS*2, 267*2, 16, 0, 0, 0, 0);
 #endif
 	
 	fprintf(stdout, "CRC : %08X\n", cart.crc);
