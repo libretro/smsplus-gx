@@ -689,7 +689,7 @@ int main (int argc, char *argv[])
 	ioctl(fbfd, FBIOPAN_DISPLAY, &vinfo); 
 
 #ifdef SCALE2X_UPSCALER
-	scale2x_buf = malloc(((VIDEO_WIDTH_SMS*2)*480)*sizeof(uint16_t));
+	scale2x_buf = malloc(((VIDEO_WIDTH_SMS*2)*(267*2))*sizeof(uint16_t));
 #endif
 	
 	fprintf(stdout, "CRC : %08X\n", cart.crc);

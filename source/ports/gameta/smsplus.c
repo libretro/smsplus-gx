@@ -626,7 +626,7 @@ int main (int argc, char *argv[])
 	SDL_ShowCursor(0);
 
 #ifdef SCALE2X_UPSCALER
-	scale2x_buf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS*2, 480, 16, 0, 0, 0, 0);
+	scale2x_buf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS*2, 267*2, 16, 0, 0, 0, 0);
 #endif
 	
 	fprintf(stdout, "CRC : %08X\n", cart.crc);
