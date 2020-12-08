@@ -78,8 +78,8 @@ libretro-build-linux-x64:
 # MacOS 64-bit
 libretro-build-osx-x64:
   extends:
-    - .libretro-osx-x64-make-default
     - .core-defs
+    - .libretro-osx-x64-make-default
     
 ################################### CELLULAR #################################
 # Android ARMv7a
@@ -128,8 +128,8 @@ libretro-build-ps2:
 # Nintendo 3DS
 libretro-build-ctr:
   extends:
-    - .libretro-ctr-static-retroarch-master
     - .core-defs
+    - .libretro-ctr-static-retroarch-master
 
 # Nintendo Switch
 libretro-build-libnx-aarch64:
