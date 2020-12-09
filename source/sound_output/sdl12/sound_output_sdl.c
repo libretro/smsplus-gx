@@ -127,7 +127,6 @@ void Sound_Init()
 	{
 		sound_mutex = SDL_CreateMutex();
 		sound_cv = SDL_CreateCond();
-		printf("Using mutexes for sync\n");
 	}
 	#endif
 	
@@ -139,7 +138,7 @@ void Sound_Init()
 void Sound_Update(int16_t* sound_buffer, unsigned long len)
 {
 	SDL_LockAudio();
-	sdl_write_buffer(sound_buffer, len * 4);
+	sdl_write_buffer((uint8_t*)sound_buffer, len * 4);
 	SDL_UnlockAudio();
 }
 
