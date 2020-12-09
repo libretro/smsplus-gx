@@ -14,6 +14,10 @@
 #include "font_drawing.h"
 #include "sound_output.h"
 
+#ifndef SDL_TRIPLEBUF
+#define SDL_TRIPLEBUF SDL_DOUBLEBUF
+#endif
+
 static SDL_Joystick * sdl_joy[2];
 #define joy_commit_range 8192
 
@@ -41,11 +45,6 @@ static const int8_t upscalers_available = 2
 #endif
 ;
 
-static uint32_t width_hold = 256;
-static uint32_t width_remember = 256;
-static uint32_t width_remove = 0;
-static uint_fast8_t remember_res_height;
-static uint_fast8_t scale2x_res = 1;
 static uint_fast8_t forcerefresh = 0;
 static uint_fast8_t dpad_input[4] = {0, 0, 0, 0};
 
@@ -63,7 +62,7 @@ static void Clear_video()
 
 static void video_update()
 {
-	uint32_t dst_x, dst_y, dst_w, dst_h, hide_left;
+	uint32_t dst_x, dst_w, hide_left;
 	SDL_Rect dst;
 
 	SDL_LockSurface(sdl_screen);
@@ -87,6 +86,7 @@ static void video_update()
 		break;
 		// Fullscreen
 		case 1:
+		default:
 		if(sms.console == CONSOLE_GG) 
 		{
 			dst.x = 48;
@@ -308,12 +308,12 @@ static void bios_init()
 	{
 		/* Seek to end of file, and get size */
 		fseek(fd, 0, SEEK_END);
-		uint32_t size = ftell(fd);
+		long size = ftell(fd);
 		fseek(fd, 0, SEEK_SET);
 		if (size < 0x4000) size = 0x4000;
 		fread(bios.rom, size, 1, fd);
 		bios.enabled = 2;  
-		bios.pages = size / 0x4000;
+		bios.pages = (uint16_t)size / 0x4000;
 		fclose(fd);
 	}
 
@@ -385,66 +385,50 @@ static const char* Return_Text_Button(uint32_t button)
 		/* UP button */
 		case 273:
 			return "DPAD UP";
-		break;
 		/* DOWN button */
 		case 274:
 			return "DPAD DOWN";
-		break;
 		/* LEFT button */
 		case 276:
 			return "DPAD LEFT";
-		break;
 		/* RIGHT button */
 		case 275:
 			return "DPAD RIGHT";
-		break;
 		/* A button */
 		case 306:
 			return "A button";
-		break;
 		/* B button */
 		case 308:
 			return "B button";
-		break;
 		/* X button */
 		case 304:
 			return "X button";
-		break;
 		/* Y button */
 		case 32:
 			return "Y button";
-		break;
 		/* L button */
 		case 9:
 			return "Left Shoulder";
-		break;
 		/* R button */
 		case 8:
 			return "Right Shoulder";
-		break;
 		/* Power button */
 		case 279:
 			return "POWER";
-		break;
 		/* Brightness */
 		case 34:
 			return "Brightness";
-		break;
 		/* Volume - */
 		case 38:
 			return "Volume -";
-		break;
 		/* Volume + */
 		case 233:
 			return "Volume +";
-		break;
 		/* Start */
 		case 13:
 			return "Start button";
-		break;
 		default:
 			return "...";
-		break;
 	}	
 }
 
@@ -455,22 +439,16 @@ static const char* Return_Volume(uint32_t vol)
 	{
 		case 0:
 			return "Mute";
-		break;
 		case 1:
 			return "25 %";
-		break;
 		case 2:
 			return "50 %";
-		break;
 		case 3:
 			return "75 %";
-		break;
 		case 4:
 			return "100 %";
-		break;
 		default:
 			return "...";
-		break;
 	}	
 }
 
@@ -478,14 +456,12 @@ static void Input_Remapping()
 {
 	SDL_Event Event;
 	char text[50];
-	uint32_t pressed = 0;
 	int32_t currentselection = 1;
 	int32_t exit_input = 0;
 	uint32_t exit_map = 0;
 	
 	while(!exit_input)
 	{
-		pressed = 0;
 		SDL_FillRect( backbuffer, NULL, 0 );
 		SDL_BlitSurface(miniscreen,NULL,backbuffer, NULL);
 		
@@ -519,7 +495,26 @@ static void Input_Remapping()
                         break;
                     case SDLK_LCTRL:
                     case SDLK_RETURN:
-                        pressed = 1;
+						SDL_FillRect( backbuffer, NULL, 0 );
+						SDL_BlitSurface(miniscreen,NULL,backbuffer, NULL);
+						print_string("Please press button for mapping", TextWhite, TextBlue, 37, 108, backbuffer->pixels);
+						SDL_BlitSurface(backbuffer, NULL, sdl_screen, NULL);
+						SDL_Flip(sdl_screen);
+						exit_map = 0;
+						while( !exit_map )
+						{
+							while (SDL_PollEvent(&Event))
+							{
+								if (Event.type == SDL_KEYDOWN)
+								{
+									if (Event.key.keysym.sym != SDLK_END)
+									{
+										option.config_buttons[currentselection - 1] = Event.key.keysym.sym;
+										exit_map = 1;
+									}
+								}
+							}
+						}
 					break;
                     case SDLK_LALT:
                         exit_input = 1;
@@ -539,35 +534,6 @@ static void Input_Remapping()
 					default:
 					break;
                 }
-            }
-        }
-
-        if (pressed)
-        {
-            switch(currentselection)
-            {
-                default:
-					SDL_FillRect( backbuffer, NULL, 0 );
-					SDL_BlitSurface(miniscreen,NULL,backbuffer, NULL);
-					print_string("Please press button for mapping", TextWhite, TextBlue, 37, 108, backbuffer->pixels);
-					bitmap_scale(0,0,320,240,sdl_screen->w,sdl_screen->h,320,0,(uint16_t* restrict)backbuffer->pixels,(uint16_t* restrict)sdl_screen->pixels);
-					SDL_Flip(sdl_screen);
-					exit_map = 0;
-					while( !exit_map )
-					{
-						while (SDL_PollEvent(&Event))
-						{
-							if (Event.type == SDL_KEYDOWN)
-							{
-								if (Event.key.keysym.sym != SDLK_END)
-								{
-									option.config_buttons[currentselection - 1] = Event.key.keysym.sym;
-									exit_map = 1;
-								}
-							}
-						}
-					}
-				break;
             }
         }
 		
@@ -651,7 +617,7 @@ static void Input_Remapping()
 			else print_string(text, TextWhite, 0, 165, 185+2, backbuffer->pixels);
 		}
 		
-		bitmap_scale(0,0,320,240,sdl_screen->w,sdl_screen->h,320,0,(uint16_t* restrict)backbuffer->pixels,(uint16_t* restrict)sdl_screen->pixels);
+		SDL_BlitSurface(backbuffer, NULL, sdl_screen, NULL);
 		SDL_Flip(sdl_screen);
 	}
 	
@@ -662,8 +628,6 @@ static void Menu()
 	char text[50];
     int16_t pressed = 0;
     int16_t currentselection = 1;
-    uint16_t miniscreenwidth = 160;
-    uint16_t miniscreenheight = 144;
     SDL_Rect dstRect;
     SDL_Event Event;
     
@@ -804,7 +768,7 @@ static void Menu()
 							break;
 							case 5:
 								option.soundlevel--;
-								if (option.soundlevel < 0)
+								if (option.soundlevel > 4)
 									option.soundlevel = 4;
 							break;
                         }
@@ -1092,8 +1056,10 @@ int main (int argc, char *argv[])
 		
 		if (SDL_PollEvent(&event)) 
 		{
-			switch(event.type) 
+			switch(event.type)
 			{
+				default:
+				break;
 				case SDL_KEYUP:
 					switch(event.key.keysym.sym) 
 					{
@@ -1101,6 +1067,8 @@ int main (int argc, char *argv[])
 						case SDLK_RCTRL:
 						case SDLK_ESCAPE:
 							selectpressed = 1;
+						break;
+						default:
 						break;
 					}
 					sdl_controls_update_input(event.key.keysym.sym, 0);
@@ -1111,6 +1079,8 @@ int main (int argc, char *argv[])
 				case SDL_JOYAXISMOTION:
 					switch (event.jaxis.axis)
 					{
+						default:
+						break;
 						case 0: /* X axis */
 							axisval = event.jaxis.value;
 							if (axisval > joy_commit_range)
