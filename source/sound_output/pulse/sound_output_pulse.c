@@ -23,7 +23,7 @@ void Sound_Init()
 	
 	ss.format = PA_SAMPLE_S16LE;
 	ss.channels = 2;
-	ss.rate = option.sndrate;
+	ss.rate = SOUND_FREQUENCY;
 
 	paattr.tlength = snd.buffer_size * 4;
 	paattr.prebuf = -1;
@@ -58,3 +58,12 @@ void Sound_Close()
 		pa_simple_free(pulse_stream);
 	}
 }
+
+void Sound_Pause()
+{
+}
+
+void Sound_Unpause()
+{
+}
+

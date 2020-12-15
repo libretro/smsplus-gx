@@ -23,7 +23,7 @@ void Sound_Init()
 	int32_t err_ret;
 	int32_t tmp;
 	
-	tmp = option.sndrate;
+	tmp = SOUND_FREQUENCY;
 	
 	oss_audio_fd = open("/dev/dsp", O_WRONLY 
 #ifdef NONBLOCKING_AUDIO
@@ -71,4 +71,13 @@ void Sound_Close()
 		close(oss_audio_fd);
 		oss_audio_fd = -1;
 	}
+}
+
+
+void Sound_Pause()
+{
+}
+
+void Sound_Unpause()
+{
 }

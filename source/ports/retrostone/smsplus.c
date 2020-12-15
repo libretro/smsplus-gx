@@ -628,6 +628,8 @@ static void Menu()
         bitmap_scale(0,0,256,192,miniscreenwidth,miniscreenheight,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)miniscreen->pixels);
         
     SDL_UnlockSurface(miniscreen);
+   
+	Sound_Pause();
     
     while (((currentselection != 1) && (currentselection != 7)) || (!pressed))
     {
@@ -835,6 +837,8 @@ static void Menu()
     
     if (currentselection == 7)
         quit = 1;
+    else
+		Sound_Unpause();
 }
 
 static void config_load()

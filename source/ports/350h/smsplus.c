@@ -649,6 +649,8 @@ static void Menu()
 	SDL_SoftStretch(sms_bitmap, &dstRect, miniscreen, NULL);
 	SDL_SetAlpha(miniscreen, SDL_SRCALPHA, 92);
 
+	Sound_Pause();
+
     while (((currentselection != 1) && (currentselection != 7)) || (!pressed))
     {
         pressed = 0;
@@ -856,6 +858,8 @@ static void Menu()
 
     if (currentselection == 7)
         quit = 1;
+	else
+		Sound_Unpause();
 }
 
 static void Reset_Mapping()

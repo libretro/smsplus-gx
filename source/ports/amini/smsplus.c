@@ -359,6 +359,8 @@ void Menu()
         
     SDL_UnlockSurface(miniscreen);
     char text[50];
+    
+    Sound_Pause();
 
     SDL_PollEvent(&Event);
     while (((currentselection != 1) && (currentselection != 5)) || (!pressed))
@@ -581,6 +583,8 @@ void Menu()
     {
         quit = 1;
 	}
+    else
+		Sound_Unpause();
 	
 	if (miniscreen) SDL_FreeSurface(miniscreen);
 	if (black_screen) SDL_FreeSurface(black_screen);

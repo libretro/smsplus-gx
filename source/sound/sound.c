@@ -59,7 +59,7 @@ uint32_t SMSPLUS_sound_init(void)
 	snd.fps = (sms.display == DISPLAY_NTSC) ? FPS_NTSC : FPS_PAL;
 	snd.fm_clock = (sms.display == DISPLAY_NTSC) ? CLOCK_NTSC : CLOCK_PAL;
 	snd.psg_clock = (sms.display == DISPLAY_NTSC) ? CLOCK_NTSC : CLOCK_PAL;
-	snd.sample_rate = option.sndrate;
+	snd.sample_rate = SOUND_FREQUENCY;
 	snd.mixer_callback = NULL;
 	
 	/* Save register settings */
@@ -116,7 +116,13 @@ uint32_t SMSPLUS_sound_init(void)
 	smptab_len = (sms.display == DISPLAY_NTSC) ? 262 : 313;
 	smptab = malloc(smptab_len * sizeof(int32_t));
 	
-	if(!smptab) return 0;
+	printf("Size of smptab_len %d\n", smptab_len);
+	
+	if(!smptab)
+	{
+		printf("Failed to malloc smptab\n");
+		return 0;
+	}
 	
 	for (i = 0; i < smptab_len; i++)
 	{

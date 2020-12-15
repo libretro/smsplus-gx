@@ -11,7 +11,7 @@ static SDL_mutex *sound_mutex;
 static SDL_cond *sound_cv;
 
 /* Using Mutexes by default but allowing disabling them on compilation */
-#define SDLAUDIO_MUTEX
+//#define SDLAUDIO_MUTEX
 
 static int32_t BUFFSIZE;
 static uint8_t *buffer;
@@ -99,7 +99,7 @@ void Sound_Init()
 	buf_write_pos = 0;
 
 	aspec.format   = AUDIO_S16SYS;
-	aspec.freq     = option.sndrate;
+	aspec.freq     = SOUND_FREQUENCY;
 	aspec.channels = 2;
 	aspec.samples  = snd.buffer_size;
 	#ifdef SDLAUDIO_MUTEX
@@ -133,6 +133,16 @@ void Sound_Init()
 	SDL_PauseAudio(0);
 	
 	return;
+}
+
+void Sound_Pause()
+{
+	SDL_PauseAudio(1);
+}
+
+void Sound_Unpause()
+{
+	SDL_PauseAudio(0);
 }
 
 void Sound_Update(int16_t* sound_buffer, unsigned long len)

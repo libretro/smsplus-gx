@@ -331,6 +331,8 @@ void Menu()
         
     SDL_UnlockSurface(miniscreen);
     
+	Sound_Pause();
+    
     while (((currentselection != 1) && (currentselection != 6)) || (!pressed))
     {
         pressed = 0;
@@ -514,6 +516,8 @@ void Menu()
     
     if (currentselection == 6)
         quit = 1;
+    else
+		Sound_Unpause();
 }
 
 static void config_load()

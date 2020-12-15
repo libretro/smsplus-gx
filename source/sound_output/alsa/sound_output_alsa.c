@@ -146,3 +146,11 @@ void Sound_Close(void)
 		snd_config_update_free_global();
 	}
 }
+
+void Sound_Pause()
+{
+}
+
+void Sound_Unpause()
+{
+}

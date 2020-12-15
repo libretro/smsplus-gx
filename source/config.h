@@ -6,6 +6,7 @@ typedef struct {
 	int32_t fullspeed;
 	int32_t nosound;
 	int32_t joystick;
+	/* Don't use below (sndrate), deprecated */
 	int32_t sndrate;
 	int32_t country;
 	int32_t console;
@@ -18,7 +19,7 @@ typedef struct {
 	uint8_t use_bios;
 	uint8_t soundlevel;
 	/* For input remapping */
-	uint32_t config_buttons[19];
+	uint32_t config_buttons[18];
 } t_config;
 extern t_config option;
 

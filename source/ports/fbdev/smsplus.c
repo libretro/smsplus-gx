@@ -354,6 +354,8 @@ static void Menu()
 	int bytes;
 	
 	Clear_buffers();
+	Sound_Pause();
+	
 
 	while(((currentselection != 1) && (currentselection != 6)) || (!pressed))
 	{
@@ -544,6 +546,8 @@ static void Menu()
 	
     if (currentselection == 6)
         quit = 1;
+    else
+		Sound_Unpause();
 }
 
 static void config_load()

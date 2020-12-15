@@ -642,6 +642,8 @@ static void Menu()
     
     sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_SWSURFACE);
     
+	Sound_Pause();
+    
     while (((currentselection != 1) && (currentselection != 7)) || (!pressed))
     {
         pressed = 0;
@@ -775,6 +777,8 @@ static void Menu()
     
     if (currentselection == 7)
         quit = 1;
+	else
+		Sound_Unpause();
 }
 
 
@@ -947,8 +951,6 @@ int main (int argc, char *argv[])
 	}
 	
 	bios_init();
-	
-	option.sndrate = SOUND_FREQUENCY;
 	
 	// Initialize all systems and power on
 	system_poweron();
