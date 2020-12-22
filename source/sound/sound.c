@@ -116,8 +116,6 @@ uint32_t SMSPLUS_sound_init(void)
 	smptab_len = (sms.display == DISPLAY_NTSC) ? 262 : 313;
 	smptab = malloc(smptab_len * sizeof(int32_t));
 	
-	printf("Size of smptab_len %d\n", smptab_len);
-	
 	if(!smptab)
 	{
 		printf("Failed to malloc smptab\n");
