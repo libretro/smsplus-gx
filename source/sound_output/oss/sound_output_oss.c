@@ -19,7 +19,11 @@ static int32_t oss_audio_fd = -1;
 void Sound_Init()
 {
 	uint32_t channels = 2;
+#ifdef LSB_FIRST
 	uint32_t format = AFMT_S16_LE;
+#else
+	uint32_t format = AFMT_S16_BE;
+#endif
 	int32_t err_ret;
 	int32_t tmp;
 	
