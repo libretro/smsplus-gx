@@ -32,7 +32,9 @@
 
 #include "shared.h"
 
-#define GAME_DATABASE_CNT 100
+uint8_t gaiden_hack = 0;
+
+#define GAME_DATABASE_CNT 101
 
 typedef struct
 {
@@ -273,7 +275,9 @@ static rominfo_t game_list[GAME_DATABASE_CNT] =
 	{0x679E1676, 0, DEVICE_PAD2B, MAPPER_SEGA, DISPLAY_NTSC, TERRITORY_DOMESTIC, CONSOLE_SMS2,
 	"Wonder Boy III - The dragon's Trap"},
 	{0x22CCA9BB, 0, DEVICE_PAD2B, MAPPER_SEGA, DISPLAY_NTSC, TERRITORY_DOMESTIC, CONSOLE_SMS2,
-	"Turma da Monica em O Resgate"}
+	"Turma da Monica em O Resgate"},
+	{0x23BAC434, 0, DEVICE_PAD2B, MAPPER_SEGA, DISPLAY_NTSC, TERRITORY_EXPORT, CONSOLE_GG,
+	"Shining Force Final Conflict"}
 };
 
 static void set_config()
@@ -289,6 +293,7 @@ static void set_config()
 	sms.device[0] = DEVICE_PAD2B;
 	sms.device[1] = DEVICE_PAD2B;
 	sms.use_fm = option.fm;
+	gaiden_hack = 0;
 
 	/* console type detection */
 	/* SMS Header is located at 0x7ff0 */
@@ -344,6 +349,12 @@ static void set_config()
 				/* these games seem to use different gun position calculation method */
 				sms.gun_offset = 16;
 			}
+			
+			if (strcmp(game_list[i].name, "Shining Force Final Conflict") == 0)
+			{
+				gaiden_hack = 1;
+			}
+			
 			i = GAME_DATABASE_CNT;
 		}
 	}
