@@ -982,6 +982,16 @@ int main (int argc, char *argv[])
 		return 0;
 	}
 	
+	/* Force 50 Fps refresh rate for PAL only games */
+	if (sms.display == DISPLAY_PAL)
+	{
+		setenv("SDL_VIDEO_REFRESHRATE", "50", 0);
+	}
+	else
+	{
+		setenv("SDL_VIDEO_REFRESHRATE", "60", 0);
+	}
+	
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
 	SDL_ShowCursor(0);
 	if (update_window_size(320, 240) == 1)

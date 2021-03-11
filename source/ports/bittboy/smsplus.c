@@ -876,7 +876,7 @@ static void config_load()
 	}
 	else
 	{
-		for (i = 0; i < 19; i++)
+		for (i = 0; i < 18; i++)
 		{
 			option.config_buttons[i] = 0;
 		}
