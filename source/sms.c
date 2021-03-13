@@ -487,10 +487,14 @@ void mapper_16k_w(uint16_t address, uint8_t data)
   
 	/* page index increment (SEGA mapper) */
 	
-	/* THIS SHOULD BE FIXED PROPERLY */
-	/* TODO : For whatever reason, disabling this makes Shining Force Gaiden English trad work properly. 
-	 * This same bug happens on Mednafen and the older SMS Plus GX too. (up until they introduced the code just below)
-	 * */
+	/* 
+		About the "gaiden_hack" bit :
+		I initially thought that it was a hack.
+		But it turns out the translation hack actually expects this :
+		https://github.com/libretro/smsplus-gx/issues/25
+		
+		TODO : Probably reimplement this ?
+	*/
 	if (slot.fcr[0] & 0x03 && gaiden_hack != 1)
 	{
 		page = (page + ((4 - (slot.fcr[0] & 0x03)) << 3)) % slot.pages;
