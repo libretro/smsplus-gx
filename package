@@ -25,7 +25,10 @@ Icon=sms
 Terminal=false
 Type=Application
 Categories=emulators;
-X-OD-NeedsDownscaling=true' > opk/default."$1".desktop
+X-OD-NeedsDownscaling=true
+selectorbrowser=true
+SelectorFilter=sms,SMS,gg,GG,sg,SG,zip,ZIP,cv,CV,ms,MS,bin,BIN
+' > opk/default."$1".desktop
 
 mksquashfs ./opk smsplus_"$1".opk -all-root -noappend -no-exports -no-xattrs
 

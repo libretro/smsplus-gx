@@ -18,9 +18,6 @@
 #define SDL_TRIPLEBUF SDL_DOUBLEBUF
 #endif
 
-static SDL_Joystick * sdl_joy[2];
-#define joy_commit_range 8192
-
 static gamedata_t gdata;
 
 t_config option;
@@ -839,10 +836,11 @@ static void Menu()
     SDL_Flip(sdl_screen);
     #endif
 
+	Sound_Unpause();
+
     if (currentselection == 7)
         quit = 1;
-	else
-		Sound_Unpause();
+
 }
 
 static void Reset_Mapping()
@@ -908,8 +906,11 @@ static void config_save()
 static void Cleanup(void)
 {
 #ifdef SCALE2X_UPSCALER
-	if (scale2x_buf) SDL_FreeSurface(scale2x_buf);
-	scale2x_buf = NULL;
+	if (scale2x_buf)
+	{
+		SDL_FreeSurface(scale2x_buf);
+		scale2x_buf = NULL;
+	}
 #endif
 	if (sdl_screen) SDL_FreeSurface(sdl_screen);
 	if (backbuffer) SDL_FreeSurface(backbuffer);
@@ -969,7 +970,6 @@ int main (int argc, char *argv[])
 	else if (strcmp(strrchr(argv[1], '.'), ".gg") == 0) option.console = 3;
 	
 	if (option.fullscreen < 0 && option.fullscreen > upscalers_available) option.fullscreen = 1;
-	if (option.console != 3 && option.fullscreen > 1) option.fullscreen = 1;
 	
 	// Load ROM
 	if(!load_rom(argv[1])) 
@@ -979,7 +979,7 @@ int main (int argc, char *argv[])
 		return 0;
 	}
 	
-	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE);
 	
 	SDL_WM_SetCaption("SMS Plus GX Super", "SMS Plus GX Super");
 	
@@ -988,9 +988,6 @@ int main (int argc, char *argv[])
 	backbuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, 0, 0, 0, 0);
 	miniscreen = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, 0, 0, 0, 0);
 	SDL_ShowCursor(0);
-	
-	sdl_joy[0] = SDL_JoystickOpen(0);
-	SDL_JoystickEventState(SDL_ENABLE);
 
 #ifdef SCALE2X_UPSCALER
 	scale2x_buf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS*2, 267*2, 16, 0, 0, 0, 0);
@@ -1062,61 +1059,6 @@ int main (int argc, char *argv[])
 				break;
 				case SDL_KEYDOWN:
 					sdl_controls_update_input(event.key.keysym.sym, 1);
-				break;
-				case SDL_JOYAXISMOTION:
-					switch (event.jaxis.axis)
-					{
-						default:
-						break;
-						case 0: /* X axis */
-							axisval = event.jaxis.value;
-							if (axisval > joy_commit_range)
-							{
-								input.pad[0] |= INPUT_RIGHT;
-							}
-							else if (axisval < -joy_commit_range)
-							{
-								input.pad[0] |= INPUT_LEFT;
-							}
-							else
-							{
-								/* LEFT */
-								if (dpad_input[1] == 0 && input.pad[0] & INPUT_LEFT)
-								{
-									input.pad[0] &= ~INPUT_LEFT;
-								}
-								/* RIGHT */
-								if (dpad_input[2] == 0 && input.pad[0] & INPUT_RIGHT)
-								{
-									input.pad[0] &= ~INPUT_RIGHT;
-								}
-							}
-						break;
-						case 1: /* Y axis */
-							axisval = event.jaxis.value;
-							if (axisval > joy_commit_range)
-							{
-								input.pad[0] |= INPUT_DOWN;
-							}
-							else if (axisval < -joy_commit_range)
-							{
-								input.pad[0] |= INPUT_UP;
-							}
-							else
-							{
-								/* UP */
-								if (dpad_input[0] == 0 && input.pad[0] & INPUT_UP)
-								{
-									input.pad[0] &= ~INPUT_UP;
-								}
-								/* DOWN */
-								if (dpad_input[3] == 0 && input.pad[0] & INPUT_DOWN)
-								{
-									input.pad[0] &= ~INPUT_DOWN;
-								}
-							}
-						break;
-					}
 				break;
 				case SDL_QUIT:
 					quit = 1;
