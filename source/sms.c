@@ -229,7 +229,7 @@ void sms_shutdown(void)
 
 void sms_reset(void)
 {
-  int32_t i;
+  uint_fast8_t i;
 
   /* reset Z80 state */
   CPUZ80_Reset();
@@ -440,7 +440,7 @@ void sms_reset(void)
 
 void mapper_8k_w(uint16_t address, uint8_t data)
 {
-	int32_t i;
+	uint_fast8_t i;
 
 	/* cartridge ROM page (8k) index */
 	uint16_t page = data % (slot.pages << 1);
@@ -480,7 +480,7 @@ void mapper_8k_w(uint16_t address, uint8_t data)
 void mapper_16k_w(uint16_t address, uint8_t data)
 {
 	extern uint8_t gaiden_hack;
-	int32_t i;
+	uint_fast8_t i;
 
 	/* cartridge ROM page (16k) index */
 	uint16_t page = data % slot.pages;
