@@ -4,7 +4,7 @@ CC			= /opt/gcw0-toolchain/usr/bin/mipsel-linux-gcc
 # Possible choices : rs97, k3s (PAP K3S), sdl, amini, fbdev
 PORT = gcw0
 # Possible choices : alsa, pulse (pulseaudio), oss, sdl12 (SDL 1.2 sound output), portaudio, libao
-SOUND_OUTPUT = alsa
+SOUND_OUTPUT = sdl12
 # Possible choices : crabemu_sn76489 (less accurate, GPLv2), maxim_sn76489 (somewhat problematic license but good accuracy)
 SOUND_ENGINE = maxim_sn76489
 # Possible choices : z80 (accurate), eighty (EightyZ80's core, GPLv2)
@@ -23,11 +23,11 @@ OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
 OBJ_CP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CP)))
 OBJS		= $(OBJ_C) $(OBJ_CP)
 
-CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mframe-header-opt -mno-fp-exceptions -mno-check-zero-division -fsingle-precision-constant -fno-common -march=mips32r2 -mtune=mips32r2 -flto
-# SMS Plus GX suffers from alignment issues so setting these to 1 helps.
-CFLAGS		+= -falign-functions=1 -falign-jumps=1 -falign-loops=1 -falign-labels=1
-CFLAGS		+= -fipa-pta -fsection-anchors -fdelete-dead-exceptions
-CFLAGS		+= -DALIGN_DWORD -DNOBLANKING_LEFTCOLUM -DOPENDINGUX_GCD_16PIXELS_ISSUE
+CFLAGS		= -Wall -Wextra -Ofast -fdata-sections -ffunction-sections -mframe-header-opt -mno-fp-exceptions -mno-check-zero-division -fsingle-precision-constant -fno-common -march=mips32r2 -mtune=mips32r2 -flto
+CFLAGS		+= -mno-xgot -fsection-anchors -fno-builtin -mplt -fno-PIC -mno-shared  -mno-memcpy
+CFLAGS		+= -fno-math-errno -freorder-functions -std=gnu99
+
+CFLAGS		+= -DNOBLANKING_LEFTCOLUM -DOPENDINGUX_GCD_16PIXELS_ISSUE
 CFLAGS		+= -DLSB_FIRST -std=gnu99
 CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/scalers -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
 
@@ -35,7 +35,7 @@ SRCDIR		+= ./source/text/fb
 CFLAGS		+= -Isource/text/fb
 
 ifeq ($(PROFILE), YES)
-CFLAGS 		+= -fprofile-generate=/usr/local/home/.smsplus
+CFLAGS 		+= -fprofile-generate=/usr/local/home
 else ifeq ($(PROFILE), APPLY)
 CFLAGS		+= -fprofile-use -fbranch-probabilities
 endif
@@ -54,10 +54,7 @@ CFLAGS		+= -Isource/scale2x
 SRCDIR		+= ./source/scale2x
 endif
 
-ifeq ($(HUGE_PAGES), 0)
-LDFLAGS		= -nodefaultlibs
-endif
-LDFLAGS     += -lc -lgcc -lSDL -lasound -lm -flto -s
+LDFLAGS     = -nodefaultlibs -lc -lgcc -lSDL -lasound -lm -flto -Wl,--as-needed -Wl,--gc-sections -no-pie -s
 ifeq ($(HUGE_PAGES), 1)
 LDFLAGS		+= -Wl,-zcommon-page-size=2097152 -Wl,-zmax-page-size=2097152 -lhugetlbfs
 endif

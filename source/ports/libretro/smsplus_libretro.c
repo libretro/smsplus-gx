@@ -552,7 +552,7 @@ bool retro_load_game(const struct retro_game_info *info)
    option.tms_pal     = 2;
    option.nosound     = 0;
    option.soundlevel  = 2;
-   option.sndrate     = 44100;
+   option.sndrate     = SOUND_FREQUENCY;
 
    option.country     = 0;
    option.console     = 0;

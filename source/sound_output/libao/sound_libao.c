@@ -22,7 +22,7 @@ void Sound_Init()
 	
 	aoformat.bits = 16;
 	aoformat.channels = 2;
-	aoformat.rate = option.sndrate;
+	aoformat.rate = SOUND_FREQUENCY;
 	aoformat.byte_format = AO_FMT_LITTLE;
 	
 	aodevice = ao_open_live(ao_default_driver_id(), &aoformat, NULL); // Live output
@@ -42,4 +42,14 @@ void Sound_Close()
 		ao_close(aodevice);
 		ao_shutdown();
 	}
+}
+
+void Sound_Pause()
+{
+	Sound_Close();
+}
+
+void Sound_Unpause()
+{
+	Sound_Init();
 }

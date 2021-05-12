@@ -355,6 +355,8 @@ static void Menu()
         
     SDL_UnlockSurface(miniscreen);
     char text[50];
+    
+    Sound_Pause();
 
     SDL_PollEvent(&Event);
     while (((currentselection != 1) && (currentselection != 5)) || (!pressed))
@@ -596,6 +598,9 @@ static void Menu()
     
     if (currentselection == 5)
         quit = 1;
+    else
+		Sound_Unpause();
+        
 	if (quit)
 	{
 		if (miniscreen) SDL_FreeSurface(miniscreen);
@@ -679,14 +684,14 @@ static void Controls_papk3s()
 			input.pad[i] &= ~INPUT_UP;
 
 		if((SDL_JoystickGetButton(joystick[i], 2) == SDL_PRESSED) || (i == 0 && keystate[SDLK_LCTRL]))
-			input.pad[i] |= INPUT_BUTTON1;
-		else
-			input.pad[i] &= ~INPUT_BUTTON1;
-				
-		if((SDL_JoystickGetButton(joystick[i], 1) == SDL_PRESSED) || (i == 0 && keystate[SDLK_LALT]))
 			input.pad[i] |= INPUT_BUTTON2;
 		else
 			input.pad[i] &= ~INPUT_BUTTON2;
+				
+		if((SDL_JoystickGetButton(joystick[i], 1) == SDL_PRESSED) || (i == 0 && keystate[SDLK_LALT]))
+			input.pad[i] |= INPUT_BUTTON1;
+		else
+			input.pad[i] &= ~INPUT_BUTTON1;
 
 		if(((i == 0) && (SDL_JoystickGetButton(joystick[i], 9) == SDL_PRESSED)) || (keystate[SDLK_RETURN]))
 			input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
@@ -783,7 +788,7 @@ int main (int argc, char *argv[])
 	
 	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 267, 16, 0, 0, 0, 0);
 #ifdef SCALE2X_UPSCALER
-	scale2x_buf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS*2, 480, 16, 0, 0, 0, 0);
+	scale2x_buf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS*2, 267*2, 16, 0, 0, 0, 0);
 #endif
 	img_background = SDL_LoadBMP("background.bmp");
 	

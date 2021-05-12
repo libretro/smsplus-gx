@@ -158,14 +158,14 @@ static void Controls()
 			input.pad[i] &= ~INPUT_UP;
 
 		if(SDL_JoystickGetButton(joystick[i], 2) == SDL_PRESSED || (i == 0 && keystate[SDLK_LCTRL]))
-			input.pad[i] |= INPUT_BUTTON1;
-		else
-			input.pad[i] &= ~INPUT_BUTTON1;
-				
-		if(SDL_JoystickGetButton(joystick[i], 1) == SDL_PRESSED || (i == 0 && keystate[SDLK_LALT]))
 			input.pad[i] |= INPUT_BUTTON2;
 		else
 			input.pad[i] &= ~INPUT_BUTTON2;
+				
+		if(SDL_JoystickGetButton(joystick[i], 1) == SDL_PRESSED || (i == 0 && keystate[SDLK_LALT]))
+			input.pad[i] |= INPUT_BUTTON1;
+		else
+			input.pad[i] &= ~INPUT_BUTTON1;
 
 		if(i == 0 && SDL_JoystickGetButton(joystick[i], 9) == SDL_PRESSED || keystate[SDLK_RETURN])
 			input.system |= (sms.console == CONSOLE_GG) ? INPUT_START : INPUT_PAUSE;
@@ -359,6 +359,8 @@ void Menu()
         
     SDL_UnlockSurface(miniscreen);
     char text[50];
+    
+    Sound_Pause();
 
     SDL_PollEvent(&Event);
     while (((currentselection != 1) && (currentselection != 5)) || (!pressed))
@@ -581,6 +583,8 @@ void Menu()
     {
         quit = 1;
 	}
+    else
+		Sound_Unpause();
 	
 	if (miniscreen) SDL_FreeSurface(miniscreen);
 	if (black_screen) SDL_FreeSurface(black_screen);

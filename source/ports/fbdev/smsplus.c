@@ -239,16 +239,16 @@ static void Controls()
 			case 56:
 			case 42:
 				if (data.value == 1 && bytes > 0)
-					input.pad[0] |= INPUT_BUTTON1;
+					input.pad[0] |= INPUT_BUTTON2;
 				else if (data.value == 0)
-					input.pad[0] &= ~INPUT_BUTTON1;
+					input.pad[0] &= ~INPUT_BUTTON2;
 			break;
 			case 29:
 			case 57:
 				if (data.value == 1 && bytes > 0)
-					input.pad[0] |= INPUT_BUTTON2;
+					input.pad[0] |= INPUT_BUTTON1;
 				else if (data.value == 0)
-					input.pad[0] &= ~INPUT_BUTTON2;
+					input.pad[0] &= ~INPUT_BUTTON1;
 			break;
 			default:
 			break;
@@ -354,6 +354,8 @@ static void Menu()
 	int bytes;
 	
 	Clear_buffers();
+	Sound_Pause();
+	
 
 	while(((currentselection != 1) && (currentselection != 6)) || (!pressed))
 	{
@@ -544,6 +546,8 @@ static void Menu()
 	
     if (currentselection == 6)
         quit = 1;
+    else
+		Sound_Unpause();
 }
 
 static void config_load()
@@ -689,7 +693,7 @@ int main (int argc, char *argv[])
 	ioctl(fbfd, FBIOPAN_DISPLAY, &vinfo); 
 
 #ifdef SCALE2X_UPSCALER
-	scale2x_buf = malloc(((VIDEO_WIDTH_SMS*2)*480)*sizeof(uint16_t));
+	scale2x_buf = malloc(((VIDEO_WIDTH_SMS*2)*(267*2))*sizeof(uint16_t));
 #endif
 	
 	fprintf(stdout, "CRC : %08X\n", cart.crc);

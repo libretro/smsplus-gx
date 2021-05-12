@@ -44,6 +44,10 @@ static int32_t smptab_len;
 sn76489_t psg_sn;
 #endif
 
+#ifdef MAME_PSG
+static uint8_t machine_psg = 0;
+#endif
+
 uint32_t SMSPLUS_sound_init(void)
 {
 	static uint8_t *fmbuf = NULL;
@@ -55,14 +59,18 @@ uint32_t SMSPLUS_sound_init(void)
 	snd.fps = (sms.display == DISPLAY_NTSC) ? FPS_NTSC : FPS_PAL;
 	snd.fm_clock = (sms.display == DISPLAY_NTSC) ? CLOCK_NTSC : CLOCK_PAL;
 	snd.psg_clock = (sms.display == DISPLAY_NTSC) ? CLOCK_NTSC : CLOCK_PAL;
-	snd.sample_rate = option.sndrate;
+	snd.sample_rate = SOUND_FREQUENCY;
 	snd.mixer_callback = NULL;
 	
 	/* Save register settings */
 	if(snd.enabled)
 	{
 		restore_sound = 1;
-		#ifdef MAXIM_PSG
+		#if defined(MAME_PSG)
+		psgbuf = malloc(sizeof(PSG));
+		if (!psgbuf) return 0;
+		memcpy(psgbuf, &PSG, sizeof(PSG));
+		#elif defined(MAXIM_PSG)
 		psgbuf = malloc(SN76489_GetContextSize ());
 		if (!psgbuf) return 0;
 		memcpy (psgbuf, SN76489_GetContextPtr (0),SN76489_GetContextSize ());
@@ -108,7 +116,11 @@ uint32_t SMSPLUS_sound_init(void)
 	smptab_len = (sms.display == DISPLAY_NTSC) ? 262 : 313;
 	smptab = malloc(smptab_len * sizeof(int32_t));
 	
-	if(!smptab) return 0;
+	if(!smptab)
+	{
+		printf("Failed to malloc smptab\n");
+		return 0;
+	}
 	
 	for (i = 0; i < smptab_len; i++)
 	{
@@ -136,7 +148,27 @@ uint32_t SMSPLUS_sound_init(void)
 	psg_buffer = (int16_t **)&snd.stream[STREAM_PSG_L];
 
 	/* Set up SN76489 emulation */
-	#ifdef MAXIM_PSG
+	#ifdef MAME_PSG
+	switch(sms.console)
+	{
+		default:
+			machine_psg = 0;
+		break;
+		case CONSOLE_GG:
+		case CONSOLE_GGMS:
+			machine_psg = 1;
+		break;
+		case CONSOLE_COLECO:
+			machine_psg = 2;
+		break;
+		case CONSOLE_SG1000:
+		case CONSOLE_SC3000:
+		case CONSOLE_SF7000:
+			machine_psg = 3;
+		break;
+	}
+	SN76489_Init(machine_psg, snd.psg_clock, snd.sample_rate);
+	#elif defined(MAXIM_PSG)
     SN76489_Init(0, snd.psg_clock, snd.sample_rate);
     SN76489_Config(0, MUTE_ALLON, BOOST_ON, VOL_FULL, (sms.console < CONSOLE_SMS) ? FB_SC3000 : FB_SEGAVDP);
     #else
@@ -151,7 +183,9 @@ uint32_t SMSPLUS_sound_init(void)
 	/* Restore YM2413 register settings */
 	if(restore_sound)
 	{
-		#ifdef MAXIM_PSG
+		#if defined(MAME_PSG)
+		memcpy (&PSG, psgbuf, sizeof(PSG));
+		#elif defined(MAXIM_PSG)
 		memcpy (SN76489_GetContextPtr (0),psgbuf,SN76489_GetContextSize ());
 		#else
 		memcpy (&psg_sn, psgbuf, sizeof(sn76489_t));
@@ -214,7 +248,9 @@ void SMSPLUS_sound_reset(void)
 		return;
 
 	/* Reset SN76489 emulator */
-	#ifdef MAXIM_PSG
+	#if defined(MAME_PSG)
+	SN76489_Init(machine_psg, snd.psg_clock, snd.sample_rate);
+	#elif defined(MAXIM_PSG)
 	SN76489_Reset(0);
 	#else
 	sn76489_reset(&psg_sn, (float)snd.psg_clock, (float)snd.sample_rate,
@@ -243,7 +279,9 @@ void SMSPLUS_sound_update(int32_t line)
 		fm[1]  = fm_buffer[1] + snd.done_so_far;
 
 		/* Generate SN76489 sample data */
-		#ifdef MAXIM_PSG
+		#if defined(MAME_PSG)
+		SN76489_Update(psg, snd.sample_count - snd.done_so_far);
+		#elif defined(MAXIM_PSG)
 		SN76489_Update(0, psg, snd.sample_count - snd.done_so_far);
 		#else
 		sn76489_execute_samples(&psg_sn, psg[0], psg[1], snd.sample_count - snd.done_so_far);
@@ -269,7 +307,9 @@ void SMSPLUS_sound_update(int32_t line)
 		fm[1]  = fm_buffer[1] + snd.done_so_far;
 
 		/* Generate SN76489 sample data */
-		#ifdef MAXIM_PSG
+		#if defined(MAME_PSG)
+		SN76489_Update(psg, tinybit);
+		#elif defined(MAXIM_PSG)
 		SN76489_Update(0, psg, tinybit);
 		#else
 		sn76489_execute_samples(&psg_sn, psg[0], psg[1], tinybit);
@@ -302,7 +342,9 @@ void SMSPLUS_sound_mixer_callback(int16_t *output, int32_t length)
 void psg_stereo_w(int32_t data)
 {
 	/*if(!snd.enabled) return;*/
-	#ifdef MAXIM_PSG
+	#if defined(MAME_PSG)
+	SN76489_GGStereoWrite(data);
+	#elif defined(MAXIM_PSG)
 	SN76489_GGStereoWrite(0, data);
 	#else
 	sn76489_set_output_channels(&psg_sn, data);
@@ -313,7 +355,9 @@ void psg_stereo_w(int32_t data)
 void psg_write(int32_t data)
 {
 	/*if(!snd.enabled) return;*/
-	#ifdef MAXIM_PSG
+	#if defined(MAME_PSG)
+	SN76489_Write(data);
+	#elif defined(MAXIM_PSG)
 	SN76489_Write(0, data);
 	#else
 	sn76489_write(&psg_sn, data);

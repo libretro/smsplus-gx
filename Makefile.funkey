@@ -1,13 +1,13 @@
 PRGNAME     = sms_sdl
-CC			= /opt/rs97-toolchain/bin/mipsel-linux-gcc
-STRIP		= /opt/rs97-toolchain/bin/mipsel-linux-strip
+CC          = /opt/funkey-toolchain/bin/arm-linux-gcc
+
 # Possible choices : rs97, k3s (PAP K3S), sdl, amini, fbdev
-PORT = gcw0
+PORT = funkey
 # Possible choices : alsa, pulse (pulseaudio), oss, sdl12 (SDL 1.2 sound output), portaudio, libao
-SOUND_OUTPUT = oss
+SOUND_OUTPUT = alsa
 # Possible choices : crabemu_sn76489 (less accurate, GPLv2), maxim_sn76489 (somewhat problematic license but good accuracy)
 SOUND_ENGINE = maxim_sn76489
-# Possible choices : z80 (accurate but proprietary), eighty (EightyZ80's core, GPLv2)
+# Possible choices : z80 (accurate), eighty (EightyZ80's core, GPLv2)
 Z80_CORE = z80
 SCALE2X_UPSCALER = 1
 PROFILE = 0
@@ -22,8 +22,10 @@ OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
 OBJ_CP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CP)))
 OBJS		= $(OBJ_C) $(OBJ_CP)
 
-CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-fp-exceptions -mno-check-zero-division -mframe-header-opt -fsingle-precision-constant -fno-common -mxgot -mips32 -mno-mips16 -fno-PIC -mno-abicalls -flto
-CFLAGS		+= -DALIGN_DWORD -DRS97 -Wall -Wextra -DNONBLOCKING_AUDIO
+CFLAGS		= -Wall -Wextra -Ofast -fsingle-precision-constant -fno-PIC -flto -fno-common
+CFLAGS		+= -std=gnu99
+
+CFLAGS		+= -DNOBLANKING_LEFTCOLUM
 CFLAGS		+= -DLSB_FIRST -std=gnu99
 CFLAGS		+= -Isource -Isource/cpu_cores/$(Z80_CORE) -Isource/scalers -Isource/ports/$(PORT) -I./source/sound -Isource/unzip -Isource/sdl -Isource/sound/$(SOUND_ENGINE) -Isource/sound_output
 
@@ -31,9 +33,10 @@ SRCDIR		+= ./source/text/fb
 CFLAGS		+= -Isource/text/fb
 
 ifeq ($(PROFILE), YES)
-CFLAGS 		+= -fprofile-generate=/home/retrofw/profile_sms
-else ifeq ($(PROFILE), APPLY)
-CFLAGS		+= -fprofile-use
+CFLAGS 		+= -fprofile-generate=/mnt/smsplusgx_profile
+endif
+ifeq ($(PROFILE), APPLY)
+CFLAGS 		+= -fprofile-use
 endif
 
 ifeq ($(SOUND_ENGINE), maxim_sn76489)
@@ -50,11 +53,10 @@ CFLAGS		+= -Isource/scale2x
 SRCDIR		+= ./source/scale2x
 endif
 
-LDFLAGS     = -nodefaultlibs -lc -lgcc -lm -lSDL -no-pie -Wl,--as-needed -Wl,--gc-sections -flto -s
-
-ifeq ($(PROFILE), YES)
-LDFLAGS 	+= -lgcov
-endif
+CFLAGS		+= -march=armv7-a+neon-vfpv4 -mtune=cortex-a7 -mfpu=neon-vfpv4
+CFLAGS		+= -fdata-sections -ffunction-sections -fsingle-precision-constant -freorder-functions -fno-math-errno -fgcse-las -fgcse-sm -fmerge-all-constants
+CXXFLAGS	= $(CFLAGS) -ftree-vectorize -fno-rtti -fno-exceptions -fno-threadsafe-statics -fno-enforce-eh-specs -fstrict-enums -std=gnu++11
+LDFLAGS     = -nodefaultlibs -lc -lgcc -lm -lSDL -lasound -lz -pthread -Wl,-z,norelro -Wl,--hash-style=gnu -Wl,--build-id=none -Wl,-O1,--sort-common,--as-needed,--gc-sections -flto -no-pie -s
 
 ifeq ($(SOUND_OUTPUT), portaudio)
 LDFLAGS		+= -lportaudio
@@ -72,10 +74,9 @@ endif
 # Rules to make executable
 $(PRGNAME): $(OBJS)  
 	$(CC) $(CFLAGS) -o $(PRGNAME) $^ $(LDFLAGS)
-	$(STRIP) $(PRGNAME) -s -R .comment -R .gnu.version --remove-section=.note --remove-section=.comment --strip-unneeded --strip-all
 
 $(OBJ_C) : %.o : %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
-
+	
 clean:
 	rm -f $(PRGNAME) *.o
