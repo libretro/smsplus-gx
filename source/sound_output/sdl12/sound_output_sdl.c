@@ -11,18 +11,15 @@ static SDL_mutex *sound_mutex;
 static SDL_cond *sound_cv;
 
 /* Using Mutexes by default but allowing disabling them on compilation */
-#ifdef SDLAUDIO_NOMUTEXES
-#define mutex 0
-#else
-#define mutex 1
-#endif
+//#define SDLAUDIO_MUTEX
 
 static int32_t BUFFSIZE;
 static uint8_t *buffer;
-static uint32_t buf_read_pos = 0;
+static int32_t buf_read_pos = 0;
 static uint32_t buf_write_pos = 0;
 static int32_t buffered_bytes = 0;
 
+/*
 static int32_t sdl_write_buffer_m(uint8_t* data, unsigned long len)
 {
 	SDL_LockMutex(sound_mutex);
@@ -39,10 +36,10 @@ static int32_t sdl_write_buffer_m(uint8_t* data, unsigned long len)
 	SDL_UnlockMutex(sound_mutex);
 	return len;
 }
-
+*/
 static void sdl_write_buffer(uint8_t* data, int32_t len)
 {
-	for(uint32_t i = 0; i < len; i += 4) 
+	for(int32_t i = 0; i < len; i += 4) 
 	{
 		if(buffered_bytes == BUFFSIZE) return; // just drop samples
 		*(int32_t*)((char*)(buffer + buf_write_pos)) = *(int32_t*)((char*)(data + i));
@@ -51,6 +48,7 @@ static void sdl_write_buffer(uint8_t* data, int32_t len)
 		buffered_bytes += 4;
 	}
 }
+
 
 static int32_t sdl_read_buffer(uint8_t* data, int32_t len)
 {
@@ -101,10 +99,14 @@ void Sound_Init()
 	buf_write_pos = 0;
 
 	aspec.format   = AUDIO_S16SYS;
-	aspec.freq     = option.sndrate;
+	aspec.freq     = SOUND_FREQUENCY;
 	aspec.channels = 2;
 	aspec.samples  = snd.buffer_size;
-	aspec.callback = (mutex ? sdl_callback_m : sdl_callback);
+	#ifdef SDLAUDIO_MUTEX
+	aspec.callback = sdl_callback_m;
+	#else
+	aspec.callback = sdl_callback;
+	#endif
 	aspec.userdata = NULL;
 
 	/* initialize the SDL Audio system */
@@ -121,29 +123,39 @@ void Sound_Init()
 		return;
 	}
 
-	if (mutex) 
+	#ifdef SDLAUDIO_MUTEX
 	{
 		sound_mutex = SDL_CreateMutex();
 		sound_cv = SDL_CreateCond();
-		printf("Using mutexes for sync\n");
 	}
+	#endif
 	
 	SDL_PauseAudio(0);
 	
 	return;
 }
 
+void Sound_Pause()
+{
+	SDL_PauseAudio(1);
+}
+
+void Sound_Unpause()
+{
+	SDL_PauseAudio(0);
+}
+
 void Sound_Update(int16_t* sound_buffer, unsigned long len)
 {
 	SDL_LockAudio();
-	sdl_write_buffer(sound_buffer, len * 4);
+	sdl_write_buffer((uint8_t*)sound_buffer, len * 4);
 	SDL_UnlockAudio();
 }
 
 void Sound_Close()
 {
 	SDL_PauseAudio(1);
-	if (mutex) 
+	#ifdef SDLAUDIO_MUTEX
 	{
 		SDL_LockMutex(sound_mutex);
 		buffered_bytes = BUFFSIZE;
@@ -153,10 +165,11 @@ void Sound_Close()
 		SDL_DestroyCond(sound_cv);
 		SDL_DestroyMutex(sound_mutex);
 	}
+	#endif
 	SDL_CloseAudio();
 	SDL_QuitSubSystem(SDL_INIT_AUDIO);
 	
-	if (buffer)
+	if (buffer != NULL)
 	{
 		free(buffer);
 		buffer = NULL;

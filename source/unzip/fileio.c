@@ -13,6 +13,8 @@ uint8_t *loadFromZipByName(char *archive, char *filename, uint32_t *filesize)
     int32_t zerror = UNZ_OK;
     unzFile zhandle;
     unz_file_info zinfo;
+    
+    zinfo.uncompressed_size = 0;
 
     zhandle = unzOpen(archive);
     if(!zhandle) return (NULL);

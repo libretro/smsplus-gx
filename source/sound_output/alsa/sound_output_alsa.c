@@ -74,7 +74,13 @@ void Sound_Init(void)
 	}
 
 	/* Signed 16-bit little-endian format */
-	rc = snd_pcm_hw_params_set_format(handle, params, SND_PCM_FORMAT_S16_LE);
+	rc = snd_pcm_hw_params_set_format(handle, params,
+	#ifdef LSB_FIRST
+	SND_PCM_FORMAT_S16_LE
+	#else
+	SND_PCM_FORMAT_S16_BE
+	#endif
+	);
 	if (rc < 0)
 	{
 		fprintf(stderr, "Error:snd_pcm_hw_params_set_format %s\n", snd_strerror(rc));
@@ -121,7 +127,6 @@ void Sound_Init(void)
 		return;
 	}
 
-	
 	return;
 }
 
@@ -145,4 +150,14 @@ void Sound_Close(void)
 		snd_pcm_close(handle);
 		snd_config_update_free_global();
 	}
+}
+
+void Sound_Pause()
+{
+	Sound_Close();
+}
+
+void Sound_Unpause()
+{
+	Sound_Init();
 }

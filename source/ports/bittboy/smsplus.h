@@ -3,6 +3,8 @@
 
 #include <SDL/SDL.h>
 
+#define HAS_FAST_FORWARD 1
+
 #define HOST_WIDTH_RESOLUTION 320
 #define HOST_HEIGHT_RESOLUTION 240
 
@@ -20,18 +22,20 @@
 #define CONFIG_BUTTON_BUTTON2 5
 #define CONFIG_BUTTON_START 6
 
+#define CONFIG_BUTTON_FF 7
+
 /* Colecovision specific */
-#define CONFIG_BUTTON_DOLLARS 7
-#define CONFIG_BUTTON_ASTERISK 8
-#define CONFIG_BUTTON_ONE 9
-#define CONFIG_BUTTON_TWO 10
-#define CONFIG_BUTTON_THREE 11
-#define CONFIG_BUTTON_FOUR 12
-#define CONFIG_BUTTON_FIVE 13
-#define CONFIG_BUTTON_SIX 14
-#define CONFIG_BUTTON_SEVEN 15
-#define CONFIG_BUTTON_EIGHT 16
-#define CONFIG_BUTTON_NINE 17
+#define CONFIG_BUTTON_DOLLARS 8
+#define CONFIG_BUTTON_ASTERISK 9
+#define CONFIG_BUTTON_ONE 10
+#define CONFIG_BUTTON_TWO 11
+#define CONFIG_BUTTON_THREE 12
+#define CONFIG_BUTTON_FOUR 13
+#define CONFIG_BUTTON_FIVE 14
+#define CONFIG_BUTTON_SIX 15
+#define CONFIG_BUTTON_SEVEN 16
+#define CONFIG_BUTTON_EIGHT 17
+#define CONFIG_BUTTON_NINE 18
 
 /* End of Defines for input remapping */
 
@@ -53,6 +57,5 @@ typedef struct {
 void smsp_state(uint8_t slot_number, uint8_t mode);
 
 #define SOUND_FREQUENCY 44100
-#define SOUND_SAMPLES_SIZE 2048
 
 #endif

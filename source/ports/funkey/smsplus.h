@@ -3,14 +3,8 @@
 
 #include <SDL/SDL.h>
 
-extern SDL_Surface* sdl_screen;
-extern SDL_Surface* sms_bitmap;
-
-#define HOST_WIDTH_RESOLUTION 320
+#define HOST_WIDTH_RESOLUTION 240
 #define HOST_HEIGHT_RESOLUTION 240
-
-#define REAL_WIDTH_RESOLUTION sdl_screen->w
-#define REAL_HEIGHT_RESOLUTION sdl_screen->h
 
 #define VIDEO_WIDTH_SMS 256
 #define VIDEO_HEIGHT_SMS 192
@@ -39,10 +33,13 @@ extern SDL_Surface* sms_bitmap;
 #define CONFIG_BUTTON_EIGHT 16
 #define CONFIG_BUTTON_NINE 17
 
-//#define VSYNC_SUPPORTED 1
+/* End of Defines for input remapping */
+
+extern SDL_Surface* sms_bitmap;
 
 #define LOCK_VIDEO SDL_LockSurface(sms_bitmap);
 #define UNLOCK_VIDEO SDL_UnlockSurface(sms_bitmap);
+
 
 typedef struct {
 	char gamename[256];
@@ -55,6 +52,6 @@ typedef struct {
 
 void smsp_state(uint8_t slot_number, uint8_t mode);
 
-#define SOUND_FREQUENCY 48000
+#define SOUND_FREQUENCY 44100
 
 #endif

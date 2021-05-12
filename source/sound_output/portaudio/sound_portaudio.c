@@ -50,7 +50,7 @@ void Sound_Init()
 	//outputParameters.suggestedLatency = Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
 	outputParameters.hostApiSpecificStreamInfo = NULL;
 	
-	err = Pa_OpenStream( &apu_stream, NULL, &outputParameters, option.sndrate, snd.buffer_size, paNoFlag,
+	err = Pa_OpenStream( &apu_stream, NULL, &outputParameters, SOUND_FREQUENCY, snd.buffer_size, paNoFlag,
 	#ifdef NONBLOCKING_AUDIO
 	patestCallback, NULL);
 	#else
@@ -71,4 +71,12 @@ void Sound_Close()
 	int32_t err;
 	err = Pa_CloseStream( apu_stream );
 	err = Pa_Terminate();
+}
+
+void Sound_Pause()
+{
+}
+
+void Sound_Unpause()
+{
 }

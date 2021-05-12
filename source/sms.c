@@ -229,7 +229,7 @@ void sms_shutdown(void)
 
 void sms_reset(void)
 {
-  int32_t i;
+  uint_fast8_t i;
 
   /* reset Z80 state */
   CPUZ80_Reset();
@@ -440,7 +440,7 @@ void sms_reset(void)
 
 void mapper_8k_w(uint16_t address, uint8_t data)
 {
-	int32_t i;
+	uint_fast8_t i;
 
 	/* cartridge ROM page (8k) index */
 	uint16_t page = data % (slot.pages << 1);
@@ -479,17 +479,27 @@ void mapper_8k_w(uint16_t address, uint8_t data)
     
 void mapper_16k_w(uint16_t address, uint8_t data)
 {
-	int32_t i;
+	extern uint8_t gaiden_hack;
+	uint_fast8_t i;
 
 	/* cartridge ROM page (16k) index */
 	uint16_t page = data % slot.pages;
   
 	/* page index increment (SEGA mapper) */
-	if (slot.fcr[0] & 0x03)
+	
+	/* 
+		About the "gaiden_hack" bit :
+		I initially thought that it was a hack.
+		But it turns out the translation hack actually expects this :
+		https://github.com/libretro/smsplus-gx/issues/25
+		
+		TODO : Probably reimplement this ?
+	*/
+	if (slot.fcr[0] & 0x03 && gaiden_hack != 1)
 	{
 		page = (page + ((4 - (slot.fcr[0] & 0x03)) << 3)) % slot.pages;
 	}
-
+	
 	/* save frame control register data */
 	slot.fcr[address] = data;
 

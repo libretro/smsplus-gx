@@ -210,16 +210,16 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 		case SDLK_LALT:
 		case SDLK_SPACE:
 			if(p)
-				input.pad[0] |= INPUT_BUTTON1;
+				input.pad[0] |= INPUT_BUTTON2;
 			else
-				input.pad[0] &= ~INPUT_BUTTON1;
+				input.pad[0] &= ~INPUT_BUTTON2;
 		break;
 		case SDLK_LCTRL:
 		case SDLK_LSHIFT:
 			if(p)
-				input.pad[0] |= INPUT_BUTTON2;
+				input.pad[0] |= INPUT_BUTTON1;
 			else
-				input.pad[0] &= ~INPUT_BUTTON2;
+				input.pad[0] &= ~INPUT_BUTTON1;
 		break;	
 		default:
 		break;
@@ -335,6 +335,8 @@ void Menu()
         bitmap_scale(0,0,256,192,miniscreenwidth,miniscreenheight,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)miniscreen->pixels);
         
     SDL_UnlockSurface(miniscreen);
+    
+    Sound_Pause();
     
     while (((currentselection != 1) && (currentselection != 6)) || (!pressed))
     {
@@ -523,6 +525,8 @@ void Menu()
     
     if (currentselection == 6)
         quit = 1;
+    else
+		Sound_Unpause();
 }
 
 static void config_load()
@@ -624,11 +628,9 @@ int main (int argc, char *argv[])
 	sms_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS, 267, 16, 0, 0, 0, 0);
 	backbuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, 0, 0, 0, 0);
 	SDL_ShowCursor(0);
-	
-	Sound_Init();
 
 #ifdef SCALE2X_UPSCALER
-	scale2x_buf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS*2, 480, 16, 0, 0, 0, 0);
+	scale2x_buf = SDL_CreateRGBSurface(SDL_SWSURFACE, VIDEO_WIDTH_SMS*2, 267*2, 16, 0, 0, 0, 0);
 #endif
 	
 	fprintf(stdout, "CRC : %08X\n", cart.crc);
@@ -652,6 +654,8 @@ int main (int argc, char *argv[])
 
 	// Initialize all systems and power on
 	system_poweron();
+	
+	Sound_Init();
 	
 	// Loop until the user closes the window
 	while (!quit) 

@@ -265,15 +265,15 @@ static uint32_t sdl_controls_update_input(SDLKey k, int32_t p)
 		break;
 		case SDLK_LCTRL:
 			if(p)
-				input.pad[0] |= INPUT_BUTTON1;
-			else
-				input.pad[0] &= ~INPUT_BUTTON1;
-		break;	
-		case SDLK_LALT:
-			if(p)
 				input.pad[0] |= INPUT_BUTTON2;
 			else
 				input.pad[0] &= ~INPUT_BUTTON2;
+		break;	
+		case SDLK_LALT:
+			if(p)
+				input.pad[0] |= INPUT_BUTTON1;
+			else
+				input.pad[0] &= ~INPUT_BUTTON1;
 		break;
 		default:
 		break;
@@ -398,6 +398,8 @@ void Menu()
         bitmap_scale(0,0,256,192,miniscreenwidth,miniscreenheight,256,0,(uint16_t* restrict)sms_bitmap->pixels,(uint16_t* restrict)miniscreen->pixels);
         
     SDL_UnlockSurface(miniscreen);
+    
+	Sound_Pause();
     
     while (((currentselection != 1) && (currentselection != 6)) || (!pressed))
     {
@@ -580,6 +582,8 @@ void Menu()
     
     if (currentselection == 6)
         quit = 1;
+    else
+		Sound_Unpause();
 }
 
 
