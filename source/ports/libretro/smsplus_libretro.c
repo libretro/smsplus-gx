@@ -248,11 +248,11 @@ static int bios_init(void)
 
 /* Libretro implementation */
 
+static void update_input(void)
+{
 #define JOYP(n)   (ret & (1 << (n)))
 #define KEYP(key) (input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, key))
 
-static void update_input(void)
-{
    unsigned port;
    unsigned startpressed = 0;
 
@@ -328,9 +328,6 @@ static void update_input(void)
 
    if (sms.console == CONSOLE_COLECO) input.system = 0;
 }
-
-#undef JOYP
-#undef KEYP
 
 static void check_system_specs(void)
 {
@@ -459,7 +456,7 @@ static void check_variables(bool startup)
 
    if (old_ntsc != use_ntsc)
    {
-      sms_ntsc_setup_t setup;
+      sms_ntsc_setup_t setup = { 0 };
 
       switch (use_ntsc)
       {
@@ -646,7 +643,7 @@ void retro_run(void)
 
    if (geometry_changed || bitmap.viewport.changed)
    {
-      struct retro_system_av_info info;
+      struct retro_system_av_info info = { 0 };
 
       retro_get_system_av_info(&info);
       /* hard audio-video reset */
@@ -697,6 +694,8 @@ void retro_get_system_info(struct retro_system_info *info)
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
+#define SMS_SCALED_4_3      (((double)system_width / (240.0 * ((double)VIDEO_WIDTH_SMS / 240.0))) * 4.0 / 3.0)
+
    memset(info, 0, sizeof(*info));
 
 #ifdef HAVE_NTSC
@@ -709,7 +708,12 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
    info->geometry.base_height  = system_height;
    info->geometry.max_height   = 240;
-   info->geometry.aspect_ratio = 4.0 / 3.0;
+
+   if (sms.console != CONSOLE_GG)
+      info->geometry.aspect_ratio = SMS_SCALED_4_3;
+   else
+      info->geometry.aspect_ratio = 4.0 / 3.0;
+
    info->timing.fps            = (double)((sms.display == DISPLAY_PAL) ? FPS_PAL : FPS_NTSC);
    info->timing.sample_rate    = (double)option.sndrate;
 }
