@@ -25,7 +25,7 @@ static retro_audio_sample_batch_t audio_batch_cb   = NULL;
 static unsigned libretro_supports_bitmasks         = 0;
 static unsigned libretro_serialize_size            = 0;
 static unsigned geometry_changed                   = 0;
-static unsigned remove_left_border                 = 0;
+static unsigned hide_left_border                   = 0;
 
 static unsigned system_width                       = VIDEO_WIDTH_SMS;
 static unsigned system_height                      = VIDEO_HEIGHT_SMS;
@@ -367,7 +367,7 @@ bool retro_load_game_special(unsigned id, const struct retro_game_info *info, si
 static void check_variables(bool startup)
 {
    struct retro_variable var = { 0 };
-   unsigned old_border = remove_left_border;
+   unsigned old_border = hide_left_border;
    #ifdef HAVE_NTSC
    unsigned old_ntsc   = use_ntsc;
    #endif
@@ -426,14 +426,14 @@ static void check_variables(bool startup)
    }
 
    var.value = NULL;
-   var.key   = "smsplus_remove_left_border";
+   var.key   = "smsplus_hide_left_border";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (strcmp(var.value, "enabled") == 0)
-         remove_left_border = 1;
+         hide_left_border = 1;
       else
-         remove_left_border = 0;
+         hide_left_border = 0;
    }
 
    #ifdef HAVE_NTSC
@@ -482,7 +482,7 @@ static void check_variables(bool startup)
    }
    #endif /* HAVE_NTSC */
 
-   if (old_border != remove_left_border)
+   if (old_border != hide_left_border)
       bitmap.viewport.changed = 1;
 }
 
@@ -610,9 +610,9 @@ void retro_unload_game(void)
 
 void retro_run(void)
 {
-   bool updated   = false;
-   bool skip      = false;
-   int32_t x      = 0;
+   bool updated    = false;
+   bool skip       = false;
+   int32_t xoffset = 0;
    static unsigned last_width, last_height;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
@@ -625,27 +625,33 @@ void retro_run(void)
    system_frame(skip);
 
    /* Refresh video data */
-   x                 = bitmap.viewport.x;
-   system_width      = bitmap.viewport.w;
-   system_height     = bitmap.viewport.h;
+   xoffset       = bitmap.viewport.x;
+   system_width  = bitmap.viewport.w;
+   system_height = bitmap.viewport.h;
 
-   if (sms.console != CONSOLE_GG && remove_left_border)
+   /* hide left border (sms) */
+   if (hide_left_border && (IS_SMS || IS_MD))
    {
-      x              = (vdp.reg[0] & 0x20) ? 8 : 0;
-      system_width   = VIDEO_WIDTH_SMS - x;
+      if (vdp.reg[0] & 0x20)
+      {
+         xoffset      = 8;
+         system_width = VIDEO_WIDTH_SMS - 8;
+      }
    }
 
    if (system_width != last_width || system_height != last_height)
+   {
       bitmap.viewport.changed = 1;
-
-   last_width  = system_width;
-   last_height = system_height;
+      last_width              = system_width;
+      last_height             = system_height;
+   }
 
    if (geometry_changed || bitmap.viewport.changed)
    {
       struct retro_system_av_info info = { 0 };
 
       retro_get_system_av_info(&info);
+
       /* hard audio-video reset */
       if (geometry_changed)
          environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &info);
@@ -662,7 +668,7 @@ void retro_run(void)
       int32_t ntsc_out_width  = SMS_NTSC_OUT_WIDTH(system_width);
       uint32_t ntsc_out_pitch = ntsc_out_width << 1;
 
-      sms_ntsc_blit(sms_ntsc, sms_bitmap + x, bitmap.pitch / sizeof(uint16_t),
+      sms_ntsc_blit(sms_ntsc, sms_bitmap + xoffset, bitmap.pitch / sizeof(uint16_t),
             system_width, system_height, ntsc_screen, ntsc_out_pitch);
 
       video_cb(ntsc_screen, ntsc_out_width, system_height, ntsc_out_pitch);
@@ -670,7 +676,7 @@ void retro_run(void)
    else
    #endif
    {
-      video_cb((const uint16_t *)sms_bitmap + x, system_width, system_height, bitmap.pitch);
+      video_cb((const uint16_t *)sms_bitmap + xoffset, system_width, system_height, bitmap.pitch);
    }
 
    /* Output audio */

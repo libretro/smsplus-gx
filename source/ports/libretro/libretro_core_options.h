@@ -89,9 +89,9 @@ struct retro_core_option_definition option_defs_us[] = {
       "auto"
    },
    {
-      "smsplus_remove_left_border",
-      "Remove Border",
-      "Removes border that is seen on the left of screen.",
+      "smsplus_hide_left_border",
+      "Hide SMS Left Border",
+      "Hides left border and center image onscreen.",
       {
          { "disabled", NULL },
          { "enabled",  NULL },
