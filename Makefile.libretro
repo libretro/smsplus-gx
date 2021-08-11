@@ -305,6 +305,18 @@ else ifeq ($(platform), emscripten)
    ENDIANNESS_DEFINES += -DLSB_FIRST -DALIGN_DWORD
    STATIC_LINKING = 1
 
+
+# RETROFW
+else ifeq ($(platform), retrofw)
+   TARGET := $(TARGET_NAME)_libretro.so
+   CC = /opt/retrofw-toolchain/usr/bin/mipsel-linux-gcc
+   CXX = /opt/retrofw-toolchain/usr/bin/mipsel-linux-g++
+   AR = /opt/retrofw-toolchain/usr/bin/mipsel-linux-ar
+   fpic := -fPIC
+   SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
+   CFLAGS += -ffast-math -march=mips32 -mtune=mips32 -mhard-float -fomit-frame-pointer
+   ENDIANNESS_DEFINES += -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DALIGN_LONG
+   
 # else ifneq (,$(findstring armv,$(platform)))
 #    TARGET := $(TARGET_NAME)_libretro.so
 #    fpic := -fPIC
