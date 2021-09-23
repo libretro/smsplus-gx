@@ -1,6 +1,8 @@
 #ifndef CONFIG_H__
 #define CONFIG_H__
 
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
+
 typedef struct {
 	int32_t fullscreen;
 	int32_t fullspeed;
