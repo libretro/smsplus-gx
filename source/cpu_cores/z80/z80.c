@@ -3399,7 +3399,19 @@ void z80_init(int32_t (*irqcallback)(int32_t))
 
 	IX = IY = 0xffff; /* IX and IY are FFFF after a reset! */
 	F = ZF;            /* Zero flag is set */
-	SP = 0xdff0; /* fix Shadow Dancer & Ace of Aces (normally set by BIOS) */
+	/* Because this is only affecting systems with an actual BIOS, we need to make sure it only sets it in such cases.
+	 * This code should not affect the SG-1000, Mark3 either.
+	 * TODO : Watch Colecovision BIOS */
+	if (sms.territory == TERRITORY_EXPORT && IS_SMS && bios.enabled == 0)
+	{
+		/* Fix Shadow Dancer & Ace of Aces (normally set by BIOS)
+		 * Shadow Dancer will black screen on boot without this. */
+		SP = 0xdff0;
+	}
+	else
+	{
+		SP = 0;
+	}
 	
 	/* setup cycle tables */
 	cc[Z80_TABLE_op] = cc_op;
