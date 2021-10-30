@@ -533,8 +533,7 @@ PROTOTYPES(Z80xycb,xycb);
  ***************************************************************/
 INLINE void halt()
 {
-	PC--;
-	Z80.halt = 1;
+	if (!Z80.halt) Z80.halt = 1;
 }
 
 /***************************************************************
@@ -542,11 +541,7 @@ INLINE void halt()
  ***************************************************************/
 INLINE void leave_halt()
 {
-	if( Z80.halt )
-	{
-		Z80.halt = 0;
-		PC++;
-	}
+	if (Z80.halt) Z80.halt = 0;
 }
 
 /***************************************************************
@@ -3238,9 +3233,6 @@ void take_interrupt()
 {
 	int32_t irq_vector;
 
-	/* there isn't a valid previous program counter */
-	PRVPC = 0xffff;
-
 	/* Check if processor was halted */
 	leave_halt();
 
@@ -3253,6 +3245,9 @@ void take_interrupt()
 	/* Interrupt mode 2. Call [i:databyte] */
 	if( Z80.im == 2 )
 	{
+		// Zilog's datasheet claims that "the least-significant bit must be a zero."
+		// However, experiments have confirmed that IM 2 vectors do not have to be
+		// even, and all 8 bits will be used; even $FF is handled normally.
 		irq_vector = (irq_vector & 0xff) | (Z80.i << 8);
 		push(Z80.pc);
 		rm16(irq_vector, Z80.pc);
@@ -3303,7 +3298,30 @@ void take_interrupt()
 		Z80.icount -= cc_ex[0xff];
 	}
 	WZ=PCD;
+#if HAS_LDAIR_QUIRK == 1
+	/* reset parity flag after LD A,I or LD A,R */
+	if (Z80.after_ldair) F &= ~PF;
+#endif
 }
+
+static inline void take_nmi()
+{
+	/* Check if processor was halted */
+	leave_halt();
+
+#if HAS_LDAIR_QUIRK == 1
+	/* reset parity flag after LD A,I or LD A,R */
+	if (Z80.after_ldair) F &= ~PF;
+#endif
+
+	Z80.iff1 = 0;
+	push(Z80.pc);
+	PCD = 0x0066;
+	WZ=PCD;
+	Z80.icount -= 11;
+	Z80.nmi_pending = false;
+}
+
 
 /****************************************************************************
  * Processor initialization
@@ -3427,6 +3445,8 @@ void z80_init(int32_t (*irqcallback)(int32_t))
  ****************************************************************************/
 void z80_reset()
 {
+	leave_halt();
+	
 	PC = 0x0000;
 	Z80.i = 0;
 	Z80.r = 0;
@@ -3440,6 +3460,17 @@ void z80_reset()
 	WZ=PCD;
 }
 
+static inline void check_interrupts()
+{
+	/* check for NMIs on the way in; they can only be set externally */
+	/* via timers, and can't be dynamically enabled, so it is safe */
+	/* to just check here */
+	if (Z80.nmi_pending)
+		take_nmi();
+	else if (Z80.irq_state != CLEAR_LINE && Z80.iff1 && !Z80.after_ei)
+		take_interrupt();
+}
+
 /****************************************************************************
  * Execute 'cycles' T-states. Return number of T-states really executed
  ****************************************************************************/
@@ -3448,46 +3479,32 @@ int32_t z80_execute(int32_t cycles)
 	Z80.icount = cycles;
 	z80_requested_cycles = Z80.icount;
 	z80_exec = 1;
-	
-	/* check for NMIs on the way in; they can only be set externally */
-	/* via timers, and can't be dynamically enabled, so it is safe */
-	/* to just check here */
-	if (Z80.nmi_pending)
-	{
-		PRVPC = 0xffff;	/* there isn't a valid previous program counter */
-		leave_halt();	/* Check if processor was halted */
-
-#if HAS_LDAIR_QUIRK
-		/* reset parity flag after LD A,I or LD A,R */
-		if (Z80.after_ldair) F &= ~PF;
-#endif
-		Z80.after_ldair = 0;
-
-		Z80.iff1 = 0;
-		push(Z80.pc);
-		PCD = 0x0066;
-		WZ=PCD;
-		Z80.icount -= 11;
-		Z80.nmi_pending = 0;
-	}
-
 	do
 	{
-		/* check for IRQs before each instruction */
-		if (Z80.irq_state != CLEAR_LINE && Z80.iff1 && !Z80.after_ei)
+		/*
+		if (Z80.wait_state)
 		{
-#if HAS_LDAIR_QUIRK
-			/* reset parity flag after LD A,I or LD A,R */
-			if (Z80.after_ldair) F &= ~PF;
-#endif
-			take_interrupt();
+			// stalled
+			Z80.icount = 0;
+			return cycles - Z80.icount;
 		}
+		*/
+		// check for interrupts before each instruction
+		check_interrupts();
+		
 		Z80.after_ei = 0;
 		Z80.after_ldair = 0;
 
 		PRVPC = PCD;
 		Z80.r++;
-		EXEC(op,rop());
+		uint8_t opcode = rop();
+		// when in HALT state, the fetched opcode is not dispatched (aka a NOP)
+		if (Z80.halt)
+		{
+			PC--;
+			opcode = 0;
+		}
+		EXEC(op,opcode);
 	} while (Z80.icount > 0);
 
 	z80_exec = 0;
@@ -3500,18 +3517,24 @@ void z80_set_irq_line(int32_t inputnum, int32_t state)
 {
 	switch (inputnum)
 	{
-	case INPUT_LINE_NMI:
-		/* mark an NMI pending on the rising edge */
-		if (Z80.nmi_state == CLEAR_LINE && state != CLEAR_LINE)
-			Z80.nmi_pending = 1;
-		Z80.nmi_state = state;
-		break;
+		case INPUT_LINE_NMI:
+			/* mark an NMI pending on the rising edge */
+			if (Z80.nmi_state == CLEAR_LINE && state != CLEAR_LINE)
+				Z80.nmi_pending = 1;
+			Z80.nmi_state = state;
+			break;
 
-	case INPUT_LINE_IRQ0:
-		/* update the IRQ state via the daisy chain */
-		Z80.irq_state = state;
-		/* the main execute loop will take the interrupt */
-		break;
+		case INPUT_LINE_IRQ0:
+			/* update the IRQ state via the daisy chain */
+			Z80.irq_state = state;
+			/* the main execute loop will take the interrupt */
+			break;
+		/*
+		// Unused for now. Might be useful for Colecovision later. Breaks Pitfall 2 apparently
+		case Z80_INPUT_LINE_WAIT:
+			Z80.wait_state = state;
+			break;
+		*/
 	}
 }
 
