@@ -91,6 +91,7 @@ void vdp_reset(void)
 	vdp.lpf = sms.display ? 313 : 262;
 
 	/* VDP registers default values (usually set by BIOS) */
+	/* Tested on Megadrive and it does not initiliaze the VDP registers. */
 	if (IS_SMS && (bios.enabled != 3))
 	{
 		vdp.reg[0]  = 0x36; 
