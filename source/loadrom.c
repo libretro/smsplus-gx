@@ -377,7 +377,7 @@ static void set_config()
 		break;
 		case 3:
 			sms.console = CONSOLE_GG;
-			sms_parameters.cycles_per_line = 222;
+			sms_parameters.cycles_per_line = 226;
 		break;
 		case 4:
 			sms.console = CONSOLE_GGMS;
