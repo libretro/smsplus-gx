@@ -1,6 +1,15 @@
 Known issues
 =============
 
+-  Madou Monogatari I (Game Gear)
+
+Has rendering issues due to video timing being different between SMS and GG.
+See :
+https://github.com/drhelius/Gearsystem/commit/71b7252831e8a50d94a11b491431b52f6c3af8d4
+
+Partially fixed as of f0192681f2daa9d1f225f891119e26dbc4969a54, but
+it is still not correct when the sprite moves into the background.
+
 -  93c46 EEPROM Support
 
 Used by a few Game Game games.
@@ -16,11 +25,6 @@ Implementations :
 https://github.com/OpenEmu/CrabEmu-Core/blob/master/consoles/sms/mapper-93c46.c
 
 World Series Baseball '95 and World Series Baseball will hang up without at least a stub in place.
-
--  Fix PAL specific code
-
-Active Range should be 294 for PAL but it had to be set to 267 to make Fantastic Dizzy work properly.
-Unfortunately this is still not quite correct, we need a proper fix for it.
 
 - LCD Persistence issues
 
@@ -63,28 +67,3 @@ In addition to that, a bug has been discovered where the game would sometimes re
 Do we really want to implement this bug though ???
 
 https://github.com/mamedev/mame/commit/33c5196a429d0afa801caac3ad24a76bf0ac273d#diff-cafb9b1c2517c95f421c776c3ec74e56
-
-
-Problematic games (To be checked & tested)
-=================================
-
--  Dallyeora Pigu Wang
-
-http://www.smspower.org/Development/DallyeoraPiguWang-SMS
-
-Uses R register and Korean mapper. (Filesize is also not a power of 2)
-Sounds like a problem.
-
--  Rainbow Islands
-
-http://www.smspower.org/Development/RainbowIslands-SMS
-Brazil release fixed this, perhaps we could patch the game on the fly ?
-But that would be outside the scope of an emulator.
-
--  PGA Tour Golf
-
-http://www.smspower.org/Development/PGATourGolf-SMS
-
--  Zool : Ninja of the Nth Dimension
-
-http://www.smspower.org/Development/Zool-SMS
