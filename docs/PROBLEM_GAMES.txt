@@ -16,7 +16,7 @@ Madou Monogatari I (Game Gear)
 Intro with character waking up from nightmare has rendering issues with the sprite.
 This part is sensitive to the timing of the rendering scanline.
 
-This is partially fixed except during the short time when the sprites scroll into the background.
+Currently, this is partially fixed except during the short time when the sprites scroll into the background.
 
 Sonic's Edusoft (Master System)
 ===============================
@@ -25,13 +25,17 @@ Relies on VDP register 1 being set by the BIOS.
 I looked at what the BIOS outputs to that register and it's 0xE except for one BIOS setting it to 0xC.
 The latter of which would still make it work on Sonic's Edusoft but seemingly break other games also.
 
+Because of this flaw, the Megadrive cannot run this game unpatched and it appears that
+the Game Gear and Mark 3 should not be able to run this either.
+
 Fantastic Dizzy (Master System)
 ===============================
 
 Uses the higher resolution modes found on PAL models. Very sensitive to timings.
 The game also needs proper emulation of HALT and a fairly accurate Z80 interpreter overall.
-If you don't get the timing rights for the VDP, you will get some glitch issues.
+If you don't get the timing rights for the VDP, you will get some rendering issues.
 The most common one being the flickering bar at the top.
+
 There are also other issues as well, such as the fact that this game won't work properly in NTSC mode
 so this should be done accordingly.
 
@@ -61,6 +65,12 @@ A quick fix is simply to clear the memory with 0xF0.
 
 This means that only the Japanese Master system can run these games.
 The overseas version clear the memory (0x00) but this also means that they can't run these games at all.
+
+Shadow Dancer, Ace of Aces (SMS)
+=================================
+
+Both rely on the BIOS setting the Z80's SP register to 0xDFF0.
+If this is not being done, Shadow Dancer will be stuck on a black screen.
 
 Rainbow Islands (Master System, PAL)
 ====================================
