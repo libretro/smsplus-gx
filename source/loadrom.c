@@ -34,7 +34,7 @@
 
 uint8_t gaiden_hack = 0;
 
-#define GAME_DATABASE_CNT 101
+#define GAME_DATABASE_CNT 102
 
 typedef struct
 {
