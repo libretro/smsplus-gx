@@ -312,6 +312,7 @@ void sms_reset(void)
 
 	#ifdef SORDM5_EMU
     case CONSOLE_SORDM5:
+	  /* Taken from http://www.retropc.net/mm/m5/memory.html */
       /* $0000-$1FFF mapped to internal ROM (8K) */
       for(i = 0x00; i < 0x08; i++)
       {
@@ -319,18 +320,25 @@ void sms_reset(void)
         cpu_writemap[i] = dummy_write;
       }
     
-      /* $2000-$6FFF mapped to cartridge ROM (max. 32K) */
-      for(i = 0x08; i < 0x19; i++)
+      /* $2000-$5FFF mapped to cartridge ROM (max. 16K) */
+      for(i = 0x08; i < 0x17; i++)
       {
         cpu_readmap[i]  = &cart.rom[i << 10];
+        cpu_writemap[i] = dummy_write;
+      }
+      
+      /* $6000-$6FFF : Reserved */
+      for(i = 0x17; i < 0x19; i++)
+      {
+        cpu_readmap[i]  = dummy_read;
         cpu_writemap[i] = dummy_write;
       }
       
       /* enable internal RAM at $7000-$7FFF (4k internal RAM) */
       for(i = 0x19; i < 0x21; i++)
       {
-          cpu_readmap[i] = &sms.wram[(i & 0x07) << 10];
-          cpu_writemap[i] = &sms.wram[(i & 0x07) << 10];
+		cpu_readmap[i]  = &sms.wram[i << 10];
+		cpu_writemap[i] = &sms.wram[i << 10];
       }
       printf("Sord M5 mode\n");
     break;
