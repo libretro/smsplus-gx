@@ -43,6 +43,9 @@ slot_t slot;
 /* Colecovision support */
 t_coleco coleco;
 
+/* Numerous parameters and tweaks depending on console being emulated */
+t_parameters sms_parameters;
+
 uint8_t dummy_write[0x400];
 uint8_t dummy_read[0x400];
 

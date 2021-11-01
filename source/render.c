@@ -85,7 +85,7 @@ static uint8_t active_border[2][3] =
 static uint16_t active_range[2] =
 {
 	243, /* NTSC VDP */
-	267  /* PAL  VDP */
+	294  /* PAL  VDP */
 };
 
 /* CRAM palette in TMS compatibility mode */

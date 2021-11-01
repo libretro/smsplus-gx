@@ -363,6 +363,8 @@ static void set_config()
 
 	/* enable BIOS on SMS only */
 	bios.enabled &= 2;
+	
+	sms_parameters.cycles_per_line = 228;
 
 	/* force settings if AUTO is not set*/
 	switch(option.console)
@@ -375,9 +377,11 @@ static void set_config()
 		break;
 		case 3:
 			sms.console = CONSOLE_GG;
+			sms_parameters.cycles_per_line = 222;
 		break;
 		case 4:
 			sms.console = CONSOLE_GGMS;
+			// sms_parameters.cycles_per_line = 222; ?
 		break;
 		case 5:
 			sms.console = CONSOLE_SG1000;
