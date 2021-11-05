@@ -3446,8 +3446,20 @@ void z80_init(int32_t (*irqcallback)(int32_t))
 	WZ = 0;
 	memset(&Z80, 0, sizeof(Z80));
 	Z80.irq_callback = irqcallback;
-
-	IX = IY = 0xffff; /* IX and IY are FFFF after a reset! */
+	
+	/* TODO
+	* For Colecovision, we need to check for the Z80 registers.
+	* Unfortunately, there are not a lot of test ROMs for the Colecovision.
+	*/
+	if (sms.console < CONSOLE_SMS)
+	{
+		/* For SG-1000, Colecovision, it should be 0. */
+		IX = IY = 0;
+	}
+	else
+	{
+		IX = IY = 0xffff; /* IX and IY are FFFF after a reset! */
+	}
 	F = ZF;            /* Zero flag is set */
 	/* Because this is only affecting systems with an actual BIOS, we need to make sure it only sets it in such cases.
 	 * This code should not affect the SG-1000, Mark3 either.
