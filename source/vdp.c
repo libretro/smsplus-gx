@@ -360,7 +360,7 @@ uint8_t vdp_read(int32_t offset)
 			 * - Fantastic Dizzy (otherwise, top bar will flicker)
 			 * - Madou Monogatari I GG (otherwise, sprite will be displayed incorrectly)
 			*/
-			if ((cyc / sms_parameters.cycles_per_line) > line)
+			if ((cyc / CYCLES_PER_LINE) > line)
 			{
 				if (line == vdp.height) vdp.status |= 0x80;
 				line = (line + 1)%vdp.lpf;

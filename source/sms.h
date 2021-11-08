@@ -148,17 +148,11 @@ typedef struct
 	uint8_t keypad[2];    /* Keypad inputs */
 } t_coleco;
 
-typedef struct
-{
-	int32_t cycles_per_line;
-} t_parameters;
-
 /* Global data */
 extern sms_t sms;
 extern bios_t bios;
 extern slot_t slot;
 extern t_coleco coleco;
-extern t_parameters sms_parameters;
 extern uint8_t dummy_write[0x400];
 extern uint8_t dummy_read[0x400];
 

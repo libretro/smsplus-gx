@@ -756,13 +756,14 @@ static void parse_satb(int32_t line)
 	/* Sprite height (8x8 by default) */
 	uint8_t yp;
 	uint8_t height = 8;
+	uint8_t zoomed = vdp.reg[1] & 0x01;
   
 	/* Adjust height for 8x16 sprites */
 	if(vdp.reg[1] & 0x02) 
 		height <<= 1;
 
 	/* Adjust height for zoomed sprites */
-	if(vdp.reg[1] & 0x01)
+	if(zoomed)
 		height <<= 1;
 
 	/* Sprite count for current line (8 max.) */
@@ -781,8 +782,9 @@ static void parse_satb(int32_t line)
 		if(yp > 240) yp -= 256;
 
 		/* Compare sprite position with current line counter */
-		yp = vc - yp;
-
+		yp |= (zoomed);
+ 		yp = line - yp;
+		
 		/* Sprite is within vertical range? */
 		if(yp < height)
 		{
