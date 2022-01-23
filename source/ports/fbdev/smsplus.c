@@ -645,6 +645,9 @@ int main (int argc, char *argv[])
 	// Sometimes Game Gear games are not properly detected, force them accordingly
 	else if (strcmp(strrchr(argv[1], '.'), ".gg") == 0) option.console = 3;
 	
+	if (sms.console == CONSOLE_SMS || sms.console == CONSOLE_SMS2)
+		sms.use_fm = 1; 
+	
 	// Load ROM
 	if(!load_rom(argv[1])) {
 		fprintf(stderr, "Error: Failed to load %s.\n", argv[1]);
@@ -710,8 +713,6 @@ int main (int argc, char *argv[])
 	bitmap.viewport.y = 0x00;
 	
 	//sms.territory = settings.misc_region;
-	if (sms.console == CONSOLE_SMS || sms.console == CONSOLE_SMS2)
-		sms.use_fm = 1; 
 	
 	bios_init();
 
