@@ -3277,9 +3277,9 @@ void take_interrupt()
 	/* Interrupt mode 2. Call [i:databyte] */
 	if( Z80.im == 2 )
 	{
-		// Zilog's datasheet claims that "the least-significant bit must be a zero."
-		// However, experiments have confirmed that IM 2 vectors do not have to be
-		// even, and all 8 bits will be used; even $FF is handled normally.
+		/* Zilog's datasheet claims that "the least-significant bit must be a zero."
+		   However, experiments have confirmed that IM 2 vectors do not have to be
+		   even, and all 8 bits will be used; even $FF is handled normally. */
 		irq_vector = (irq_vector & 0xff) | (Z80.i << 8);
 		push(Z80.pc);
 		rm16(irq_vector, Z80.pc);
@@ -3336,7 +3336,7 @@ void take_interrupt()
 #endif
 }
 
-static inline void take_nmi()
+INLINE void take_nmi()
 {
 	/* Check if processor was halted */
 	leave_halt();
@@ -3506,7 +3506,7 @@ void z80_reset()
 	WZ=PCD;
 }
 
-static inline void check_interrupts()
+INLINE void check_interrupts()
 {
 	/* check for NMIs on the way in; they can only be set externally */
 	/* via timers, and can't be dynamically enabled, so it is safe */
@@ -3535,7 +3535,7 @@ int32_t z80_execute(int32_t cycles)
 			return cycles - Z80.icount;
 		}
 		*/
-		// check for interrupts before each instruction
+		/* check for interrupts before each instruction */
 		check_interrupts();
 		
 		Z80.after_ei = 0;
@@ -3544,7 +3544,7 @@ int32_t z80_execute(int32_t cycles)
 		PRVPC = PCD;
 		Z80.r++;
 		uint8_t opcode = rop();
-		// when in HALT state, the fetched opcode is not dispatched (aka a NOP)
+		/* when in HALT state, the fetched opcode is not dispatched (aka a NOP) */
 		if (Z80.halt)
 		{
 			PC--;
