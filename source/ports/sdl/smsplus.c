@@ -678,6 +678,12 @@ int main (int argc, char *argv[])
 	// Force M5
 	else if (strcmp(strrchr(argv[1], '.'), ".m5") == 0) option.console = 7;
 	
+	/* Make sure it's before load_rom as we need to handle the cornercase in Wanted and other FM incompatible games */
+	if (sms.console == CONSOLE_SMS || sms.console == CONSOLE_SMS2)
+	{ 
+		sms.use_fm = 1; 
+	}
+	
 	// Load ROM
 	if(!load_rom(argv[1])) {
 		fprintf(stderr, "Error: Failed to load %s.\n", argv[1]);
@@ -717,10 +723,6 @@ int main (int argc, char *argv[])
 	bitmap.viewport.y = 0x00;
 	
 	//sms.territory = settings.misc_region;
-	if (sms.console == CONSOLE_SMS || sms.console == CONSOLE_SMS2)
-	{ 
-		sms.use_fm = 1; 
-	}
 	
 	bios_init();
 

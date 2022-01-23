@@ -89,6 +89,16 @@ PGA TOUR Golf (Game Gear)
 Expects the low 5 bits of the VDP status register to not be zero. 
 https://www.smspower.org/Development/PGATourGolf-SMS
 
+Great Baseball (1985), Pit Pot and Teddy Boy Blues (Japan)
+==========================================================
+
+These have control issues when a FM sound unit is plugged in.
+
+Wanted (SMS)
+============
+
+Incompatible FM game. (Won't boot, red screen of death)
+
 Zool (GG, SMS)
 ==============
 
