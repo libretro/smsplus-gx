@@ -722,17 +722,17 @@ int main (int argc, char *argv[])
 		sms.use_fm = 1; 
 	}
 	
-	if (sms.display == DISPLAY_PAL) real_FPS = 1000 / 49.701459;
-	else real_FPS = 1000 / 59.922743;
-	
-	printf("sms.display %d, PAL is %d\n", sms.display, DISPLAY_PAL);
-	
 	bios_init();
 
 	// Initialize all systems and power on
 	system_poweron();
 
 	Sound_Init();
+	
+	if (sms.display == DISPLAY_PAL) real_FPS = 1000 / 49.701459;
+	else real_FPS = 1000 / 59.922743;
+	
+	printf("sms.display %d, PAL is %d\n", sms.display, DISPLAY_PAL);
 	
 	// Loop until the user closes the window
 	while (!quit) 

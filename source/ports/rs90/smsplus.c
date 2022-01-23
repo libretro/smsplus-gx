@@ -37,19 +37,19 @@ static const uint32_t YUV_MAT[3][3] = {
 	{UINT16_16(0.168736f), UINT16_16(0.331264f), UINT16_16(0.5f)},
 	{UINT16_16(0.5f),      UINT16_16(0.418688f), UINT16_16(0.081312f)}
 };
+static uint8_t* dst_yuv[3];
 #endif
 
 static uint_fast8_t forcerefresh = 0;
 static uint32_t update_window_size(uint32_t w, uint32_t h);
-
-static uint8_t* dst_yuv[3];
 
 /* This is solely relying on the IPU chip implemented in the kernel
  * for centering, scaling (with bilinear filtering) etc...
 */
 static void video_update(void)
 {
-	uint_fast16_t height, width, i, pixels_shifting_remove;
+	uint_fast16_t height, width;
+	uint_fast16_t i, pixels_shifting_remove;
 	uint_fast8_t a, plane;
 	
 	if (sms.console == CONSOLE_GG)
@@ -786,7 +786,7 @@ static void config_load()
 {
 	uint_fast8_t i;
 	char config_path[256];
-	snprintf(config_path, sizeof(config_path), "%s/config.cfg", home_path);
+	snprintf(config_path, sizeof(config_path), "%sconfig.cfg", home_path);
 	FILE* fp;
 	
 	fp = fopen(config_path, "rb");
@@ -800,7 +800,7 @@ static void config_load()
 	{
         printf("Config NOT loaded. >%s\n",config_path);
         
-		for (i = 0; i < 19; i++)
+		for (i = 0; i < sizeof(option); i++)
 		{
 			option.config_buttons[i] = 0;
 		}
@@ -821,7 +821,7 @@ static void config_load()
 static void config_save()
 {
 	char config_path[256];
-	snprintf(config_path, sizeof(config_path), "%s/config.cfg", home_path);
+	snprintf(config_path, sizeof(config_path), "%sconfig.cfg", home_path);
 	FILE* fp;
 	
 	fp = fopen(config_path, "wb");

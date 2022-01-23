@@ -533,8 +533,7 @@ PROTOTYPES(Z80xycb,xycb);
  ***************************************************************/
 INLINE void halt()
 {
-	PC--;
-	Z80.halt = 1;
+	if (!Z80.halt) Z80.halt = 1;
 }
 
 /***************************************************************
@@ -542,11 +541,7 @@ INLINE void halt()
  ***************************************************************/
 INLINE void leave_halt()
 {
-	if( Z80.halt )
-	{
-		Z80.halt = 0;
-		PC++;
-	}
+	if (Z80.halt) Z80.halt = 0;
 }
 
 /***************************************************************
@@ -1468,12 +1463,44 @@ INLINE void otdr()
 }
 
 /***************************************************************
+ * DI
+ ***************************************************************/
+INLINE void di()
+{
+	Z80.iff1 = Z80.iff2 = 0;
+}
+
+/***************************************************************
  * EI
  ***************************************************************/
 INLINE void ei()
 {
 	Z80.iff1 = Z80.iff2 = 1;
 	Z80.after_ei = 1;
+}
+
+/***************************************************************
+ * im_0
+ ***************************************************************/
+INLINE void im_0()
+{
+	Z80.im = 0;
+}
+
+/***************************************************************
+ * im_1
+ ***************************************************************/
+INLINE void im_1()
+{
+	Z80.im = 1;
+}
+
+/***************************************************************
+ * im_2
+ ***************************************************************/
+INLINE void im_2()
+{
+	Z80.im = 2;
 }
 
 /**********************************************************
@@ -2731,7 +2758,7 @@ OP(ed,42) { sbc_hl(Z80.bc);                                    } /* SBC  HL,BC  
 OP(ed,43) { Z80.ea = arg16(); wm16(Z80.ea, Z80.bc); WZ = Z80.ea + 1; } /* LD   (w),BC      */
 OP(ed,44) { neg();                                           } /* NEG              */
 OP(ed,45) { retn();                                          } /* RETN             */
-OP(ed,46) { Z80.im = 0;                                        } /* IM   0           */
+OP(ed,46) { im_0();                                        } /* IM   0           */
 OP(ed,47) { ld_i_a();                                        } /* LD   i,A         */
 
 OP(ed,48) { C = in(BC); F = (F & CF) | SZP[C];               } /* IN   C,(C)       */
@@ -2740,7 +2767,7 @@ OP(ed,4a) { adc_hl(Z80.bc);                                    } /* ADC  HL,BC  
 OP(ed,4b) { Z80.ea = arg16(); rm16(Z80.ea, Z80.bc); WZ = Z80.ea + 1; } /* LD   BC,(w)      */
 OP(ed,4c) { neg();                                           } /* NEG              */
 OP(ed,4d) { reti();                                          } /* RETI             */
-OP(ed,4e) { Z80.im = 0;                                        } /* IM   0           */
+OP(ed,4e) { im_0();                                        } /* IM   0           */
 OP(ed,4f) { ld_r_a();                                        } /* LD   r,A         */
 
 OP(ed,50) { D = in(BC); F = (F & CF) | SZP[D];               } /* IN   D,(C)       */
@@ -2749,7 +2776,7 @@ OP(ed,52) { sbc_hl(Z80.de);                                    } /* SBC  HL,DE  
 OP(ed,53) { Z80.ea = arg16(); wm16(Z80.ea, Z80.de); WZ = Z80.ea + 1; } /* LD   (w),DE      */
 OP(ed,54) { neg();                                           } /* NEG              */
 OP(ed,55) { retn();                                          } /* RETN             */
-OP(ed,56) { Z80.im = 1;                                        } /* IM   1           */
+OP(ed,56) { im_1();                                        } /* IM   1           */
 OP(ed,57) { ld_a_i();                                        } /* LD   A,i         */
 
 OP(ed,58) { E = in(BC); F = (F & CF) | SZP[E];               } /* IN   E,(C)       */
@@ -2758,7 +2785,7 @@ OP(ed,5a) { adc_hl(Z80.de);                                    } /* ADC  HL,DE  
 OP(ed,5b) { Z80.ea = arg16(); rm16(Z80.ea, Z80.de); WZ = Z80.ea + 1; } /* LD   DE,(w)      */
 OP(ed,5c) { neg();                                           } /* NEG              */
 OP(ed,5d) { reti();                                          } /* RETI             */
-OP(ed,5e) { Z80.im = 2;                                        } /* IM   2           */
+OP(ed,5e) { im_2();                                        } /* IM   2           */
 OP(ed,5f) { ld_a_r();                                        } /* LD   A,r         */
 
 OP(ed,60) { H = in(BC); F = (F & CF) | SZP[H];               } /* IN   H,(C)       */
@@ -2767,7 +2794,7 @@ OP(ed,62) { sbc_hl(Z80.hl);                                    } /* SBC  HL,HL  
 OP(ed,63) { Z80.ea = arg16(); wm16(Z80.ea, Z80.hl); WZ = Z80.ea + 1; } /* LD   (w),HL      */
 OP(ed,64) { neg();                                           } /* NEG              */
 OP(ed,65) { retn();                                          } /* RETN             */
-OP(ed,66) { Z80.im = 0;                                        } /* IM   0           */
+OP(ed,66) { im_0();                                        } /* IM   0           */
 OP(ed,67) { rrd();                                           } /* RRD  (HL)        */
 
 OP(ed,68) { L = in(BC); F = (F & CF) | SZP[L];               } /* IN   L,(C)       */
@@ -2776,7 +2803,7 @@ OP(ed,6a) { adc_hl(Z80.hl);                                    } /* ADC  HL,HL  
 OP(ed,6b) { Z80.ea = arg16(); rm16(Z80.ea, Z80.hl); WZ = Z80.ea + 1; } /* LD   HL,(w)      */
 OP(ed,6c) { neg();                                           } /* NEG              */
 OP(ed,6d) { reti();                                          } /* RETI             */
-OP(ed,6e) { Z80.im = 0;                                        } /* IM   0           */
+OP(ed,6e) { im_0();                                        } /* IM   0           */
 OP(ed,6f) { rld();                                           } /* RLD  (HL)        */
 
 OP(ed,70) { uint8_t res = in(BC); F = (F & CF) | SZP[res];     } /* IN   0,(C)       */
@@ -2785,7 +2812,7 @@ OP(ed,72) { sbc_hl(Z80.sp);                                    } /* SBC  HL,SP  
 OP(ed,73) { Z80.ea = arg16(); wm16(Z80.ea, Z80.sp); WZ = Z80.ea + 1; } /* LD   (w),SP      */
 OP(ed,74) { neg();                                           } /* NEG              */
 OP(ed,75) { retn();                                          } /* RETN             */
-OP(ed,76) { Z80.im = 1;                                        } /* IM   1           */
+OP(ed,76) { im_1();                                        } /* IM   1           */
 OP(ed,77) { illegal_2();                                     } /* DB   ED,77       */
 
 OP(ed,78) { A = in(BC); F = (F & CF) | SZP[A]; WZ = BC + 1;  } /* IN   A,(C)       */
@@ -2794,7 +2821,7 @@ OP(ed,7a) { adc_hl(Z80.sp);                                    } /* ADC  HL,SP  
 OP(ed,7b) { Z80.ea = arg16(); rm16(Z80.ea, Z80.sp); WZ = Z80.ea + 1; } /* LD   SP,(w)      */
 OP(ed,7c) { neg();                                           } /* NEG              */
 OP(ed,7d) { reti();                                          } /* RETI             */
-OP(ed,7e) { Z80.im = 2;                                        } /* IM   2           */
+OP(ed,7e) { im_2();                                        } /* IM   2           */
 OP(ed,7f) { illegal_2();                                     } /* DB   ED,7F       */
 
 OP(ed,80) { illegal_2();                                     } /* DB   ED          */
@@ -3218,7 +3245,7 @@ OP(op,ef) { rst(0x28);                                                          
 OP(op,f0) { ret_cond(!(F & SF), 0xf0);                                            } /* RET  P           */
 OP(op,f1) { pop(Z80.af);                                                            } /* POP  AF          */
 OP(op,f2) { jp_cond(!(F & SF));                                                   } /* JP   P,a         */
-OP(op,f3) { Z80.iff1 = Z80.iff2 = 0;                                                  } /* DI               */
+OP(op,f3) { di();                                                 				  } /* DI               */
 OP(op,f4) { call_cond(!(F & SF), 0xf4);                                           } /* CALL P,a         */
 OP(op,f5) { push(Z80.af);                                                           } /* PUSH AF          */
 OP(op,f6) { or_a(arg());                                                          } /* OR   n           */
@@ -3238,9 +3265,6 @@ void take_interrupt()
 {
 	int32_t irq_vector;
 
-	/* there isn't a valid previous program counter */
-	PRVPC = 0xffff;
-
 	/* Check if processor was halted */
 	leave_halt();
 
@@ -3253,6 +3277,9 @@ void take_interrupt()
 	/* Interrupt mode 2. Call [i:databyte] */
 	if( Z80.im == 2 )
 	{
+		// Zilog's datasheet claims that "the least-significant bit must be a zero."
+		// However, experiments have confirmed that IM 2 vectors do not have to be
+		// even, and all 8 bits will be used; even $FF is handled normally.
 		irq_vector = (irq_vector & 0xff) | (Z80.i << 8);
 		push(Z80.pc);
 		rm16(irq_vector, Z80.pc);
@@ -3303,7 +3330,30 @@ void take_interrupt()
 		Z80.icount -= cc_ex[0xff];
 	}
 	WZ=PCD;
+#if HAS_LDAIR_QUIRK == 1
+	/* reset parity flag after LD A,I or LD A,R */
+	if (Z80.after_ldair) F &= ~PF;
+#endif
 }
+
+static inline void take_nmi()
+{
+	/* Check if processor was halted */
+	leave_halt();
+
+#if HAS_LDAIR_QUIRK == 1
+	/* reset parity flag after LD A,I or LD A,R */
+	if (Z80.after_ldair) F &= ~PF;
+#endif
+
+	Z80.iff1 = 0;
+	push(Z80.pc);
+	PCD = 0x0066;
+	WZ=PCD;
+	Z80.icount -= 11;
+	Z80.nmi_pending = false;
+}
+
 
 /****************************************************************************
  * Processor initialization
@@ -3396,10 +3446,34 @@ void z80_init(int32_t (*irqcallback)(int32_t))
 	WZ = 0;
 	memset(&Z80, 0, sizeof(Z80));
 	Z80.irq_callback = irqcallback;
-
-	IX = IY = 0xffff; /* IX and IY are FFFF after a reset! */
+	
+	/* TODO
+	* For Colecovision, we need to check for the Z80 registers.
+	* Unfortunately, there are not a lot of test ROMs for the Colecovision.
+	*/
+	if (sms.console < CONSOLE_SMS)
+	{
+		/* For SG-1000, Colecovision, it should be 0. */
+		IX = IY = 0;
+	}
+	else
+	{
+		IX = IY = 0xffff; /* IX and IY are FFFF after a reset! */
+	}
 	F = ZF;            /* Zero flag is set */
-	SP = 0xdff0; /* fix Shadow Dancer & Ace of Aces (normally set by BIOS) */
+	/* Because this is only affecting systems with an actual BIOS, we need to make sure it only sets it in such cases.
+	 * This code should not affect the SG-1000, Mark3 either.
+	 * TODO : Watch Colecovision BIOS */
+	if (sms.territory == TERRITORY_EXPORT && IS_SMS && bios.enabled == 0)
+	{
+		/* Fix Shadow Dancer & Ace of Aces (normally set by BIOS)
+		 * Shadow Dancer will black screen on boot without this. */
+		SP = 0xdff0;
+	}
+	else
+	{
+		SP = 0;
+	}
 	
 	/* setup cycle tables */
 	cc[Z80_TABLE_op] = cc_op;
@@ -3415,17 +3489,32 @@ void z80_init(int32_t (*irqcallback)(int32_t))
  ****************************************************************************/
 void z80_reset()
 {
+	leave_halt();
+	
 	PC = 0x0000;
 	Z80.i = 0;
 	Z80.r = 0;
 	Z80.r2 = 0;
 	Z80.nmi_pending = 0;
 	Z80.after_ei = 0;
+	Z80.irq_state = 0;
+	Z80.halt = 0;
 	Z80.after_ldair = 0;
 	Z80.iff1 = 0;
 	Z80.iff2 = 0;
 
 	WZ=PCD;
+}
+
+static inline void check_interrupts()
+{
+	/* check for NMIs on the way in; they can only be set externally */
+	/* via timers, and can't be dynamically enabled, so it is safe */
+	/* to just check here */
+	if (Z80.nmi_pending)
+		take_nmi();
+	else if (Z80.irq_state != CLEAR_LINE && Z80.iff1 && !Z80.after_ei)
+		take_interrupt();
 }
 
 /****************************************************************************
@@ -3436,46 +3525,32 @@ int32_t z80_execute(int32_t cycles)
 	Z80.icount = cycles;
 	z80_requested_cycles = Z80.icount;
 	z80_exec = 1;
-	
-	/* check for NMIs on the way in; they can only be set externally */
-	/* via timers, and can't be dynamically enabled, so it is safe */
-	/* to just check here */
-	if (Z80.nmi_pending)
-	{
-		PRVPC = 0xffff;	/* there isn't a valid previous program counter */
-		leave_halt();	/* Check if processor was halted */
-
-#if HAS_LDAIR_QUIRK
-		/* reset parity flag after LD A,I or LD A,R */
-		if (Z80.after_ldair) F &= ~PF;
-#endif
-		Z80.after_ldair = 0;
-
-		Z80.iff1 = 0;
-		push(Z80.pc);
-		PCD = 0x0066;
-		WZ=PCD;
-		Z80.icount -= 11;
-		Z80.nmi_pending = 0;
-	}
-
 	do
 	{
-		/* check for IRQs before each instruction */
-		if (Z80.irq_state != CLEAR_LINE && Z80.iff1 && !Z80.after_ei)
+		/*
+		if (Z80.wait_state)
 		{
-#if HAS_LDAIR_QUIRK
-			/* reset parity flag after LD A,I or LD A,R */
-			if (Z80.after_ldair) F &= ~PF;
-#endif
-			take_interrupt();
+			// stalled
+			Z80.icount = 0;
+			return cycles - Z80.icount;
 		}
+		*/
+		// check for interrupts before each instruction
+		check_interrupts();
+		
 		Z80.after_ei = 0;
 		Z80.after_ldair = 0;
 
 		PRVPC = PCD;
 		Z80.r++;
-		EXEC(op,rop());
+		uint8_t opcode = rop();
+		// when in HALT state, the fetched opcode is not dispatched (aka a NOP)
+		if (Z80.halt)
+		{
+			PC--;
+			opcode = 0;
+		}
+		EXEC(op,opcode);
 	} while (Z80.icount > 0);
 
 	z80_exec = 0;
@@ -3488,18 +3563,24 @@ void z80_set_irq_line(int32_t inputnum, int32_t state)
 {
 	switch (inputnum)
 	{
-	case INPUT_LINE_NMI:
-		/* mark an NMI pending on the rising edge */
-		if (Z80.nmi_state == CLEAR_LINE && state != CLEAR_LINE)
-			Z80.nmi_pending = 1;
-		Z80.nmi_state = state;
-		break;
+		case INPUT_LINE_NMI:
+			/* mark an NMI pending on the rising edge */
+			if (Z80.nmi_state == CLEAR_LINE && state != CLEAR_LINE)
+				Z80.nmi_pending = 1;
+			Z80.nmi_state = state;
+			break;
 
-	case INPUT_LINE_IRQ0:
-		/* update the IRQ state via the daisy chain */
-		Z80.irq_state = state;
-		/* the main execute loop will take the interrupt */
-		break;
+		case INPUT_LINE_IRQ0:
+			/* update the IRQ state via the daisy chain */
+			Z80.irq_state = state;
+			/* the main execute loop will take the interrupt */
+			break;
+		/*
+		// Unused for now. Might be useful for Colecovision later. Breaks Pitfall 2 apparently
+		case Z80_INPUT_LINE_WAIT:
+			Z80.wait_state = state;
+			break;
+		*/
 	}
 }
 
