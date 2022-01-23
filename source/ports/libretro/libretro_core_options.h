@@ -51,8 +51,8 @@ extern "C" {
 struct retro_core_option_definition option_defs_us[] = {
    {
       "smsplus_hardware",
-      "Hardware (Restart)",
-      "Emulates which system hardware to use. Needs restart.",
+      "Hardware (Restart Required)",
+      "Emulates which system hardware to use.",
       {
          { "auto",             NULL },
          { "master system",    NULL },
@@ -66,8 +66,8 @@ struct retro_core_option_definition option_defs_us[] = {
    },
    {
       "smsplus_region",
-      "Region (Restart)",
-      "Runs console at a specific video timing based on region. Needs restart.",
+      "Region (Restart Required)",
+      "Runs console at a specific video timing based on region.",
       {
          { "auto",   NULL },
          { "ntsc-u", NULL },
@@ -79,8 +79,8 @@ struct retro_core_option_definition option_defs_us[] = {
    },
    {
       "smsplus_fm_sound",
-      "Use FM (YM2413) (Restart)",
-      "Use FM Sound for some Master System games to enable enhanced music. Some games will only enable YM2413 sound if the Region option is also set to ntsc-j (e.g. Wonder Boy III). Needs restart.",
+      "Use FM (YM2413) (Restart Required)",
+      "Use FM Sound for some Master System games to enable enhanced music. Some games will only enable YM2413 sound if the Region option is also set to ntsc-j (e.g. Wonder Boy III).",
       {
          { "auto",  NULL },
          { "disabled", NULL },

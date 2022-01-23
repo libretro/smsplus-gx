@@ -422,7 +422,7 @@ static void check_variables(bool startup)
       if (strcmp(var.value, "disabled") == 0)
          option.fm = 0;
       else
-         option.fm = 1;
+         option.fm = sms.use_fm;
    }
 
    var.value = NULL;
