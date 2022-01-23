@@ -91,6 +91,7 @@ void vdp_reset(void)
 	vdp.lpf = sms.display ? 313 : 262;
 
 	/* VDP registers default values (usually set by BIOS) */
+	/* Tested on Megadrive and it does not initiliaze the VDP registers. */
 	if (IS_SMS && (bios.enabled != 3))
 	{
 		vdp.reg[0]  = 0x36; 
@@ -354,6 +355,11 @@ uint8_t vdp_read(int32_t offset)
 			/* cycle-accurate SPR_OVR and INT flags */
 			int32_t cyc   = z80_get_elapsed_cycles();
 			int32_t line  = vdp.line;
+			/*
+			 * This is needed for :
+			 * - Fantastic Dizzy (otherwise, top bar will flicker)
+			 * - Madou Monogatari I GG (otherwise, sprite will be displayed incorrectly)
+			*/
 			if ((cyc / CYCLES_PER_LINE) > line)
 			{
 				if (line == vdp.height) vdp.status |= 0x80;
