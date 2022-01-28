@@ -50,6 +50,17 @@ extern "C" {
 
 struct retro_core_option_definition option_defs_us[] = {
    {
+      "smsplus_sms_bios",
+      "Master System BIOS (Restart Required)",
+      "Use official BIOS/bootloader for emulated hardware, if present in RetroArch's system directory. Displays console-specific start-up sequence/animation.",
+      {
+         { "disabled", NULL },
+         { "auto", NULL },
+         { NULL,       NULL },
+      },
+      "disabled"
+   },
+   {
       "smsplus_hardware",
       "Hardware (Restart Required)",
       "Emulates which system hardware to use.",
