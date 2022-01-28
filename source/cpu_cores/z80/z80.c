@@ -588,7 +588,7 @@ INLINE void wm(uint32_t addr, uint8_t value)
  ***************************************************************/
 #define wm16(addr, r) \
 	wm(addr, r.b.l); \
-	wm((addr+1), r.b.h);
+	wm((addr+1)&0xffff, r.b.h);
 
 /***************************************************************
  * rop() is identical to rm() except it is used for
