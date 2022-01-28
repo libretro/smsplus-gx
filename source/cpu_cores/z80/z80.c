@@ -573,7 +573,7 @@ INLINE uint8_t rm(uint32_t addr)
  ***************************************************************/
 #define rm16(addr, r) \
 	r.b.l = rm(addr); \
-	r.b.h = rm((addr+1));
+	r.b.h = rm((addr+1) & 0xffff);
 
 /***************************************************************
  * Write a byte to given memory location
