@@ -373,6 +373,15 @@ static void check_variables(bool startup)
    #endif
 
    var.value = NULL;
+   var.key   = "smsplus_sms_bios";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && startup)
+   {
+      if (strcmp(var.value, "auto") == 0)
+         bios.enabled |= 1;
+   }
+   
+   var.value = NULL;
    var.key   = "smsplus_hardware";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && startup)
@@ -584,10 +593,10 @@ bool retro_load_game(const struct retro_game_info *info)
    bitmap.viewport.x  = 0x00;
    bitmap.viewport.y  = 0x00;
 
-   check_variables(true);
-
    if (!bios_init()) /* This only fails when running coleco roms and coleco bios is not found */
       return false;
+
+   check_variables(true);
 
    /* sms.territory = settings.misc_region; */
    if (sms.console == CONSOLE_SMS || sms.console == CONSOLE_SMS2)
