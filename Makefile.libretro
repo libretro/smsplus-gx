@@ -67,7 +67,7 @@ ifneq (,$(findstring unix,$(platform)))
 
    # Raspberry Pi
    ifneq (,$(findstring rpi,$(platform)))
-      ENDIANNESS_DEFINES += -DALIGN_DWORD -DLSB_FIRST
+      ENDIANNESS_DEFINES += -DLSB_FIRST
       FLAGS += -fomit-frame-pointer -ffast-math
       ifneq (,$(findstring rpi1,$(platform)))
          FLAGS += -DARM -marm -march=armv6j -mfpu=vfp -mfloat-abi=hard
@@ -85,7 +85,7 @@ ifneq (,$(findstring unix,$(platform)))
 # (armv7 a7, hard point, neon based) ###
 # NESC, SNESC, C64 mini
 else ifeq ($(platform), classic_armv7_a7)
-   ENDIANNESS_DEFINES += -DLSB_FIRST -DALIGN_DWORD
+	ENDIANNESS_DEFINES += -DLSB_FIRST
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
@@ -122,7 +122,7 @@ ifeq ($(arch),ppc)
    ENDIANNESS_DEFINES += -DMSB_FIRST -DWORDS_BIGENDIAN -DBYTE_ORDER=BIG_ENDIAN
    OLD_GCC := 1
 else
-   ENDIANNESS_DEFINES += -DALIGN_DWORD -DLSB_FIRST
+   ENDIANNESS_DEFINES += -DLSB_FIRST
 endif
    OSXVER = `sw_vers -productVersion | cut -d. -f 2`
    OSX_LT_MAVERICKS = `(( $(OSXVER) <= 9)) && echo "YES"`
@@ -234,7 +234,7 @@ else ifeq ($(platform), vita)
    CXX = arm-vita-eabi-g++$(EXE_EXT)
    AR = arm-vita-eabi-ar$(EXE_EXT)
    FLAGS += -DVITA -march=armv7-a -mfpu=neon -mfloat-abi=hard -mlittle-endian -ffast-math
-   ENDIANNESS_DEFINES += -DLSB_FIRST -DALIGN_DWORD
+   ENDIANNESS_DEFINES += -DLSB_FIRST
    STATIC_LINKING = 1
    EXTRA_INCLUDES := -I"$(VITASDK)/arm-vita-eabi/include"
 
@@ -244,7 +244,7 @@ else ifeq ($(platform), ctr)
 	CC = $(DEVKITARM)/bin/arm-none-eabi-gcc$(EXE_EXT)
 	CXX = $(DEVKITARM)/bin/arm-none-eabi-g++$(EXE_EXT)
 	AR = $(DEVKITARM)/bin/arm-none-eabi-ar$(EXE_EXT)
-   ENDIANNESS_DEFINES := -DLSB_FIRST -DALIGN_LONG -DBYTE_ORDER=LITTLE_ENDIAN -DUSE_DYNAMIC_ALLOC
+	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DUSE_DYNAMIC_ALLOC
 	CFLAGS += -DARM11 -D_3DS -DNO_OS -DNO_DYLIB -DNO_SOCKET
 	CFLAGS += -march=armv6k -mtune=mpcore -mfloat-abi=hard -marm -mfpu=vfp -mtp=soft
 	CFLAGS += -Wall -mword-relocations
@@ -272,7 +272,7 @@ include $(DEVKITPRO)/libnx/switch_rules
     CFLAGS += $(INCDIRS)
     CFLAGS  += $(INCLUDE)  -D__SWITCH__ -DHAVE_LIBNX
     CXXFLAGS := $(ASFLAGS) $(CFLAGS) -fexceptions -fno-rtti
-    ENDIANNESS_DEFINES += -DLSB_FIRST -DALIGN_WORD
+    ENDIANNESS_DEFINES += -DLSB_FIRST
     STATIC_LINKING = 1
 
 # Nintendo Game Cube / Wii / WiiU
@@ -315,7 +315,7 @@ else ifeq ($(platform), retrofw)
    fpic := -fPIC
    SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
    CFLAGS += -ffast-math -march=mips32 -mtune=mips32 -mhard-float -fomit-frame-pointer
-   ENDIANNESS_DEFINES += -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DALIGN_LONG
+   ENDIANNESS_DEFINES += -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DALIGN_DWORD
 
 # MIYOO
 else ifeq ($(platform), miyoo)
@@ -326,7 +326,7 @@ else ifeq ($(platform), miyoo)
    fpic := -fPIC
    SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
    CFLAGS += -ffast-math -march=armv5te -mtune=arm926ej-s -fomit-frame-pointer
-   ENDIANNESS_DEFINES += -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DALIGN_LONG
+   ENDIANNESS_DEFINES += -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DALIGN_DWORD
    
 # else ifneq (,$(findstring armv,$(platform)))
 #    TARGET := $(TARGET_NAME)_libretro.so
