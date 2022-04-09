@@ -222,7 +222,7 @@ else ifeq ($(platform), psp1)
    CC = psp-gcc$(EXE_EXT)
    CXX = psp-g++$(EXE_EXT)
    AR = psp-ar$(EXE_EXT)
-   ENDIANNESS_DEFINES += -DLSB_FIRST
+   ENDIANNESS_DEFINES += -DLSB_FIRST -DALIGN_DWORD
    FLAGS += -DPSP -G0
    STATIC_LINKING = 1
    EXTRA_INCLUDES := -I$(shell psp-config --pspsdk-path)/include
