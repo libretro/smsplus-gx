@@ -495,6 +495,31 @@ static void check_variables(bool startup)
       bitmap.viewport.changed = 1;
 }
 
+static void retro_set_memory_map(void)
+{
+   const uint64_t mem = RETRO_MEMDESC_SYSTEM_RAM;
+   struct retro_memory_map mmaps;
+   struct retro_memory_descriptor descs[64] = { 0 };
+   size_t i = 0, j = 0;
+
+   memset(descs, 0, sizeof(descs));
+   for (i = 0; i < 64; i++)
+   {
+      if (MMapPtrs[i] != NULL)
+      {
+         descs[j].ptr    = MMapPtrs[i];
+         descs[j].start  = i * 1024;
+         descs[j].len    = 1024;
+         descs[j].select = 0;
+         j++;
+      }
+   }
+
+   mmaps.descriptors = descs;
+   mmaps.num_descriptors = j;
+   environ_cb(RETRO_ENVIRONMENT_SET_MEMORY_MAPS, &mmaps);
+}
+
 bool retro_load_game(const struct retro_game_info *info)
 {
    enum retro_pixel_format rgb565   = RETRO_PIXEL_FORMAT_RGB565;
@@ -609,6 +634,8 @@ bool retro_load_game(const struct retro_game_info *info)
    system_height = bitmap.viewport.h;
 
    libretro_serialize_size = 0;
+
+   retro_set_memory_map();
 
    return true;
 }
