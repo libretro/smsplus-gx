@@ -170,4 +170,6 @@ extern void mapper_8k_w(uint16_t address, uint8_t data);
 extern void mapper_16k_w(uint16_t address, uint8_t data);
 extern int32_t sms_irq_callback(int32_t param);
 
+extern uint8_t *MMapPtrs[64];
+
 #endif /* _SMS_H_ */

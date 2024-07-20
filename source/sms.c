@@ -46,6 +46,8 @@ t_coleco coleco;
 uint8_t dummy_write[0x400];
 uint8_t dummy_read[0x400];
 
+uint8_t *MMapPtrs[64] = { 0 };
+
 static void writemem_mapper_none(uint16_t offset, uint8_t data)
 {
 	cpu_writemap[offset >> 10][offset & 0x03FF] = data;
@@ -128,6 +130,10 @@ static void writemem_mapper_4pak(uint16_t offset, uint8_t data)
 	cpu_writemap[offset >> 10][offset & 0x03FF] = data;
 }
 
+void MemoryAddRAM(int bank, int offset, void *ptr)
+{
+	MMapPtrs[bank] = ptr + offset;
+}
 
 void mapper_reset(void)
 {
@@ -276,6 +282,7 @@ void sms_reset(void)
       {
         cpu_readmap[i]  = &coleco.rom[i << 10];
         cpu_writemap[i] = dummy_write;
+		MemoryAddRAM(i, i << 10, coleco.rom);
       }
 
       /* $2000-$5FFF mapped to expansion */
@@ -290,6 +297,7 @@ void sms_reset(void)
       {
         cpu_readmap[i]  = &sms.wram[0];
         cpu_writemap[i] = &sms.wram[0];
+		MemoryAddRAM(i, 0, sms.wram);
       }
 
       /* $8000-$FFFF mapped to Cartridge ROM (max. 32K) */
@@ -297,6 +305,7 @@ void sms_reset(void)
       {
         cpu_readmap[i]  = &cart.rom[(i&0x1F) << 10];
         cpu_writemap[i] = dummy_write;
+		MemoryAddRAM(i, (i&0x1F) << 10, cart.rom);
       }
 
       /* reset I/O */
@@ -315,6 +324,7 @@ void sms_reset(void)
       {
         cpu_readmap[i]  = &coleco.rom[i << 10];
         cpu_writemap[i] = dummy_write;
+		MemoryAddRAM(i, i << 10, coleco.rom);
       }
     
       /* $2000-$5FFF mapped to cartridge ROM (max. 16K) */
@@ -322,6 +332,7 @@ void sms_reset(void)
       {
         cpu_readmap[i]  = &cart.rom[i << 10];
         cpu_writemap[i] = dummy_write;
+		MemoryAddRAM(i, i << 10, cart.rom);
       }
       
       /* $6000-$6FFF : Reserved */
@@ -336,6 +347,7 @@ void sms_reset(void)
       {
 		cpu_readmap[i]  = &sms.wram[i << 10];
 		cpu_writemap[i] = &sms.wram[i << 10];
+		MemoryAddRAM(i, i << 10, sms.wram);
       }
       printf("Sord M5 mode\n");
     break;
@@ -348,6 +360,7 @@ void sms_reset(void)
       {
         cpu_readmap[i]  = &cart.rom[i << 10];
         cpu_writemap[i] = dummy_write;
+		MemoryAddRAM(i, i << 10, cart.rom);
       }
 
       /* $8000-$BFFF mapped to external RAM (lower 16K) */
@@ -355,6 +368,7 @@ void sms_reset(void)
       {
         cpu_readmap[i]  = &cart.sram[(i & 0x0F) << 10];
         cpu_writemap[i] = &cart.sram[(i & 0x0F) << 10];
+		MemoryAddRAM(i, (i & 0x1f) << 10, cart.sram);
       }
 
       /* $C000-$FFFF mapped to internal RAM (2K) or external RAM (upper 16K) */
@@ -362,6 +376,7 @@ void sms_reset(void)
       {
         cpu_readmap[i]  = &cart.sram[0x4000 + ((i & 0x0F) << 10)];
         cpu_writemap[i] = &cart.sram[0x4000 + ((i & 0x0F) << 10)];
+		MemoryAddRAM(i, 0x4000 + ((i & 0x0F) << 10), cart.sram);
       }
 
       break;
@@ -399,6 +414,7 @@ void sms_reset(void)
       {
         cpu_readmap[i]  = &slot.rom[(i & 0x1F) << 10];
         cpu_writemap[i] = dummy_write;
+		MemoryAddRAM(i, (i & 0x1f) << 10, slot.rom);
       }
 
       /* enable internal RAM at $C000-$FFFF (8k mirrored) */
@@ -406,6 +422,7 @@ void sms_reset(void)
       {
           cpu_readmap[i] = &sms.wram[(i & 0x07) << 10];
           cpu_writemap[i] = &sms.wram[(i & 0x07) << 10];
+		  MemoryAddRAM(i, (i & 0x07) << 10, sms.wram);
       }
 
       /* reset cartridge paging registers */
@@ -466,24 +483,28 @@ void mapper_8k_w(uint16_t address, uint8_t data)
 		for(i = 0x20; i <= 0x27; i++)
 		{
 			cpu_readmap[i] = &slot.rom[(page << 13) | ((i & 0x07) << 10)];
+			MemoryAddRAM(i, (page << 13) | ((i & 0x07) << 10), slot.rom);
 		}
 		break;
 		case 1: /* cartridge ROM bank (16k) at $A000-$BFFF */
 		for(i = 0x28; i <= 0x2F; i++)
 		{
 			cpu_readmap[i] = &slot.rom[(page << 13) | ((i & 0x07) << 10)];
+			MemoryAddRAM(i, (page << 13) | ((i & 0x07) << 10), slot.rom);
 		}
 		break;
 		case 2: /* cartridge ROM bank (16k) at $4000-$5FFF */
 		for(i = 0x10; i <= 0x17; i++)
 		{
 			cpu_readmap[i] = &slot.rom[(page << 13) | ((i & 0x07) << 10)];
+			MemoryAddRAM(i, (page << 13) | ((i & 0x07) << 10), slot.rom);
 		}
 		break;
 		case 3: /* cartridge ROM bank (16k) at $6000-$7FFF */
 		for(i = 0x18; i <= 0x1F; i++)
 		{
 			cpu_readmap[i] = &slot.rom[(page << 13) | ((i & 0x07) << 10)];
+			MemoryAddRAM(i, (page << 13) | ((i & 0x07) << 10), slot.rom);
 		}
 		break;
 	}
@@ -525,6 +546,7 @@ void mapper_16k_w(uint16_t address, uint8_t data)
 			for(i = 0x20; i <= 0x2F; i++)
 			{
 				cpu_readmap[i] = cpu_writemap[i] = &cart.sram[offset + ((i & 0x0F) << 10)];
+				MemoryAddRAM(i, offset + ((i & 0x0F) << 10), cart.sram);
 			}
 			sms.save = 1;
 		}
@@ -542,6 +564,7 @@ void mapper_16k_w(uint16_t address, uint8_t data)
 			{
 				cpu_readmap[i] = &slot.rom[(page << 14) | ((i & 0x0F) << 10)];
 				cpu_writemap[i] = dummy_write;
+				MemoryAddRAM(i, (page << 14) | ((i & 0x0F) << 10), slot.rom);
 			}
 		}
 		
@@ -551,6 +574,7 @@ void mapper_16k_w(uint16_t address, uint8_t data)
 			for(i = 0x30; i <= 0x3F; i++)
 			{
 			  cpu_writemap[i] = cpu_readmap[i]  = &cart.sram[(i & 0x0F) << 10];
+			  MemoryAddRAM(i, (i & 0x0F) << 10, cart.sram);
 			}
 			sms.save = 1;
 		}
@@ -560,6 +584,7 @@ void mapper_16k_w(uint16_t address, uint8_t data)
 			for(i = 0x30; i <= 0x3F; i++)
 			{
 			  cpu_writemap[i] = cpu_readmap[i] = &sms.wram[(i & 0x07) << 10];
+			  MemoryAddRAM(i, (i & 0x07) << 10, sms.wram);
 			}
 		}
 		break;
@@ -568,17 +593,20 @@ void mapper_16k_w(uint16_t address, uint8_t data)
 		if (slot.mapper == MAPPER_CODIES || slot.mapper == MAPPER_4PAK)
 		{
 			cpu_readmap[0] = &slot.rom[(page << 14)];
+			MemoryAddRAM(0, (page << 14), slot.rom);
 		}
 
 		for(i = 0x01; i <= 0x0F; i++)
 		{
 			cpu_readmap[i] = &slot.rom[(page << 14) | ((i & 0x0F) << 10)];
+			MemoryAddRAM(i, (page << 14) | ((i & 0x0F) << 10), slot.rom);
 		}
 		break;
 		case 2: /* cartridge ROM bank (16k) at $4000-$7FFF */
 		for(i = 0x10; i <= 0x1F; i++)
 		{
 			cpu_readmap[i] = &slot.rom[(page << 14) | ((i & 0x0F) << 10)];
+			MemoryAddRAM(i, (page << 14) | ((i & 0x0F) << 10), slot.rom);
 		}
 
 		/* Ernie Elf's Golf external RAM switch */
@@ -590,6 +618,7 @@ void mapper_16k_w(uint16_t address, uint8_t data)
 				for(i = 0x28; i <= 0x2F; i++)
 				{
 					cpu_writemap[i] = cpu_readmap[i]  = &cart.sram[(i & 0x0F) << 10];
+					MemoryAddRAM(i, (i & 0x0F) << 10, cart.sram);
 				}
 				sms.save = 1;
 			}
@@ -600,6 +629,7 @@ void mapper_16k_w(uint16_t address, uint8_t data)
 				{
 					cpu_readmap[i] = &slot.rom[((slot.fcr[3] % slot.pages) << 14) | ((i & 0x0F) << 10)];
 					cpu_writemap[i] = dummy_write;
+					MemoryAddRAM(i, ((slot.fcr[3] % slot.pages) << 14) | ((i & 0x0F) << 10), slot.rom);
 				}
 			}
 		}
@@ -612,6 +642,7 @@ void mapper_16k_w(uint16_t address, uint8_t data)
 		for(i = 0x20; i <= 0x27; i++)
 		{
 			cpu_readmap[i] = &slot.rom[(page << 14) | ((i & 0x0F) << 10)];
+			MemoryAddRAM(i, (page << 14) | ((i & 0x0F) << 10), slot.rom);
 		}
 
 		/* check that external RAM (8k) is not mapped at $A000-$BFFF (CODEMASTER mapper) */
@@ -621,6 +652,7 @@ void mapper_16k_w(uint16_t address, uint8_t data)
 		for(i = 0x28; i <= 0x2F; i++)
 		{
 			cpu_readmap[i] = &slot.rom[(page << 14) | ((i & 0x0F) << 10)];
+			MemoryAddRAM(i, (page << 14) | ((i & 0x0F) << 10), slot.rom);
 		}
 		break;
 	}
