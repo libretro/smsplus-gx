@@ -497,9 +497,8 @@ static void check_variables(bool startup)
 
 static void retro_set_memory_map(void)
 {
-   const uint64_t mem = RETRO_MEMDESC_SYSTEM_RAM;
    struct retro_memory_map mmaps;
-   struct retro_memory_descriptor descs[64] = { 0 };
+   struct retro_memory_descriptor descs[64];
    size_t i = 0, j = 0;
 
    memset(descs, 0, sizeof(descs));
