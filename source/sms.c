@@ -305,7 +305,7 @@ void sms_reset(void)
       {
         cpu_readmap[i]  = &cart.rom[(i&0x1F) << 10];
         cpu_writemap[i] = dummy_write;
-		MemoryAddRAM(i, (i&0x1F) << 10, cart.rom);
+		MemoryAddRAM(i, (i & 0x1F) << 10, cart.rom);
       }
 
       /* reset I/O */
@@ -368,7 +368,7 @@ void sms_reset(void)
       {
         cpu_readmap[i]  = &cart.sram[(i & 0x0F) << 10];
         cpu_writemap[i] = &cart.sram[(i & 0x0F) << 10];
-		MemoryAddRAM(i, (i & 0x1f) << 10, cart.sram);
+		MemoryAddRAM(i, (i & 0x0f) << 10, cart.sram);
       }
 
       /* $C000-$FFFF mapped to internal RAM (2K) or external RAM (upper 16K) */
