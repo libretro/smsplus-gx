@@ -30,6 +30,11 @@ static unsigned hide_left_border                   = 0;
 static unsigned system_width                       = VIDEO_WIDTH_SMS;
 static unsigned system_height                      = VIDEO_HEIGHT_SMS;
 
+#define RETRO_DEVICE_MSPAD_2B                      RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)
+#define RETRO_DEVICE_PADDLE                        RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_ANALOG, 0)
+
+static unsigned input_type[2]                      = { DEVICE_PAD2B, DEVICE_PAD2B };
+
 #ifdef HAVE_NTSC
 static SMS_NTSC_IN_T *ntsc_screen                  = NULL;
 static sms_ntsc_t *sms_ntsc                        = NULL;
@@ -317,6 +322,15 @@ static void update_input(void)
             coleco.keypad[port] = 10;
          else if (KEYP(RETROK_ASTERISK) || (JOYP(RETRO_DEVICE_ID_JOYPAD_SELECT)))
             coleco.keypad[port] = 11;
+      }
+      else if (input_type[port] == DEVICE_PADDLE)
+      {
+         input.analog[port][0] = (input_state_cb(port, RETRO_DEVICE_ANALOG, 0, RETRO_DEVICE_ID_ANALOG_X) + 0x8000) >> 8;
+
+         if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_B))
+            input.pad[port] |= INPUT_BUTTON1;
+         if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_START))
+            input.pad[port] |= INPUT_START;
       }
 
       if (!port && (JOYP(RETRO_DEVICE_ID_JOYPAD_START)))
@@ -799,14 +813,55 @@ unsigned retro_api_version(void)
 
 void retro_set_controller_port_device(unsigned in_port, unsigned device)
 {
-   (void)in_port;
-   (void)device;
+   if (in_port > 1)
+      return;
+   
+   switch (device)
+   {
+   case RETRO_DEVICE_NONE:
+      input_type[in_port] = DEVICE_NONE;
+      break;
+   case RETRO_DEVICE_MSPAD_2B:
+      sms.device[in_port] = DEVICE_PAD2B;
+      input_type[in_port] = DEVICE_PAD2B;
+      break;
+   case RETRO_DEVICE_PADDLE:
+      sms.device[in_port] = DEVICE_PADDLE;
+      input_type[in_port] = DEVICE_PADDLE;
+      break;
+   case RETRO_DEVICE_JOYPAD:
+   default:
+      input_type[in_port] = sms.device[in_port];
+      if (sms.device[in_port] > DEVICE_PADDLE)
+         input_type[in_port] = DEVICE_PAD2B;
+      break;
+   }
 }
 
 void retro_set_environment(retro_environment_t cb)
 {
+   static const struct retro_controller_description port_1[] = {
+      { "Joypad Auto", RETRO_DEVICE_JOYPAD },
+      { "Joypad Port Empty", RETRO_DEVICE_NONE },
+      { "MS Joypad 2 Button", RETRO_DEVICE_MSPAD_2B },
+      { "MS Paddle Control", RETRO_DEVICE_PADDLE },
+   };
+
+   static const struct retro_controller_description port_2[] = {
+      { "Joypad Auto", RETRO_DEVICE_JOYPAD },
+      { "Joypad Port Empty", RETRO_DEVICE_NONE },
+      { "MS Joypad 2 Button", RETRO_DEVICE_MSPAD_2B },
+      { "MS Paddle Control", RETRO_DEVICE_PADDLE },
+   };
+
+   static const struct retro_controller_info ports[] = {
+      { port_1, 4 },
+      { port_2, 4 },
+      { 0 },
+   };
    environ_cb = cb;
    libretro_set_core_options(environ_cb);
+   cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
 }
 
 void retro_set_audio_sample(retro_audio_sample_t cb)
