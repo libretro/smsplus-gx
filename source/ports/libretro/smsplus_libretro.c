@@ -18,6 +18,7 @@ static retro_log_printf_t log_cb                   = NULL;
 static retro_video_refresh_t video_cb              = NULL;
 static retro_audio_sample_t audio_cb               = NULL;
 static retro_environment_t environ_cb              = NULL;
+static struct retro_vfs_interface *vfs             = NULL;
 static retro_input_poll_t input_poll_cb            = NULL;
 static retro_input_state_t input_state_cb          = NULL;
 static retro_audio_sample_batch_t audio_batch_cb   = NULL;
@@ -208,31 +209,69 @@ void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode)
    (void)mode;
 }
 
+/* Reads up to max bytes of a file through the frontend's VFS when it offers
+ * one, so the frontend can see which BIOS was looked for. Returns the number
+ * of bytes read, or -1 if the file can't be opened. */
+static int64_t read_file(const char *path, void *dest, int64_t max)
+{
+   int64_t size;
+   int64_t done = 0;
+
+   if (vfs)
+   {
+      struct retro_vfs_file_handle *file = vfs->open(path,
+            RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
+      if (!file)
+         return -1;
+
+      size = vfs->size(file);
+      if (size > max)
+         size = max;
+      while (done < size)
+      {
+         int64_t n = vfs->read(file, (uint8_t *)dest + done, size - done);
+         if (n <= 0)
+            break;
+         done += n;
+      }
+      vfs->close(file);
+   }
+   else
+   {
+      FILE *fd = fopen(path, "rb");
+      if (!fd)
+         return -1;
+
+      fseek(fd, 0, SEEK_END);
+      size = ftell(fd);
+      fseek(fd, 0, SEEK_SET);
+      if (size > max)
+         size = max;
+      if (size > 0)
+         done = fread(dest, 1, size, fd);
+      fclose(fd);
+   }
+
+   return done;
+}
+
 static int bios_init(void)
 {
-   FILE *fd;
    char bios_path[1024];
+   int64_t size;
 
    bios.rom     = malloc(0x100000);
    bios.enabled = 0;
 
    sprintf(bios_path, "%s%c%s", gdata.biosdir, path_default_slash_c(), "bios.sms");
 
-   fd = fopen(bios_path, "rb");
-
-   if(fd)
+   size = read_file(bios_path, bios.rom, 0x100000);
+   if (size >= 0)
    {
-      uint32_t size;
-      /* Seek to end of file, and get size */
-      fseek(fd, 0, SEEK_END);
-      size = ftell(fd);
-      fseek(fd, 0, SEEK_SET);
       if (size < 0x4000)
          size = 0x4000;
-      fread(bios.rom, size, 1, fd);
       bios.enabled = 2;
       bios.pages   = size / 0x4000;
-      fclose(fd);
 
       log_cb(RETRO_LOG_INFO, "bios loaded:      %s\n", bios_path);
    }
@@ -240,18 +279,13 @@ static int bios_init(void)
    if (sms.console == CONSOLE_COLECO)
    {
       sprintf(bios_path, "%s%c%s", gdata.biosdir, path_default_slash_c(), "BIOS.col");
-      fd = fopen(bios_path, "rb");
 
-      if(!fd)
+      if (read_file(bios_path, coleco.rom, 0x2000) < 0)
       {
          /* Coleco bios is required when running coleco roms */
          log_cb(RETRO_LOG_ERROR, "Cannot load required colero rom: %s\n", bios_path);
          return 0;
       }
-
-      /* Seek to end of file, and get size */
-      fread(coleco.rom, 0x2000, 1, fd);
-      fclose(fd);
 
       log_cb(RETRO_LOG_INFO, "bios loaded:      %s\n", bios_path);
    }
@@ -867,9 +901,14 @@ void retro_set_environment(retro_environment_t cb)
       { port_2, 4 },
       { 0 },
    };
+   struct retro_vfs_interface_info vfs_iface_info = { 1, NULL };
+
    environ_cb = cb;
    libretro_set_core_options(environ_cb);
    cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
+
+   if (cb(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &vfs_iface_info))
+      vfs = vfs_iface_info.iface;
 }
 
 void retro_set_audio_sample(retro_audio_sample_t cb)
