@@ -210,47 +210,48 @@ void system_manage_sram(uint8_t *sram, uint8_t slot_number, uint8_t mode)
 }
 
 /* Reads up to max bytes of a file through the frontend's VFS when it offers
- * one, so the frontend can see which BIOS was looked for. Returns the number
- * of bytes read, or -1 if the file can't be opened. */
+ * one, so the frontend can see which BIOS was looked for, and with stdio as
+ * before otherwise or if the VFS can't open it. Returns the number of bytes
+ * read, or -1 if the file can't be opened. */
 static int64_t read_file(const char *path, void *dest, int64_t max)
 {
    int64_t size;
    int64_t done = 0;
+   FILE *fd;
 
    if (vfs)
    {
       struct retro_vfs_file_handle *file = vfs->open(path,
             RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
-      if (!file)
-         return -1;
-
-      size = vfs->size(file);
-      if (size > max)
-         size = max;
-      while (done < size)
+      if (file)
       {
-         int64_t n = vfs->read(file, (uint8_t *)dest + done, size - done);
-         if (n <= 0)
-            break;
-         done += n;
+         size = vfs->size(file);
+         if (size > max)
+            size = max;
+         while (done < size)
+         {
+            int64_t n = vfs->read(file, (uint8_t *)dest + done, size - done);
+            if (n <= 0)
+               break;
+            done += n;
+         }
+         vfs->close(file);
+         return done;
       }
-      vfs->close(file);
    }
-   else
-   {
-      FILE *fd = fopen(path, "rb");
-      if (!fd)
-         return -1;
 
-      fseek(fd, 0, SEEK_END);
-      size = ftell(fd);
-      fseek(fd, 0, SEEK_SET);
-      if (size > max)
-         size = max;
-      if (size > 0)
-         done = fread(dest, 1, size, fd);
-      fclose(fd);
-   }
+   fd = fopen(path, "rb");
+   if (!fd)
+      return -1;
+
+   fseek(fd, 0, SEEK_END);
+   size = ftell(fd);
+   fseek(fd, 0, SEEK_SET);
+   if (size > max)
+      size = max;
+   if (size > 0)
+      done = fread(dest, 1, size, fd);
+   fclose(fd);
 
    return done;
 }
