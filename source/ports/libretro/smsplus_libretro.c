@@ -255,6 +255,14 @@ static int64_t read_file(const char *path, void *dest, int64_t max)
    return done;
 }
 
+/* Joins the BIOS folder and a file name with the folder's own slash, so the
+ * frontend is never given a mixed path such as C:/system\BIOS.col. */
+static void bios_file_path(char *dest, const char *name)
+{
+   char slash = strchr(gdata.biosdir, '/') ? '/' : path_default_slash_c();
+   sprintf(dest, "%s%c%s", gdata.biosdir, slash, name);
+}
+
 static int bios_init(void)
 {
    char bios_path[1024];
@@ -263,7 +271,7 @@ static int bios_init(void)
    bios.rom     = malloc(0x100000);
    bios.enabled = 0;
 
-   sprintf(bios_path, "%s%c%s", gdata.biosdir, path_default_slash_c(), "bios.sms");
+   bios_file_path(bios_path, "bios.sms");
 
    size = read_file(bios_path, bios.rom, 0x100000);
    if (size >= 0)
@@ -278,7 +286,7 @@ static int bios_init(void)
 
    if (sms.console == CONSOLE_COLECO)
    {
-      sprintf(bios_path, "%s%c%s", gdata.biosdir, path_default_slash_c(), "BIOS.col");
+      bios_file_path(bios_path, "BIOS.col");
 
       if (read_file(bios_path, coleco.rom, 0x2000) < 0)
       {
